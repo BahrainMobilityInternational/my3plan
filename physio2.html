@@ -1340,6 +1340,8 @@ CREATE TABLE IF NOT EXISTS treatments (
   treatment_type TEXT,
   description TEXT,
   notes TEXT,
+  duration INTEGER DEFAULT 60, -- Duration in minutes
+  treatment_date TIMESTAMP DEFAULT NOW(),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -4838,7 +4840,26 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                         .insert([treatmentData])
                         .select();
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Database error details:', error);
+                        
+                        // If duration column doesn't exist, try without it
+                        if (error.message.includes('duration')) {
+                            console.log('Duration column not found, retrying without duration field...');
+                            const treatmentDataWithoutDuration = { ...treatmentData };
+                            delete treatmentDataWithoutDuration.duration;
+                            
+                            const { data: retryData, error: retryError } = await supabase
+                                .from('treatments')
+                                .insert([treatmentDataWithoutDuration])
+                                .select();
+                                
+                            if (retryError) throw retryError;
+                            console.log('Treatment saved successfully without duration field');
+                        } else {
+                            throw error;
+                        }
+                    }
                     
                     console.log('Treatment saved successfully:', data);
                     showNotification('✅ Treatment added successfully to database!', 'success');
