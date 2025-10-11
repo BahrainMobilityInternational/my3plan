@@ -209,7 +209,7 @@
     <!-- Main Application (Hidden until login) -->
     <div id="mainApp" class="hidden">
     <!-- Navigation -->
-    <nav class="bg-primary shadow-lg">
+    <nav class="bg-primary shadow-lg fixed top-0 left-0 right-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
@@ -244,9 +244,9 @@
         </div>
     </nav>
 
-    <div class="flex">
+    <div class="flex pt-16">
         <!-- Sidebar -->
-        <div class="w-64 bg-gray-50 dark:bg-gray-800 min-h-screen p-4">
+        <div class="w-64 bg-gray-50 dark:bg-gray-800 min-h-screen p-4 fixed left-0 top-16 bottom-0 overflow-y-auto">
             <nav class="space-y-2">
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="dashboard">
                     <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
@@ -273,7 +273,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 p-6">
+        <div class="flex-1 ml-64 p-6">
             <!-- Dashboard View -->
             <div id="dashboard" class="view">
                 <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
