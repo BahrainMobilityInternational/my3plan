@@ -1086,28 +1086,37 @@ CREATE TABLE IF NOT EXISTS exercises (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 6. Enable Row Level Security (RLS) - Optional but recommended
-ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE physiotherapists ENABLE ROW LEVEL SECURITY;
-ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE treatments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+-- 6. DISABLE Row Level Security for easier development (IMPORTANT!)
+-- Note: For production, you should enable RLS and create proper policies
+ALTER TABLE patients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE physiotherapists DISABLE ROW LEVEL SECURITY;
+ALTER TABLE appointments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE treatments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
--- 7. Create policies for authenticated users (adjust as needed)
-CREATE POLICY "Enable all operations for authenticated users" ON patients
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Alternative: If you want to keep RLS enabled, use these policies instead:
+-- (Uncomment the lines below and comment out the DISABLE commands above)
 
-CREATE POLICY "Enable all operations for authenticated users" ON physiotherapists
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE physiotherapists ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE treatments ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable all operations for authenticated users" ON appointments
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- CREATE POLICY "Enable all operations for everyone" ON patients
+--   FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Enable all operations for authenticated users" ON treatments
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- CREATE POLICY "Enable all operations for everyone" ON physiotherapists
+--   FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Enable all operations for authenticated users" ON exercises
-  FOR ALL TO authenticated USING (true) WITH CHECK (true);</pre>
+-- CREATE POLICY "Enable all operations for everyone" ON appointments
+--   FOR ALL USING (true) WITH CHECK (true);
+
+-- CREATE POLICY "Enable all operations for everyone" ON treatments
+--   FOR ALL USING (true) WITH CHECK (true);
+
+-- CREATE POLICY "Enable all operations for everyone" ON exercises
+--   FOR ALL USING (true) WITH CHECK (true);</pre>
                     </div>
                 </div>
 
