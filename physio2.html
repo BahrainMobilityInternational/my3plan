@@ -4157,38 +4157,173 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         });
 
         document.getElementById('saveQuickTreatment').addEventListener('click', async () => {
-            const treatmentType = document.getElementById('quickTreatmentType').value;
-            const duration = document.getElementById('quickTreatmentDuration').value;
-            const notes = document.getElementById('quickTreatmentNotes').value;
+            // Get form elements with null checks
+            const treatmentTypeEl = document.getElementById('quickTreatmentType');
+            const durationEl = document.getElementById('quickTreatmentDuration');
+            const physioEl = document.getElementById('quickTreatmentPhysio');
+            const notesEl = document.getElementById('quickTreatmentNotes');
+            const dateEl = document.getElementById('quickTreatmentDate');
+            const timeEl = document.getElementById('quickTreatmentTime');
             
-            if (!treatmentType) {
+            // Check if elements exist
+            if (!treatmentTypeEl || !durationEl || !physioEl || !notesEl || !dateEl || !timeEl) {
+                showNotification('Form elements not found. Please refresh the page.', 'error');
+                return;
+            }
+            
+            // Get form values
+            const treatmentType = treatmentTypeEl.value?.trim() || '';
+            const duration = durationEl.value?.trim() || '60';
+            const physioId = physioEl.value?.trim() || '';
+            const notes = notesEl.value?.trim() || '';
+            const date = dateEl.value?.trim() || '';
+            const time = timeEl.value?.trim() || '';
+            
+            // Validation with proper styling and user feedback
+            if (!treatmentType || treatmentType === '') {
                 showNotification('Please select a treatment type', 'error');
+                treatmentTypeEl.style.borderColor = '#ef4444';
+                treatmentTypeEl.focus();
+                setTimeout(() => treatmentTypeEl.style.borderColor = '', 3000);
                 return;
             }
             
-            if (!notes.trim()) {
+            if (!physioId || physioId === '') {
+                showNotification('Please select a physiotherapist', 'error');
+                physioEl.style.borderColor = '#ef4444';
+                physioEl.focus();
+                setTimeout(() => physioEl.style.borderColor = '', 3000);
+                return;
+            }
+            
+            if (!notes || notes === '') {
                 showNotification('Please add treatment notes', 'error');
+                notesEl.style.borderColor = '#ef4444';
+                notesEl.focus();
+                setTimeout(() => notesEl.style.borderColor = '', 3000);
+                return;
+            }
+
+            if (!date || date === '') {
+                showNotification('Please set treatment date', 'error');
+                dateEl.style.borderColor = '#ef4444';
+                dateEl.focus();
+                setTimeout(() => dateEl.style.borderColor = '', 3000);
+                return;
+            }
+
+            if (!time || time === '') {
+                showNotification('Please set treatment time', 'error');
+                timeEl.style.borderColor = '#ef4444';
+                timeEl.focus();
+                setTimeout(() => timeEl.style.borderColor = '', 3000);
                 return;
             }
             
-            // Store treatment data temporarily (will be saved with patient)
+            const treatmentDateTime = new Date(`${date}T${time}`);
+            
             const treatmentData = {
-                type: treatmentType,
-                duration: duration,
-                notes: notes,
-                date: new Date().toISOString()
+                patient_id: currentPatientId,
+                physiotherapist_id: physioId,
+                treatment_type: treatmentType,
+                description: notes,
+                duration: parseInt(duration),
+                treatment_date: treatmentDateTime.toISOString(),
+                created_at: new Date().toISOString()
             };
             
-            // Add to a temporary storage for this session
-            if (!window.tempTreatments) {
-                window.tempTreatments = [];
+            try {
+                showLoading();
+                
+                if (supabase && currentPatientId && currentPatientId !== 'sample-id') {
+                    // Save to database
+                    const { data, error } = await supabase
+                        .from('treatments')
+                        .insert([treatmentData])
+                        .select();
+                    
+                    if (error) throw error;
+                    
+                    showNotification('Treatment added successfully to database!', 'success');
+                    
+                } else {
+                    // Store temporarily for new patients or demo mode
+                    if (!window.tempTreatments) {
+                        window.tempTreatments = [];
+                    }
+                    
+                    // Get physiotherapist name from dropdown
+                    const physioSelect = document.getElementById('quickTreatmentPhysio');
+                    const selectedOption = physioSelect.options[physioSelect.selectedIndex];
+                    const physioName = selectedOption?.text || '';
+                    
+                    // Parse the name (format: "Dr. FirstName LastName" or just "FirstName LastName")
+                    let firstName = 'Sarah';  // Default fallback
+                    let lastName = 'Johnson';   // Default fallback
+                    
+                    if (physioName && physioName !== 'Select Physiotherapist' && physioName.trim() !== '') {
+                        const cleanName = physioName.replace(/^Dr\.\s*/, '').replace(/\s*\([^)]*\)$/, '').trim();
+                        const nameParts = cleanName.split(/\s+/);
+                        if (nameParts.length >= 2) {
+                            firstName = nameParts[0];
+                            lastName = nameParts[1];
+                        } else if (nameParts.length === 1) {
+                            firstName = nameParts[0];
+                            lastName = '';
+                        }
+                    }
+                    
+                    // Create proper treatment object matching the database structure
+                    const newTreatment = {
+                        id: 'temp-' + Date.now(),
+                        treatment_type: treatmentType,
+                        description: notes,
+                        notes: `Duration: ${duration} minutes. Added via quick form.`,
+                        duration: parseInt(duration),
+                        created_at: treatmentDateTime.toISOString(),
+                        treatment_date: treatmentDateTime.toISOString(),
+                        patient_id: currentPatientId,
+                        physiotherapist_id: physioId,
+                        physiotherapists: {
+                            id: physioId,
+                            first_name: firstName,
+                            last_name: lastName,
+                            specializations: ['General'],
+                            license_number: 'TEMP-LICENSE'
+                        }
+                    };
+                    
+                    window.tempTreatments.unshift(newTreatment); // Add to beginning
+                    showNotification('Treatment added successfully!', 'success');
+                }
+                
+                // Reset and hide the form first
+                document.getElementById('cancelQuickTreatment').click();
+                
+                // Force refresh the treatment history display immediately
+                const treatmentSection = document.getElementById('treatmentHistorySection');
+                const assignedPhysioSection = document.getElementById('assignedPhysioSection');
+                const viewButton = document.getElementById('viewTreatmentsBtn');
+                
+                treatmentSection.classList.remove('hidden');
+                assignedPhysioSection.classList.remove('hidden');
+                viewButton.innerHTML = '<i class="fas fa-eye-slash mr-1"></i>Hide Treatments';
+                
+                // Refresh displays
+                await loadModalTreatmentHistory();
+                await loadAssignedPhysiotherapist();
+                
+                // Also refresh the main patient details view if we're in that view
+                if (!document.getElementById('patientDetailsView').classList.contains('hidden')) {
+                    await loadPatientDetails(currentPatientId);
+                }
+                
+            } catch (error) {
+                console.error('Error saving treatment:', error);
+                showNotification('Error saving treatment: ' + error.message, 'error');
+            } finally {
+                hideLoading();
             }
-            window.tempTreatments.push(treatmentData);
-            
-            showNotification('Treatment added! It will be saved with the patient.', 'success');
-            
-            // Hide the form
-            document.getElementById('cancelQuickTreatment').click();
         });
 
         // Enhanced patient form submission to include media and treatments
@@ -4319,100 +4454,117 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
         async function loadModalTreatmentHistory() {
             const container = document.getElementById('modalTreatmentHistory');
-            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-gray-400"></i> Loading treatments...</div>';
-
-            // Handle demo mode with temporary treatments
-            if (!supabase || !currentPatientId || currentPatientId === 'sample-id') {
-                console.log('Loading demo mode treatments. tempTreatments:', window.tempTreatments);
-                
-                // Start with sample treatments
-                let allTreatments = [
-                    {
-                        id: 'sample-1',
-                        treatment_type: 'Manual Therapy',
-                        description: 'Spinal manipulation applied. Good progress noted.',
-                        created_at: '2024-11-15T10:00:00Z',
-                        physiotherapists: { first_name: 'Sarah', last_name: 'Johnson' }
-                    },
-                    {
-                        id: 'sample-2', 
-                        treatment_type: 'Exercise Therapy',
-                        description: 'Core strengthening exercises completed successfully.',
-                        created_at: '2024-11-10T14:30:00Z',
-                        physiotherapists: { first_name: 'Sarah', last_name: 'Johnson' }
-                    }
-                ];
-                
-                // Add any temporary treatments (most recent first)
-                if (window.tempTreatments && window.tempTreatments.length > 0) {
-                    console.log('Adding temp treatments to display:', window.tempTreatments);
-                    allTreatments = [...window.tempTreatments, ...allTreatments];
-                }
-                
-                // Display all treatments
-                container.innerHTML = '';
-                allTreatments.forEach((treatment, index) => {
-                    // Better physiotherapist name handling
-                    let therapistName = 'Unknown Therapist';
-                    if (treatment.physiotherapists) {
-                        const first = treatment.physiotherapists.first_name || '';
-                        const last = treatment.physiotherapists.last_name || '';
-                        if (first || last) {
-                            therapistName = `Dr. ${first} ${last}`.trim();
-                        }
-                    }
-                    
-                    // Better date formatting to prevent "Invalid Date"
-                    let displayDate = 'Recent';
-                    try {
-                        const dateToUse = treatment.treatment_date || treatment.created_at;
-                        if (dateToUse) {
-                            const parsedDate = new Date(dateToUse);
-                            if (!isNaN(parsedDate.getTime())) {
-                                displayDate = parsedDate.toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                });
-                            }
-                        }
-                    } catch (e) {
-                        console.log('Date parsing error:', e);
-                        displayDate = 'Recent';
-                    }
-
-                    const treatmentCard = document.createElement('div');
-                    treatmentCard.className = 'bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg p-3 mb-3';
-                    treatmentCard.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center flex-1">
-                                <div class="w-8 h-8 bg-green-100 dark:bg-green-800 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-notes-medical text-green-600 dark:text-green-300 text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <h5 class="font-semibold text-sm">${treatment.treatment_type || 'Treatment Session'}</h5>
-                                    <p class="text-xs text-gray-600 dark:text-gray-300">${therapistName} • ${displayDate}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2 ml-2">
-                                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">Completed</span>
-                                <button onclick="generateSingleTreatmentDoc('${treatment.id}')" class="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors" title="Generate Word Document">
-                                    <i class="fas fa-file-word"></i>
-                                    <span>Doc</span>
-                                </button>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-700 dark:text-gray-200 mt-2">${(treatment.description || 'No description provided').substring(0, 200)}${treatment.description && treatment.description.length > 200 ? '...' : ''}</p>
-                        ${treatment.notes && treatment.notes.length < 100 ? `<p class="text-xs text-gray-600 dark:text-gray-300 mt-1"><strong>Notes:</strong> ${treatment.notes}</p>` : ''}
-                    `;
-                    container.appendChild(treatmentCard);
-                });
-                
-                console.log('Demo treatments displayed:', allTreatments.length);
+            if (!container) {
+                console.error('modalTreatmentHistory container not found');
                 return;
             }
+            
+            container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-gray-400"></i> Loading treatments...</div>';
 
             try {
+                // Handle demo mode with temporary treatments
+                if (!supabase || !currentPatientId || currentPatientId === 'sample-id') {
+                    console.log('Loading demo mode treatments. tempTreatments:', window.tempTreatments);
+                    
+                    // Start with sample treatments
+                    let allTreatments = [
+                        {
+                            id: 'sample-1',
+                            treatment_type: 'Manual Therapy',
+                            description: 'Spinal manipulation applied. Good progress noted.',
+                            created_at: '2024-11-15T10:00:00Z',
+                            physiotherapists: { first_name: 'Sarah', last_name: 'Johnson' }
+                        },
+                        {
+                            id: 'sample-2', 
+                            treatment_type: 'Exercise Therapy',
+                            description: 'Core strengthening exercises completed successfully.',
+                            created_at: '2024-11-10T14:30:00Z',
+                            physiotherapists: { first_name: 'Sarah', last_name: 'Johnson' }
+                        }
+                    ];
+                    
+                    // Add any temporary treatments (most recent first)
+                    if (window.tempTreatments && window.tempTreatments.length > 0) {
+                        console.log('Adding temp treatments to display:', window.tempTreatments);
+                        allTreatments = [...window.tempTreatments, ...allTreatments];
+                    }
+                    
+                    // Display all treatments
+                    container.innerHTML = '';
+                    
+                    if (allTreatments.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-6 text-gray-500 dark:text-gray-400">
+                                <i class="fas fa-notes-medical text-2xl mb-2"></i>
+                                <p class="text-sm">No treatments recorded yet</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    allTreatments.forEach((treatment, index) => {
+                        // Better physiotherapist name handling
+                        let therapistName = 'Dr. Sarah Johnson'; // Default for demo
+                        if (treatment.physiotherapists) {
+                            const first = treatment.physiotherapists.first_name || '';
+                            const last = treatment.physiotherapists.last_name || '';
+                            if (first || last) {
+                                therapistName = `Dr. ${first} ${last}`.trim();
+                            }
+                        }
+                        
+                        // Better date formatting to prevent "Invalid Date"
+                        let displayDate = 'Recent';
+                        try {
+                            const dateToUse = treatment.treatment_date || treatment.created_at;
+                            if (dateToUse) {
+                                const parsedDate = new Date(dateToUse);
+                                if (!isNaN(parsedDate.getTime())) {
+                                    displayDate = parsedDate.toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Date parsing error:', e);
+                            displayDate = 'Recent';
+                        }
+
+                        const treatmentCard = document.createElement('div');
+                        treatmentCard.className = 'bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 rounded-lg p-3 mb-3';
+                        treatmentCard.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center flex-1">
+                                    <div class="w-8 h-8 bg-green-100 dark:bg-green-800 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-notes-medical text-green-600 dark:text-green-300 text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h5 class="font-semibold text-sm">${treatment.treatment_type || 'Treatment Session'}</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-300">${therapistName} • ${displayDate}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2 ml-2">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">Completed</span>
+                                    <button onclick="generateSingleTreatmentDoc('${treatment.id}')" class="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors" title="Generate Word Document">
+                                        <i class="fas fa-file-word"></i>
+                                        <span>Doc</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-700 dark:text-gray-200 mt-2">${(treatment.description || 'No description provided').substring(0, 200)}${treatment.description && treatment.description.length > 200 ? '...' : ''}</p>
+                            ${treatment.notes && treatment.notes.length < 100 ? `<p class="text-xs text-gray-600 dark:text-gray-300 mt-1"><strong>Notes:</strong> ${treatment.notes}</p>` : ''}
+                        `;
+                        container.appendChild(treatmentCard);
+                    });
+                    
+                    console.log('Demo treatments displayed:', allTreatments.length);
+                    return;
+                }
+
+                // Database mode
                 const { data: treatments, error } = await supabase
                     .from('treatments')
                     .select(`
@@ -4480,9 +4632,10 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             } catch (error) {
                 console.error('Error loading treatments:', error);
                 container.innerHTML = `
-                    <div class="text-center py-4 text-red-500">
-                        <i class="fas fa-exclamation-triangle text-lg mb-2"></i>
-                        <p class="text-sm">Error loading treatments</p>
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-info-circle text-lg mb-2"></i>
+                        <p class="text-sm">No treatments found</p>
+                        <p class="text-xs mt-1">Add your first treatment using the form above</p>
                     </div>
                 `;
             }
