@@ -1340,15 +1340,38 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             }, 3000);
         }
 
-        // Session persistence functions (using URL fragment)
+        // Session persistence functions (improved for cross-tab compatibility)
         function saveConnectionDetails(url, key) {
             connectionDetails = { url, key };
-            // Store in URL fragment for session persistence
+            // Try multiple storage methods for better persistence
+            try {
+                // Try sessionStorage first
+                if (typeof(Storage) !== "undefined" && sessionStorage) {
+                    sessionStorage.setItem('supabase_connection', JSON.stringify({ url, key }));
+                }
+            } catch (e) {
+                console.log('SessionStorage not available');
+            }
+            
+            // Fallback to URL fragment
             const encoded = btoa(JSON.stringify({ url, key }));
             window.location.hash = encoded;
         }
 
         function loadConnectionDetails() {
+            try {
+                // Try sessionStorage first
+                if (typeof(Storage) !== "undefined" && sessionStorage) {
+                    const stored = sessionStorage.getItem('supabase_connection');
+                    if (stored) {
+                        return JSON.parse(stored);
+                    }
+                }
+            } catch (e) {
+                console.log('SessionStorage not available, trying URL hash');
+            }
+            
+            // Fallback to URL fragment
             try {
                 if (window.location.hash) {
                     const encoded = window.location.hash.substring(1);
@@ -1356,13 +1379,24 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     return decoded;
                 }
             } catch (error) {
-                console.log('No valid connection details found in URL');
+                console.log('No valid connection details found');
             }
             return null;
         }
 
         function clearConnectionDetails() {
             connectionDetails = null;
+            
+            // Clear sessionStorage
+            try {
+                if (typeof(Storage) !== "undefined" && sessionStorage) {
+                    sessionStorage.removeItem('supabase_connection');
+                }
+            } catch (e) {
+                console.log('SessionStorage not available');
+            }
+            
+            // Clear URL hash
             window.location.hash = '';
         }
 
@@ -2996,8 +3030,14 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
             }, 5000);
         }
 
-        // Override the auto-reconnect to only work when logged in
+        // Enhanced persistence notification system
         window.addEventListener('load', async () => {
+            // Check for existing connections when page loads (for new tabs)
+            const savedConnection = loadConnectionDetails();
+            if (savedConnection && !isLoggedIn) {
+                showNotification('💾 Connection details found! Login to auto-connect to Supabase.', 'success');
+            }
+            
             if (isLoggedIn) {
                 const reconnected = await reconnectSupabase();
                 
@@ -3006,7 +3046,7 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                         showNotification('Please connect to Supabase to start using the system', 'error');
                     }, 1000);
                 } else {
-                    showNotification('Welcome back! Auto-reconnected to Supabase.', 'success');
+                    showNotification('🔄 Auto-reconnected to Supabase across tabs!', 'success');
                 }
             }
         });
