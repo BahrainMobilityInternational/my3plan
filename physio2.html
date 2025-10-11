@@ -4745,7 +4745,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             }
         }
 
-        // Enhanced save treatment function
+        // Enhanced save treatment function with better error handling
         document.getElementById('saveQuickTreatment').addEventListener('click', async () => {
             // Get form elements with null checks
             const treatmentTypeEl = document.getElementById('quickTreatmentType');
@@ -4843,6 +4843,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     let saveSuccessful = false;
                     let finalData = null;
                     
+                    // Progressive fallback strategy to work with any database schema
                     try {
                         // First attempt: Try with all fields
                         const { data, error } = await supabase
@@ -4854,100 +4855,86 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                         
                         finalData = data;
                         saveSuccessful = true;
-                        console.log('Treatment saved successfully:', data);
+                        console.log('Treatment saved successfully with all fields:', data);
+                        showNotification('✅ Treatment saved successfully!', 'success');
                         
                     } catch (error) {
-                        console.error('First attempt failed:', error);
+                        console.error('Full save failed, trying fallback options:', error);
                         
-                        // Second attempt: Try without physiotherapist_id if it's missing
-                        if (error.message.includes('physiotherapist_id')) {
-                            console.log('physiotherapist_id column not found, retrying without it...');
-                            const treatmentDataWithoutPhysio = { ...treatmentData };
-                            delete treatmentDataWithoutPhysio.physiotherapist_id;
+                        // Determine which columns are missing and create appropriate fallback data
+                        let fallbackData = { ...treatmentData };
+                        let missingColumns = [];
+                        
+                        // Check for specific column errors
+                        if (error.message.includes('physiotherapist_id') || error.message.includes('column "physiotherapist_id" does not exist')) {
+                            delete fallbackData.physiotherapist_id;
+                            missingColumns.push('physiotherapist_id');
+                        }
+                        if (error.message.includes('duration') || error.message.includes('column "duration" does not exist')) {
+                            delete fallbackData.duration;
+                            missingColumns.push('duration');
+                        }
+                        if (error.message.includes('treatment_date') || error.message.includes('column "treatment_date" does not exist')) {
+                            delete fallbackData.treatment_date;
+                            missingColumns.push('treatment_date');
+                        }
+                        
+                        // If we couldn't identify specific missing columns, try minimal data
+                        if (missingColumns.length === 0) {
+                            console.log('Unknown error, trying with minimal fields...');
+                            fallbackData = {
+                                patient_id: currentPatientId,
+                                treatment_type: treatmentType,
+                                description: notes
+                            };
+                            missingColumns = ['unknown columns'];
+                        }
+                        
+                        try {
+                            const { data: fallbackResult, error: fallbackError } = await supabase
+                                .from('treatments')
+                                .insert([fallbackData])
+                                .select();
+                                
+                            if (fallbackError) throw fallbackError;
                             
+                            finalData = fallbackResult;
+                            saveSuccessful = true;
+                            console.log('Treatment saved with fallback data:', fallbackResult);
+                            
+                            if (missingColumns.length > 0) {
+                                showNotification(`⚠️ Treatment saved! Missing columns: ${missingColumns.join(', ')}. Please update your database schema.`, 'success');
+                            } else {
+                                showNotification('✅ Treatment saved successfully!', 'success');
+                            }
+                            
+                        } catch (fallbackError) {
+                            console.error('Even fallback save failed:', fallbackError);
+                            
+                            // Last attempt: super minimal data
                             try {
-                                const { data: retryData, error: retryError } = await supabase
+                                const superMinimalData = {
+                                    patient_id: currentPatientId,
+                                    treatment_type: treatmentType || 'Treatment',
+                                    notes: notes
+                                };
+                                
+                                const { data: minimalResult, error: minimalError } = await supabase
                                     .from('treatments')
-                                    .insert([treatmentDataWithoutPhysio])
+                                    .insert([superMinimalData])
                                     .select();
                                     
-                                if (retryError) throw retryError;
+                                if (minimalError) throw minimalError;
                                 
-                                finalData = retryData;
+                                finalData = minimalResult;
                                 saveSuccessful = true;
-                                console.log('Treatment saved successfully without physiotherapist_id field');
-                                showNotification('⚠️ Treatment saved! Note: Please update your database schema to include physiotherapist_id column.', 'success');
+                                console.log('Treatment saved with super minimal data');
+                                showNotification('⚠️ Treatment saved with basic info only! Database schema needs updating. Please check the SQL commands in Supabase connection modal.', 'success');
                                 
-                            } catch (retryError) {
-                                console.error('Retry without physiotherapist_id failed:', retryError);
-                                
-                                // Third attempt: Try with minimal fields only
-                                if (retryError.message.includes('duration') || retryError.message.includes('treatment_date')) {
-                                    console.log('Trying with minimal fields only...');
-                                    const minimalData = {
-                                        patient_id: currentPatientId,
-                                        treatment_type: treatmentType,
-                                        description: notes
-                                    };
-                                    
-                                    try {
-                                        const { data: minimalResult, error: minimalError } = await supabase
-                                            .from('treatments')
-                                            .insert([minimalData])
-                                            .select();
-                                            
-                                        if (minimalError) throw minimalError;
-                                        
-                                        finalData = minimalResult;
-                                        saveSuccessful = true;
-                                        console.log('Treatment saved with minimal fields');
-                                        showNotification('⚠️ Treatment saved with basic info! Please run the database update commands from the Supabase connection modal.', 'success');
-                                        
-                                    } catch (minimalError) {
-                                        console.error('Even minimal save failed:', minimalError);
-                                        throw new Error(`Database schema needs updating. Please run the SQL commands shown in the Supabase connection modal. Error: ${minimalError.message}`);
-                                    }
-                                } else {
-                                    throw retryError;
-                                }
+                            } catch (minimalError) {
+                                console.error('All save attempts failed:', minimalError);
+                                throw new Error(`Unable to save treatment. Database schema needs updating. Please run the SQL commands shown in the Supabase connection modal. Error: ${minimalError.message}`);
                             }
-                        } 
-                        // Handle other missing columns
-                        else if (error.message.includes('duration')) {
-                            console.log('Duration column not found, retrying without duration field...');
-                            const treatmentDataWithoutDuration = { ...treatmentData };
-                            delete treatmentDataWithoutDuration.duration;
-                            
-                            const { data: retryData, error: retryError } = await supabase
-                                .from('treatments')
-                                .insert([treatmentDataWithoutDuration])
-                                .select();
-                                
-                            if (retryError) throw retryError;
-                            
-                            finalData = retryData;
-                            saveSuccessful = true;
-                            console.log('Treatment saved successfully without duration field');
-                            showNotification('⚠️ Treatment saved! Note: Please update your database schema to include duration column.', 'success');
-                        }
-                        else if (error.message.includes('treatment_date')) {
-                            console.log('treatment_date column not found, retrying without it...');
-                            const treatmentDataWithoutDate = { ...treatmentData };
-                            delete treatmentDataWithoutDate.treatment_date;
-                            
-                            const { data: retryData, error: retryError } = await supabase
-                                .from('treatments')
-                                .insert([treatmentDataWithoutDate])
-                                .select();
-                                
-                            if (retryError) throw retryError;
-                            
-                            finalData = retryData;
-                            saveSuccessful = true;
-                            console.log('Treatment saved successfully without treatment_date field');
-                            showNotification('⚠️ Treatment saved! Note: Please update your database schema to include treatment_date column.', 'success');
-                        } else {
-                            throw error;
                         }
                     }
                     
