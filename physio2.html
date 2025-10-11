@@ -404,6 +404,7 @@ CREATE TABLE exercises (
         let supabase = null;
         let currentView = 'dashboard';
         let currentPatientId = null;
+        let connectionDetails = null;
 
         // Utility functions
         function showLoading() {
@@ -425,6 +426,62 @@ CREATE TABLE exercises (
             setTimeout(() => {
                 notification.remove();
             }, 3000);
+        }
+
+        // Session persistence functions (using URL fragment)
+        function saveConnectionDetails(url, key) {
+            connectionDetails = { url, key };
+            // Store in URL fragment for session persistence
+            const encoded = btoa(JSON.stringify({ url, key }));
+            window.location.hash = encoded;
+        }
+
+        function loadConnectionDetails() {
+            try {
+                if (window.location.hash) {
+                    const encoded = window.location.hash.substring(1);
+                    const decoded = JSON.parse(atob(encoded));
+                    return decoded;
+                }
+            } catch (error) {
+                console.log('No valid connection details found in URL');
+            }
+            return null;
+        }
+
+        function clearConnectionDetails() {
+            connectionDetails = null;
+            window.location.hash = '';
+        }
+
+        async function reconnectSupabase() {
+            const details = loadConnectionDetails();
+            if (details && details.url && details.key) {
+                try {
+                    showLoading();
+                    supabase = window.supabase.createClient(details.url, details.key);
+                    
+                    // Test connection
+                    await supabase.from('patients').select('count').limit(1);
+                    
+                    document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
+                    connectionDetails = details;
+                    
+                    // Load initial data
+                    await loadDashboardData();
+                    await loadPatients();
+                    
+                    return true;
+                } catch (error) {
+                    console.log('Auto-reconnection failed:', error);
+                    // Clear invalid connection details
+                    clearConnectionDetails();
+                }
+                finally {
+                    hideLoading();
+                }
+            }
+            return false;
         }
 
         // Supabase connection
@@ -475,9 +532,12 @@ CREATE TABLE exercises (
                     }
                 }
 
+                // Save connection details for session persistence
+                saveConnectionDetails(url, key);
+                
                 document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
                 document.getElementById('supabaseModal').classList.add('hidden');
-                showNotification('Successfully connected to Supabase!');
+                showNotification('Successfully connected to Supabase! Connection will persist during this session.');
                 
                 // Try to load initial data
                 await loadDashboardData();
@@ -914,12 +974,26 @@ CREATE TABLE exercises (
             }
         });
 
-        // Show connection prompt
-        setTimeout(() => {
-            if (!supabase) {
-                showNotification('Please connect to Supabase to start using the system', 'error');
+        // Auto-reconnect on page load
+        window.addEventListener('load', async () => {
+            const reconnected = await reconnectSupabase();
+            
+            if (!reconnected) {
+                setTimeout(() => {
+                    showNotification('Please connect to Supabase to start using the system', 'error');
+                }, 1000);
+            } else {
+                showNotification('Welcome back! Auto-reconnected to Supabase.', 'success');
             }
-        }, 1000);
+        });
+
+        // Also try to reconnect immediately
+        (async () => {
+            const reconnected = await reconnectSupabase();
+            if (reconnected) {
+                showNotification('Welcome back! Auto-reconnected to Supabase.', 'success');
+            }
+        })();
     </script>
 </body>
 </html>
