@@ -1153,6 +1153,28 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <div class="relative">
+                            <input type="password" id="physioPassword" required class="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                            <button type="button" id="togglePhysioFormPassword" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Confirm Password</label>
+                        <div class="relative">
+                            <input type="password" id="physioConfirmPassword" required class="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                            <button type="button" id="togglePhysioConfirmPassword" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Must match password</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                         <label class="block text-sm font-medium mb-2">License Number</label>
                         <input type="text" id="licenseNumber" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
                     </div>
@@ -2677,6 +2699,27 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                 return;
             }
 
+            // Validate passwords for new physiotherapists
+            if (!currentPhysiotherapistId) {
+                const password = document.getElementById('physioPassword').value;
+                const confirmPassword = document.getElementById('physioConfirmPassword').value;
+                
+                if (!password || !confirmPassword) {
+                    showNotification('Password and confirm password are required', 'error');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    showNotification('Password must be at least 6 characters long', 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showNotification('Passwords do not match', 'error');
+                    return;
+                }
+            }
+
             // Get selected specializations
             const specializations = Array.from(document.querySelectorAll('.specialization:checked'))
                 .map(cb => cb.value);
@@ -2699,6 +2742,7 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                 showLoading();
                 
                 if (currentPhysiotherapistId) {
+                    // Update existing physiotherapist
                     const { error } = await supabase
                         .from('physiotherapists')
                         .update(formData)
@@ -2707,12 +2751,50 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                     if (error) throw error;
                     showNotification('Physiotherapist updated successfully!');
                 } else {
-                    const { error } = await supabase
+                    // Create new physiotherapist
+                    const password = document.getElementById('physioPassword').value;
+                    
+                    // First create the auth user
+                    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+                        email: formData.email,
+                        password: password,
+                        email_confirm: true
+                    });
+                    
+                    if (authError) {
+                        // If admin.createUser fails, try signUp (for non-admin connections)
+                        if (authError.message.includes('Admin API') || authError.message.includes('service_role')) {
+                            showNotification('Warning: Using client signup method. For production, use service_role key for admin.createUser()', 'error');
+                            
+                            const { data: signupData, error: signupError } = await supabase.auth.signUp({
+                                email: formData.email,
+                                password: password
+                            });
+                            
+                            if (signupError) throw signupError;
+                            
+                            // Add user_id to formData if available
+                            if (signupData?.user?.id) {
+                                formData.user_id = signupData.user.id;
+                            }
+                        } else {
+                            throw authError;
+                        }
+                    } else {
+                        // Add user_id to formData
+                        if (authData?.user?.id) {
+                            formData.user_id = authData.user.id;
+                        }
+                    }
+                    
+                    // Then insert into physiotherapists table
+                    const { error: insertError } = await supabase
                         .from('physiotherapists')
                         .insert([formData]);
                     
-                    if (error) throw error;
-                    showNotification('Physiotherapist added successfully!');
+                    if (insertError) throw insertError;
+                    
+                    showNotification('Physiotherapist added successfully! They can now log in with their credentials.');
                 }
 
                 document.getElementById('physiotherapistModal').classList.add('hidden');
@@ -2720,7 +2802,17 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
 
             } catch (error) {
                 console.error('Error saving physiotherapist:', error);
-                showNotification('Error saving physiotherapist: ' + error.message, 'error');
+                let errorMessage = 'Error saving physiotherapist: ';
+                
+                if (error.message.includes('User already registered')) {
+                    errorMessage = 'A user with this email already exists in the authentication system.';
+                } else if (error.message.includes('duplicate key value')) {
+                    errorMessage = 'Email or license number already exists.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
             } finally {
                 hideLoading();
             }
@@ -3331,6 +3423,37 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
 
         // Initialize authentication
         checkAuthStatus();
+
+        // Password toggle functionality for physiotherapist form
+        document.getElementById('togglePhysioFormPassword').addEventListener('click', () => {
+            const passwordInput = document.getElementById('physioPassword');
+            const toggleIcon = document.querySelector('#togglePhysioFormPassword i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+
+        document.getElementById('togglePhysioConfirmPassword').addEventListener('click', () => {
+            const passwordInput = document.getElementById('physioConfirmPassword');
+            const toggleIcon = document.querySelector('#togglePhysioConfirmPassword i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
 
         // Pre-fill admin credentials for demo (remove in production)
         document.addEventListener('DOMContentLoaded', () => {
