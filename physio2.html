@@ -1345,6 +1345,11 @@ CREATE TABLE IF NOT EXISTS treatments (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- 4a. Add missing columns if they don't exist (for existing databases)
+ALTER TABLE treatments ADD COLUMN IF NOT EXISTS physiotherapist_id UUID REFERENCES physiotherapists(id);
+ALTER TABLE treatments ADD COLUMN IF NOT EXISTS duration INTEGER DEFAULT 60;
+ALTER TABLE treatments ADD COLUMN IF NOT EXISTS treatment_date TIMESTAMP DEFAULT NOW();
+
 -- 5. Create exercises table
 CREATE TABLE IF NOT EXISTS exercises (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
