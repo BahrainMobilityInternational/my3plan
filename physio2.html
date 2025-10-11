@@ -1989,11 +1989,15 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
         async function loadPhysiotherapistsForFilter() {
             try {
-                const { data: physiotherapists } = await supabase
+                const { data: physiotherapists, error } = await supabase
                     .from('physiotherapists')
                     .select('id, first_name, last_name')
-                    .eq('is_active', true)
                     .order('first_name');
+
+                if (error) {
+                    console.log('Physiotherapists table not found, using empty filter');
+                    return;
+                }
 
                 const filterSelect = document.getElementById('appointmentFilterPhysio');
                 filterSelect.innerHTML = '<option value="">All Physiotherapists</option>';
@@ -2004,8 +2008,10 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     option.textContent = `${physio.first_name} ${physio.last_name}`;
                     filterSelect.appendChild(option);
                 });
+
+                console.log(`Loaded ${physiotherapists?.length || 0} physiotherapists for filter`);
             } catch (error) {
-                console.log('No physiotherapists found for filter');
+                console.log('Error loading physiotherapists for filter:', error);
             }
         }
 
@@ -2013,83 +2019,120 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             if (!supabase) return;
 
             try {
-                // Build query with filters - simplified to avoid relationship issues
+                console.log('Loading appointments...');
+                
+                // Build query - start with all appointments if no filters
                 let query = supabase
                     .from('appointments')
                     .select('*')
-                    .order('appointment_date', { ascending: true });
+                    .order('appointment_date', { ascending: false }); // Show most recent first
 
-                // Apply filters
+                // Apply filters only if they have values
                 const dateFilter = document.getElementById('appointmentFilterDate').value;
                 const statusFilter = document.getElementById('appointmentFilterStatus').value;
                 const physioFilter = document.getElementById('appointmentFilterPhysio').value;
+
+                console.log('Filters:', { dateFilter, statusFilter, physioFilter });
 
                 if (dateFilter) {
                     const startOfDay = dateFilter + 'T00:00:00';
                     const endOfDay = dateFilter + 'T23:59:59';
                     query = query.gte('appointment_date', startOfDay).lte('appointment_date', endOfDay);
+                    console.log('Applied date filter:', startOfDay, 'to', endOfDay);
                 }
 
                 if (statusFilter) {
                     query = query.eq('status', statusFilter);
+                    console.log('Applied status filter:', statusFilter);
                 }
 
                 if (physioFilter) {
                     query = query.eq('physiotherapist_id', physioFilter);
+                    console.log('Applied physio filter:', physioFilter);
                 }
 
                 const { data: appointments, error } = await query;
                 
                 if (error) throw error;
 
-                // Manually fetch related data
-                const appointmentsWithDetails = await Promise.all(
-                    (appointments || []).map(async (appointment) => {
-                        let patientData = null;
-                        let physioData = null;
+                console.log(`Found ${appointments?.length || 0} appointments`);
 
-                        // Fetch patient data
-                        if (appointment.patient_id) {
-                            try {
-                                const { data: patient } = await supabase
-                                    .from('patients')
-                                    .select('first_name, last_name, phone')
-                                    .eq('id', appointment.patient_id)
-                                    .single();
-                                patientData = patient;
-                            } catch (e) {
-                                console.log('Patient not found for appointment:', appointment.id);
-                            }
-                        }
+                // If no appointments found, show all appointments without filters
+                if (!appointments || appointments.length === 0) {
+                    console.log('No appointments found with filters, loading all appointments...');
+                    const { data: allAppointments, error: allError } = await supabase
+                        .from('appointments')
+                        .select('*')
+                        .order('appointment_date', { ascending: false });
+                    
+                    if (allError) throw allError;
+                    console.log(`Found ${allAppointments?.length || 0} total appointments`);
+                    
+                    if (allAppointments && allAppointments.length > 0) {
+                        await displayAppointmentsWithDetails(allAppointments);
+                        return;
+                    }
+                }
 
-                        // Fetch physiotherapist data
-                        if (appointment.physiotherapist_id) {
-                            try {
-                                const { data: physio } = await supabase
-                                    .from('physiotherapists')
-                                    .select('first_name, last_name')
-                                    .eq('id', appointment.physiotherapist_id)
-                                    .single();
-                                physioData = physio;
-                            } catch (e) {
-                                console.log('Physiotherapist not found for appointment:', appointment.id);
-                            }
-                        }
-
-                        return {
-                            ...appointment,
-                            patients: patientData,
-                            physiotherapists: physioData
-                        };
-                    })
-                );
-
-                displayAppointments(appointmentsWithDetails);
+                // Display filtered appointments
+                await displayAppointmentsWithDetails(appointments || []);
 
             } catch (error) {
                 console.error('Error loading appointments:', error);
                 showNotification('Error loading appointments: ' + error.message, 'error');
+                
+                // Show empty state on error
+                displayAppointments([]);
             }
+        }
+
+        async function displayAppointmentsWithDetails(appointments) {
+            console.log('Processing appointments with details...');
+            
+            // Manually fetch related data
+            const appointmentsWithDetails = await Promise.all(
+                appointments.map(async (appointment) => {
+                    let patientData = null;
+                    let physioData = null;
+
+                    // Fetch patient data
+                    if (appointment.patient_id) {
+                        try {
+                            const { data: patient } = await supabase
+                                .from('patients')
+                                .select('first_name, last_name, phone')
+                                .eq('id', appointment.patient_id)
+                                .single();
+                            patientData = patient;
+                        } catch (e) {
+                            console.log('Patient not found for appointment:', appointment.id);
+                        }
+                    }
+
+                    // Fetch physiotherapist data
+                    if (appointment.physiotherapist_id) {
+                        try {
+                            const { data: physio } = await supabase
+                                .from('physiotherapists')
+                                .select('first_name, last_name')
+                                .eq('id', appointment.physiotherapist_id)
+                                .single();
+                            physioData = physio;
+                        } catch (e) {
+                            console.log('Physiotherapist not found for appointment:', appointment.id);
+                        }
+                    }
+
+                    return {
+                        ...appointment,
+                        patients: patientData,
+                        physiotherapists: physioData
+                    };
+                })
+            );
+
+            console.log('Processed appointments:', appointmentsWithDetails.length);
+            displayAppointments(appointmentsWithDetails);
         }
 
         function displayAppointments(appointments) {
@@ -2449,10 +2492,15 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         document.getElementById('appointmentFilterPhysio').addEventListener('change', refreshAppointmentsList);
 
         document.getElementById('clearFilters').addEventListener('click', () => {
+            console.log('Clearing all filters...');
             document.getElementById('appointmentFilterDate').value = '';
             document.getElementById('appointmentFilterStatus').value = '';
             document.getElementById('appointmentFilterPhysio').value = '';
-            refreshAppointmentsList();
+            
+            // Force refresh to show all appointments
+            setTimeout(() => {
+                refreshAppointmentsList();
+            }, 100);
         });
 
         async function loadTreatments() {
