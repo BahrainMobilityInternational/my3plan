@@ -1016,9 +1016,12 @@
                     <h4 class="font-medium mb-2">Database Setup Required:</h4>
                     <p class="text-sm text-gray-600 dark:text-gray-300">After connecting, run these SQL commands in your Supabase SQL Editor:</p>
                     <button id="showSqlBtn" class="text-primary hover:text-secondary text-sm underline mt-1">Show SQL Commands</button>
-                    <div id="sqlCommands" class="hidden mt-3 bg-gray-800 text-green-400 p-3 rounded text-xs overflow-x-auto">
-                        <pre>-- Create patients table
-CREATE TABLE patients (
+                    <div id="sqlCommands" class="mt-3 bg-gray-800 text-green-400 p-3 rounded text-xs overflow-x-auto">
+                        <pre>-- IMPORTANT: Run these SQL commands in your Supabase SQL Editor
+-- Go to: Your Supabase Dashboard → SQL Editor → New Query
+
+-- 1. Create patients table
+CREATE TABLE IF NOT EXISTS patients (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -1030,41 +1033,8 @@ CREATE TABLE patients (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create appointments table  
-CREATE TABLE appointments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  patient_id UUID REFERENCES patients(id),
-  appointment_date TIMESTAMP,
-  duration INTEGER,
-  status TEXT DEFAULT 'scheduled',
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Create treatments table
-CREATE TABLE treatments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  patient_id UUID REFERENCES patients(id),
-  appointment_id UUID REFERENCES appointments(id),
-  treatment_type TEXT,
-  description TEXT,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Create exercises table
-CREATE TABLE exercises (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  description TEXT,
-  category TEXT,
-  difficulty_level TEXT,
-  instructions TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Create physiotherapists table
-CREATE TABLE physiotherapists (
+-- 2. Create physiotherapists table (REQUIRED for staff management)
+CREATE TABLE IF NOT EXISTS physiotherapists (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -1079,7 +1049,65 @@ CREATE TABLE physiotherapists (
   bio TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW()
-);</pre>
+);
+
+-- 3. Create appointments table  
+CREATE TABLE IF NOT EXISTS appointments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  physiotherapist_id UUID REFERENCES physiotherapists(id),
+  appointment_date TIMESTAMP,
+  duration INTEGER,
+  status TEXT DEFAULT 'scheduled',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 4. Create treatments table
+CREATE TABLE IF NOT EXISTS treatments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  appointment_id UUID REFERENCES appointments(id),
+  physiotherapist_id UUID REFERENCES physiotherapists(id),
+  treatment_type TEXT,
+  description TEXT,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 5. Create exercises table
+CREATE TABLE IF NOT EXISTS exercises (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  difficulty_level TEXT,
+  instructions TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 6. Enable Row Level Security (RLS) - Optional but recommended
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE physiotherapists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE treatments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+
+-- 7. Create policies for authenticated users (adjust as needed)
+CREATE POLICY "Enable all operations for authenticated users" ON patients
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON physiotherapists
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON appointments
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON treatments
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON exercises
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);</pre>
                     </div>
                 </div>
 
