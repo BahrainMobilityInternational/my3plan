@@ -2013,14 +2013,10 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             if (!supabase) return;
 
             try {
-                // Build query with filters
+                // Build query with filters - simplified to avoid relationship issues
                 let query = supabase
                     .from('appointments')
-                    .select(`
-                        *,
-                        patients:patient_id(first_name, last_name, phone),
-                        physiotherapists:physiotherapist_id(first_name, last_name)
-                    `)
+                    .select('*')
                     .order('appointment_date', { ascending: true });
 
                 // Apply filters
@@ -2046,7 +2042,49 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 
                 if (error) throw error;
 
-                displayAppointments(appointments || []);
+                // Manually fetch related data
+                const appointmentsWithDetails = await Promise.all(
+                    (appointments || []).map(async (appointment) => {
+                        let patientData = null;
+                        let physioData = null;
+
+                        // Fetch patient data
+                        if (appointment.patient_id) {
+                            try {
+                                const { data: patient } = await supabase
+                                    .from('patients')
+                                    .select('first_name, last_name, phone')
+                                    .eq('id', appointment.patient_id)
+                                    .single();
+                                patientData = patient;
+                            } catch (e) {
+                                console.log('Patient not found for appointment:', appointment.id);
+                            }
+                        }
+
+                        // Fetch physiotherapist data
+                        if (appointment.physiotherapist_id) {
+                            try {
+                                const { data: physio } = await supabase
+                                    .from('physiotherapists')
+                                    .select('first_name, last_name')
+                                    .eq('id', appointment.physiotherapist_id)
+                                    .single();
+                                physioData = physio;
+                            } catch (e) {
+                                console.log('Physiotherapist not found for appointment:', appointment.id);
+                            }
+                        }
+
+                        return {
+                            ...appointment,
+                            patients: patientData,
+                            physiotherapists: physioData
+                        };
+                    })
+                );
+
+                displayAppointments(appointmentsWithDetails);
 
             } catch (error) {
                 console.error('Error loading appointments:', error);
