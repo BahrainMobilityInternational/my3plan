@@ -608,6 +608,9 @@
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physiotherapists">
                     <i class="fas fa-user-md mr-3"></i>Physiotherapists
                 </button>
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="treatments">
+                    <i class="fas fa-notes-medical mr-3"></i>Treatments
+                </button>
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="exercises">
                     <i class="fas fa-dumbbell mr-3"></i>Exercises
                 </button>
@@ -1597,111 +1600,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     </div>
                 </div>
 
-                <!-- Treatment Management Section -->
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold">Treatment Management</h3>
-                        <div class="flex space-x-2">
-                            <button type="button" id="viewTreatmentsBtn" class="text-blue-600 hover:text-blue-800 text-sm">
-                                <i class="fas fa-eye mr-1"></i>View Treatments
-                            </button>
-                            <button type="button" id="toggleTreatmentSection" class="text-primary hover:text-secondary text-sm">
-                                <i class="fas fa-plus mr-1"></i>Add Treatment
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Treatment History Display -->
-                    <div id="treatmentHistorySection" class="hidden mb-6">
-                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-semibold text-gray-900 dark:text-white">Treatment History</h4>
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" id="generateFullHistoryDocBtn" class="flex items-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                                        <i class="fas fa-file-word"></i>
-                                        <span>Word Doc</span>
-                                    </button>
-                                    <button type="button" id="hideTreatmentsBtn" class="text-gray-500 hover:text-gray-700 text-sm">
-                                        <i class="fas fa-times mr-1"></i>Hide
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="modalTreatmentHistory" class="space-y-3 max-h-60 overflow-y-auto">
-                                <!-- Treatment history will be loaded here -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Assigned Physiotherapist Display -->
-                    <div id="assignedPhysioSection" class="hidden mb-4">
-                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center mr-3">
-                                    <i class="fas fa-user-md text-blue-600 dark:text-blue-300"></i>
-                                </div>
-                                <div>
-                                    <h5 class="font-semibold text-blue-900 dark:text-blue-100">Assigned Physiotherapist</h5>
-                                    <p id="assignedPhysioName" class="text-sm text-blue-700 dark:text-blue-200">Dr. Sarah Johnson</p>
-                                    <p id="assignedPhysioDetails" class="text-xs text-blue-600 dark:text-blue-300">Orthopedic Specialist • 5 years experience</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="quickTreatmentForm" class="hidden space-y-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Treatment Type</label>
-                                <select id="quickTreatmentType" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
-                                    <option value="">Select Treatment</option>
-                                    <option value="Manual Therapy">Manual Therapy</option>
-                                    <option value="Exercise Therapy">Exercise Therapy</option>
-                                    <option value="Electrotherapy">Electrotherapy</option>
-                                    <option value="Massage Therapy">Massage Therapy</option>
-                                    <option value="Heat/Cold Therapy">Heat/Cold Therapy</option>
-                                    <option value="Ultrasound">Ultrasound</option>
-                                    <option value="Assessment">Initial Assessment</option>
-                                    <option value="Follow-up">Follow-up Session</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Duration (minutes)</label>
-                                <select id="quickTreatmentDuration" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
-                                    <option value="30">30 minutes</option>
-                                    <option value="45">45 minutes</option>
-                                    <option value="60" selected>60 minutes</option>
-                                    <option value="90">90 minutes</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Assigned Physiotherapist</label>
-                            <select id="quickTreatmentPhysio" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
-                                <option value="">Select Physiotherapist</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Treatment Notes</label>
-                            <textarea id="quickTreatmentNotes" rows="3" placeholder="Brief description of the treatment session..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base"></textarea>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Treatment Date</label>
-                                <input type="date" id="quickTreatmentDate" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Treatment Time</label>
-                                <input type="time" id="quickTreatmentTime" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
-                            </div>
-                        </div>
-                        <div class="flex justify-end space-x-2">
-                            <button type="button" id="cancelQuickTreatment" class="px-3 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded">Cancel</button>
-                            <button type="button" id="saveQuickTreatment" class="px-3 py-2 bg-green-600 text-white hover:bg-green-700 rounded">
-                                <i class="fas fa-plus mr-1"></i>Add Treatment
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" id="cancelPatient" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
@@ -2079,6 +1978,9 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     break;
                 case 'physiotherapists':
                     loadPhysiotherapists();
+                    break;
+                case 'treatments':
+                    loadTreatments();
                     break;
                 case 'exercises':
                     loadExercises();
@@ -3515,6 +3417,242 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             });
         }
 
+        async function loadTreatments() {
+            if (!supabase) {
+                // Show sample data
+                document.getElementById('allTreatments').textContent = '15';
+                document.getElementById('treatmentsThisMonth').textContent = '8';
+                document.getElementById('mostCommonTreatment').textContent = 'Manual Therapy';
+                document.getElementById('avgTreatmentDuration').textContent = '60';
+                
+                const container = document.getElementById('treatmentsList');
+                container.innerHTML = `
+                    <div class="p-6">
+                        <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-notes-medical text-green-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">Manual Therapy - John Doe</h4>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm">Dr. Sarah Johnson • November 15, 2024 • 60 min</p>
+                                    <p class="text-gray-500 text-sm">Spinal manipulation and mobilization techniques applied...</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Completed</span>
+                                <button class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-dumbbell text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">Exercise Therapy - Jane Smith</h4>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm">Dr. Mark Wilson • November 12, 2024 • 45 min</p>
+                                    <p class="text-gray-500 text-sm">Prescribed strengthening exercises for core muscles...</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Completed</span>
+                                <button class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // Load treatment statistics
+                const { data: allTreatments } = await supabase
+                    .from('treatments')
+                    .select('*');
+                
+                document.getElementById('allTreatments').textContent = allTreatments?.length || 0;
+
+                // This month's treatments
+                const startOfMonth = new Date();
+                startOfMonth.setDate(1);
+                startOfMonth.setHours(0, 0, 0, 0);
+                
+                const { data: thisMonthTreatments } = await supabase
+                    .from('treatments')
+                    .select('*')
+                    .gte('created_at', startOfMonth.toISOString());
+                
+                document.getElementById('treatmentsThisMonth').textContent = thisMonthTreatments?.length || 0;
+
+                // Most common treatment type
+                if (allTreatments && allTreatments.length > 0) {
+                    const treatmentCounts = {};
+                    allTreatments.forEach(treatment => {
+                        const type = treatment.treatment_type || 'Unknown';
+                        treatmentCounts[type] = (treatmentCounts[type] || 0) + 1;
+                    });
+                    
+                    const mostCommon = Object.keys(treatmentCounts).reduce((a, b) => 
+                        treatmentCounts[a] > treatmentCounts[b] ? a : b
+                    );
+                    document.getElementById('mostCommonTreatment').textContent = mostCommon;
+                    
+                    // Average duration
+                    const totalDuration = allTreatments
+                        .filter(t => t.duration)
+                        .reduce((sum, t) => sum + (t.duration || 0), 0);
+                    const avgDuration = totalDuration / allTreatments.filter(t => t.duration).length || 60;
+                    document.getElementById('avgTreatmentDuration').textContent = Math.round(avgDuration);
+                }
+
+                // Load treatment list with patient and physiotherapist details
+                const { data: treatments, error } = await supabase
+                    .from('treatments')
+                    .select(`
+                        *,
+                        patients (first_name, last_name),
+                        physiotherapists (first_name, last_name)
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                const container = document.getElementById('treatmentsList');
+                container.innerHTML = '';
+
+                if (treatments?.length === 0) {
+                    container.innerHTML = `
+                        <div class="p-6 text-center text-gray-500">
+                            <i class="fas fa-notes-medical text-4xl mb-4"></i>
+                            <p>No treatments found. Add treatments through patient profiles or click "Add Treatment" above.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                treatments?.forEach(treatment => {
+                    const treatmentDate = new Date(treatment.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    const patientName = treatment.patients 
+                        ? `${treatment.patients.first_name} ${treatment.patients.last_name}`
+                        : 'Unknown Patient';
+                    
+                    const physioName = treatment.physiotherapists 
+                        ? `Dr. ${treatment.physiotherapists.first_name} ${treatment.physiotherapists.last_name}`
+                        : 'Unknown Therapist';
+
+                    const treatmentCard = document.createElement('div');
+                    treatmentCard.className = 'p-6 border-b border-gray-200 dark:border-gray-700';
+                    treatmentCard.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-notes-medical text-green-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">${treatment.treatment_type || 'Treatment'} - ${patientName}</h4>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm">${physioName} • ${treatmentDate} • ${treatment.duration || 60} min</p>
+                                    <p class="text-gray-500 text-sm">${(treatment.description || '').substring(0, 100)}${(treatment.description || '').length > 100 ? '...' : ''}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Completed</span>
+                                <button onclick="editTreatment('${treatment.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteTreatment('${treatment.id}')" class="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(treatmentCard);
+                });
+
+                // Load physiotherapists for filter dropdown
+                await loadPhysiotherapistsForFilter();
+
+            } catch (error) {
+                console.error('Error loading treatments:', error);
+                showNotification('Error loading treatments: ' + error.message, 'error');
+            }
+        }
+
+        async function loadPhysiotherapistsForFilter() {
+            const select = document.getElementById('treatmentFilterPhysio');
+            if (!supabase) return;
+
+            try {
+                const { data: physiotherapists } = await supabase
+                    .from('physiotherapists')
+                    .select('id, first_name, last_name')
+                    .eq('is_active', true);
+
+                select.innerHTML = '<option value="">All Physiotherapists</option>';
+                physiotherapists?.forEach(physio => {
+                    const option = document.createElement('option');
+                    option.value = physio.id;
+                    option.textContent = `Dr. ${physio.first_name} ${physio.last_name}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading physiotherapists for filter:', error);
+            }
+        }
+
+        async function deleteTreatment(id) {
+            if (!supabase) return;
+
+            // Custom confirmation dialog
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            confirmDialog.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to delete this treatment?</p>
+                    <div class="flex justify-end space-x-3">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancel</button>
+                        <button class="confirm-btn px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded">Delete</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmDialog);
+
+            confirmDialog.querySelector('.cancel-btn').addEventListener('click', () => {
+                confirmDialog.remove();
+            });
+
+            confirmDialog.querySelector('.confirm-btn').addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    const { error } = await supabase
+                        .from('treatments')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    
+                    showNotification('Treatment deleted successfully!');
+                    await loadTreatments();
+
+                } catch (error) {
+                    console.error('Error deleting treatment:', error);
+                    showNotification('Error deleting treatment: ' + error.message, 'error');
+                } finally {
+                    hideLoading();
+                    confirmDialog.remove();
+                }
+            });
+        }
+
         async function loadExercises() {
             // Implementation here  
         }
@@ -4133,205 +4271,9 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             reader.readAsDataURL(file);
         });
 
-        // Quick Treatment Section Toggle
-        document.getElementById('toggleTreatmentSection').addEventListener('click', () => {
-            const form = document.getElementById('quickTreatmentForm');
-            const button = document.getElementById('toggleTreatmentSection');
-            
-            if (form.classList.contains('hidden')) {
-                form.classList.remove('hidden');
-                button.innerHTML = '<i class="fas fa-minus mr-1"></i>Hide Treatment';
-            } else {
-                form.classList.add('hidden');
-                button.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Treatment';
-            }
-        });
+        // Note: Quick treatment section was moved to separate treatments view
 
-        document.getElementById('cancelQuickTreatment').addEventListener('click', () => {
-            const form = document.getElementById('quickTreatmentForm');
-            const button = document.getElementById('toggleTreatmentSection');
-            
-            form.classList.add('hidden');
-            button.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Treatment';
-            
-            // Clear form
-            document.getElementById('quickTreatmentType').value = '';
-            document.getElementById('quickTreatmentDuration').value = '60';
-            document.getElementById('quickTreatmentNotes').value = '';
-            document.getElementById('quickTreatmentPhysio').value = '';
-            document.getElementById('quickTreatmentDate').value = '';
-            document.getElementById('quickTreatmentTime').value = '';
-        });
-
-        document.getElementById('saveQuickTreatment').addEventListener('click', async () => {
-            // Get form elements with null checks
-            const treatmentTypeEl = document.getElementById('quickTreatmentType');
-            const durationEl = document.getElementById('quickTreatmentDuration');
-            const physioEl = document.getElementById('quickTreatmentPhysio');
-            const notesEl = document.getElementById('quickTreatmentNotes');
-            const dateEl = document.getElementById('quickTreatmentDate');
-            const timeEl = document.getElementById('quickTreatmentTime');
-            
-            // Check if elements exist
-            if (!treatmentTypeEl || !durationEl || !physioEl || !notesEl || !dateEl || !timeEl) {
-                showNotification('Form elements not found. Please refresh the page.', 'error');
-                return;
-            }
-            
-            // Get form values
-            const treatmentType = treatmentTypeEl.value?.trim() || '';
-            const duration = durationEl.value?.trim() || '60';
-            const physioId = physioEl.value?.trim() || '';
-            const notes = notesEl.value?.trim() || '';
-            const date = dateEl.value?.trim() || '';
-            const time = timeEl.value?.trim() || '';
-            
-            // Validation with proper styling and user feedback
-            if (!treatmentType || treatmentType === '') {
-                showNotification('Please select a treatment type', 'error');
-                treatmentTypeEl.style.borderColor = '#ef4444';
-                treatmentTypeEl.focus();
-                setTimeout(() => treatmentTypeEl.style.borderColor = '', 3000);
-                return;
-            }
-            
-            if (!physioId || physioId === '') {
-                showNotification('Please select a physiotherapist', 'error');
-                physioEl.style.borderColor = '#ef4444';
-                physioEl.focus();
-                setTimeout(() => physioEl.style.borderColor = '', 3000);
-                return;
-            }
-            
-            if (!notes || notes === '') {
-                showNotification('Please add treatment notes', 'error');
-                notesEl.style.borderColor = '#ef4444';
-                notesEl.focus();
-                setTimeout(() => notesEl.style.borderColor = '', 3000);
-                return;
-            }
-
-            if (!date || date === '') {
-                showNotification('Please set treatment date', 'error');
-                dateEl.style.borderColor = '#ef4444';
-                dateEl.focus();
-                setTimeout(() => dateEl.style.borderColor = '', 3000);
-                return;
-            }
-
-            if (!time || time === '') {
-                showNotification('Please set treatment time', 'error');
-                timeEl.style.borderColor = '#ef4444';
-                timeEl.focus();
-                setTimeout(() => timeEl.style.borderColor = '', 3000);
-                return;
-            }
-            
-            const treatmentDateTime = new Date(`${date}T${time}`);
-            
-            const treatmentData = {
-                patient_id: currentPatientId,
-                physiotherapist_id: physioId,
-                treatment_type: treatmentType,
-                description: notes,
-                duration: parseInt(duration),
-                treatment_date: treatmentDateTime.toISOString(),
-                created_at: new Date().toISOString()
-            };
-            
-            try {
-                showLoading();
-                
-                if (supabase && currentPatientId && currentPatientId !== 'sample-id') {
-                    // Save to database
-                    const { data, error } = await supabase
-                        .from('treatments')
-                        .insert([treatmentData])
-                        .select();
-                    
-                    if (error) throw error;
-                    
-                    showNotification('Treatment added successfully to database!', 'success');
-                    
-                } else {
-                    // Store temporarily for new patients or demo mode
-                    if (!window.tempTreatments) {
-                        window.tempTreatments = [];
-                    }
-                    
-                    // Get physiotherapist name from dropdown
-                    const physioSelect = document.getElementById('quickTreatmentPhysio');
-                    const selectedOption = physioSelect.options[physioSelect.selectedIndex];
-                    const physioName = selectedOption?.text || '';
-                    
-                    // Parse the name (format: "Dr. FirstName LastName" or just "FirstName LastName")
-                    let firstName = 'Sarah';  // Default fallback
-                    let lastName = 'Johnson';   // Default fallback
-                    
-                    if (physioName && physioName !== 'Select Physiotherapist' && physioName.trim() !== '') {
-                        const cleanName = physioName.replace(/^Dr\.\s*/, '').replace(/\s*\([^)]*\)$/, '').trim();
-                        const nameParts = cleanName.split(/\s+/);
-                        if (nameParts.length >= 2) {
-                            firstName = nameParts[0];
-                            lastName = nameParts[1];
-                        } else if (nameParts.length === 1) {
-                            firstName = nameParts[0];
-                            lastName = '';
-                        }
-                    }
-                    
-                    // Create proper treatment object matching the database structure
-                    const newTreatment = {
-                        id: 'temp-' + Date.now(),
-                        treatment_type: treatmentType,
-                        description: notes,
-                        notes: `Duration: ${duration} minutes. Added via quick form.`,
-                        duration: parseInt(duration),
-                        created_at: treatmentDateTime.toISOString(),
-                        treatment_date: treatmentDateTime.toISOString(),
-                        patient_id: currentPatientId,
-                        physiotherapist_id: physioId,
-                        physiotherapists: {
-                            id: physioId,
-                            first_name: firstName,
-                            last_name: lastName,
-                            specializations: ['General'],
-                            license_number: 'TEMP-LICENSE'
-                        }
-                    };
-                    
-                    window.tempTreatments.unshift(newTreatment); // Add to beginning
-                    showNotification('Treatment added successfully!', 'success');
-                }
-                
-                // Reset and hide the form first
-                document.getElementById('cancelQuickTreatment').click();
-                
-                // Force refresh the treatment history display immediately
-                const treatmentSection = document.getElementById('treatmentHistorySection');
-                const assignedPhysioSection = document.getElementById('assignedPhysioSection');
-                const viewButton = document.getElementById('viewTreatmentsBtn');
-                
-                treatmentSection.classList.remove('hidden');
-                assignedPhysioSection.classList.remove('hidden');
-                viewButton.innerHTML = '<i class="fas fa-eye-slash mr-1"></i>Hide Treatments';
-                
-                // Refresh displays
-                await loadModalTreatmentHistory();
-                await loadAssignedPhysiotherapist();
-                
-                // Also refresh the main patient details view if we're in that view
-                if (!document.getElementById('patientDetailsView').classList.contains('hidden')) {
-                    await loadPatientDetails(currentPatientId);
-                }
-                
-            } catch (error) {
-                console.error('Error saving treatment:', error);
-                showNotification('Error saving treatment: ' + error.message, 'error');
-            } finally {
-                hideLoading();
-            }
-        });
+        // Note: Treatment functionality has been moved to patient details view
 
         // Enhanced patient form submission to include media and treatments
         async function savePatientWithMedia(formData) {
@@ -4381,83 +4323,17 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             document.getElementById('patientVideoPreview').classList.add('hidden');
             document.getElementById('videoPlaceholder').classList.remove('hidden');
             
-            // Reset treatment section
-            document.getElementById('quickTreatmentForm').classList.add('hidden');
-            document.getElementById('toggleTreatmentSection').innerHTML = '<i class="fas fa-plus mr-1"></i>Add Treatment';
-            
             // Clear temp treatments
             window.tempTreatments = [];
             
             document.getElementById('patientModal').classList.add('hidden');
         });
 
-        // Enhanced Treatment Management Functions
-        document.getElementById('viewTreatmentsBtn').addEventListener('click', async () => {
-            const treatmentSection = document.getElementById('treatmentHistorySection');
-            const assignedPhysioSection = document.getElementById('assignedPhysioSection');
-            const button = document.getElementById('viewTreatmentsBtn');
-            const generateBtn = document.getElementById('generateFullHistoryDocBtn');
-            
-            if (treatmentSection.classList.contains('hidden')) {
-                // Show treatment history
-                treatmentSection.classList.remove('hidden');
-                assignedPhysioSection.classList.remove('hidden');
-                button.innerHTML = '<i class="fas fa-eye-slash mr-1"></i>Hide Treatments';
-                
-                // Show generate document button
-                if (generateBtn) {
-                    generateBtn.classList.remove('hidden');
-                }
-                
-                // Load treatment history
-                await loadModalTreatmentHistory();
-                await loadAssignedPhysiotherapist();
-            } else {
-                // Hide treatment history
-                treatmentSection.classList.add('hidden');
-                assignedPhysioSection.classList.add('hidden');
-                button.innerHTML = '<i class="fas fa-eye mr-1"></i>View Treatments';
-                
-                // Hide generate document button
-                if (generateBtn) {
-                    generateBtn.classList.add('hidden');
-                }
-            }
-        });
+        // Note: Treatment functionality moved to patient details view
 
-        // Generate Full Treatment History Word Document  
-        document.getElementById('generateFullHistoryDocBtn').addEventListener('click', async () => {
-            await generateTreatmentHistoryWordDocument();
-        });
+        // Note: Treatment document generation moved to patient details view
 
-        // Enhanced Treatment Section Toggle (now fully functional)
-        document.getElementById('toggleTreatmentSection').addEventListener('click', async () => {
-            const form = document.getElementById('quickTreatmentForm');
-            const button = document.getElementById('toggleTreatmentSection');
-            
-            if (form.classList.contains('hidden')) {
-                form.classList.remove('hidden');
-                button.innerHTML = '<i class="fas fa-minus mr-1"></i>Hide Treatment Form';
-                
-                // Load physiotherapists for the dropdown
-                await loadPhysiotherapistsForQuickForm();
-                
-                // Set default date and time
-                const now = new Date();
-                document.getElementById('quickTreatmentDate').value = now.toISOString().split('T')[0];
-                document.getElementById('quickTreatmentTime').value = now.toTimeString().slice(0, 5);
-                
-            } else {
-                form.classList.add('hidden');
-                button.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Treatment';
-            }
-        });
-
-        document.getElementById('hideTreatmentsBtn').addEventListener('click', () => {
-            document.getElementById('treatmentHistorySection').classList.add('hidden');
-            document.getElementById('assignedPhysioSection').classList.add('hidden');
-            document.getElementById('viewTreatmentsBtn').innerHTML = '<i class="fas fa-eye mr-1"></i>View Treatments';
-        });
+        // Note: Treatment section functionality moved to patient details view
 
         async function loadModalTreatmentHistory() {
             const container = document.getElementById('modalTreatmentHistory');
@@ -4639,28 +4515,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             }
         }
 
-        // Enhanced Quick Treatment Form with Physiotherapist Selection
-        document.getElementById('toggleTreatmentSection').addEventListener('click', async () => {
-            const form = document.getElementById('quickTreatmentForm');
-            const button = document.getElementById('toggleTreatmentSection');
-            
-            if (form.classList.contains('hidden')) {
-                form.classList.remove('hidden');
-                button.innerHTML = '<i class="fas fa-minus mr-1"></i>Hide Form';
-                
-                // Load physiotherapists for the dropdown
-                await loadPhysiotherapistsForQuickForm();
-                
-                // Set default date and time
-                const now = new Date();
-                document.getElementById('quickTreatmentDate').value = now.toISOString().split('T')[0];
-                document.getElementById('quickTreatmentTime').value = now.toTimeString().slice(0, 5);
-                
-            } else {
-                form.classList.add('hidden');
-                button.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Treatment';
-            }
-        });
+        // Note: Quick treatment form functionality moved to patient details view
 
         async function loadPhysiotherapistsForQuickForm() {
             const select = document.getElementById('quickTreatmentPhysio');
@@ -4695,296 +4550,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             }
         }
 
-        // Enhanced save treatment function with better error handling
-        document.getElementById('saveQuickTreatment').addEventListener('click', async () => {
-            // Get form elements with null checks
-            const treatmentTypeEl = document.getElementById('quickTreatmentType');
-            const durationEl = document.getElementById('quickTreatmentDuration');
-            const physioEl = document.getElementById('quickTreatmentPhysio');
-            const notesEl = document.getElementById('quickTreatmentNotes');
-            const dateEl = document.getElementById('quickTreatmentDate');
-            const timeEl = document.getElementById('quickTreatmentTime');
-            
-            // Check if elements exist
-            if (!treatmentTypeEl || !durationEl || !physioEl || !notesEl || !dateEl || !timeEl) {
-                showNotification('❌ Form elements not found. Please refresh the page.', 'error');
-                return;
-            }
-            
-            // Get form values with proper error handling
-            const treatmentType = treatmentTypeEl.value?.trim() || '';
-            const duration = durationEl.value?.trim() || '60';
-            const physioId = physioEl.value?.trim() || '';
-            const notes = notesEl.value?.trim() || '';
-            const date = dateEl.value?.trim() || '';
-            const time = timeEl.value?.trim() || '';
-            
-            console.log('Form values check:', {
-                treatmentType: `"${treatmentType}"`,
-                duration: `"${duration}"`,
-                physioId: `"${physioId}"`,
-                notes: `"${notes}"`,
-                date: `"${date}"`,
-                time: `"${time}"`
-            });
-            
-            console.log('Saving treatment - currentPatientId:', currentPatientId, 'supabase:', !!supabase);
-            
-            // Enhanced validation with better error messages and user feedback
-            if (!treatmentType || treatmentType === '') {
-                showNotification('❌ Please select a treatment type', 'error');
-                treatmentTypeEl.style.borderColor = '#ef4444';
-                treatmentTypeEl.focus();
-                setTimeout(() => treatmentTypeEl.style.borderColor = '', 3000);
-                return;
-            }
-            
-            if (!physioId || physioId === '') {
-                showNotification('❌ Please select a physiotherapist', 'error');
-                physioEl.style.borderColor = '#ef4444';
-                physioEl.focus();
-                setTimeout(() => physioEl.style.borderColor = '', 3000);
-                return;
-            }
-            
-            if (!notes || notes === '') {
-                showNotification('❌ Please add treatment notes', 'error');
-                notesEl.style.borderColor = '#ef4444';
-                notesEl.focus();
-                setTimeout(() => notesEl.style.borderColor = '', 3000);
-                return;
-            }
-
-            if (!date || date === '') {
-                showNotification('❌ Please set treatment date', 'error');
-                dateEl.style.borderColor = '#ef4444';
-                dateEl.focus();
-                setTimeout(() => dateEl.style.borderColor = '', 3000);
-                return;
-            }
-
-            if (!time || time === '') {
-                showNotification('❌ Please set treatment time', 'error');
-                timeEl.style.borderColor = '#ef4444';
-                timeEl.focus();
-                setTimeout(() => timeEl.style.borderColor = '', 3000);
-                return;
-            }
-            
-            const treatmentDateTime = new Date(`${date}T${time}`);
-            
-            const treatmentData = {
-                patient_id: currentPatientId,
-                physiotherapist_id: physioId,
-                treatment_type: treatmentType,
-                description: notes,
-                duration: parseInt(duration),
-                treatment_date: treatmentDateTime.toISOString(),
-                created_at: new Date().toISOString()
-            };
-            
-            try {
-                showLoading();
-                
-                if (supabase && currentPatientId && currentPatientId !== 'sample-id') {
-                    console.log('Saving to database with data:', treatmentData);
-                    
-                    // Save to database with intelligent error handling
-                    let saveSuccessful = false;
-                    let finalData = null;
-                    
-                    // Progressive fallback strategy to work with any database schema
-                    try {
-                        // First attempt: Try with all fields
-                        const { data, error } = await supabase
-                            .from('treatments')
-                            .insert([treatmentData])
-                            .select();
-                        
-                        if (error) throw error;
-                        
-                        finalData = data;
-                        saveSuccessful = true;
-                        console.log('Treatment saved successfully with all fields:', data);
-                        showNotification('✅ Treatment saved successfully!', 'success');
-                        
-                    } catch (error) {
-                        console.error('Full save failed, trying fallback options:', error);
-                        
-                        // Determine which columns are missing and create appropriate fallback data
-                        let fallbackData = { ...treatmentData };
-                        let missingColumns = [];
-                        
-                        // Check for specific column errors
-                        if (error.message.includes('physiotherapist_id') || error.message.includes('column "physiotherapist_id" does not exist')) {
-                            delete fallbackData.physiotherapist_id;
-                            missingColumns.push('physiotherapist_id');
-                        }
-                        if (error.message.includes('duration') || error.message.includes('column "duration" does not exist')) {
-                            delete fallbackData.duration;
-                            missingColumns.push('duration');
-                        }
-                        if (error.message.includes('treatment_date') || error.message.includes('column "treatment_date" does not exist')) {
-                            delete fallbackData.treatment_date;
-                            missingColumns.push('treatment_date');
-                        }
-                        
-                        // If we couldn't identify specific missing columns, try minimal data
-                        if (missingColumns.length === 0) {
-                            console.log('Unknown error, trying with minimal fields...');
-                            fallbackData = {
-                                patient_id: currentPatientId,
-                                treatment_type: treatmentType,
-                                description: notes
-                            };
-                            missingColumns = ['unknown columns'];
-                        }
-                        
-                        try {
-                            const { data: fallbackResult, error: fallbackError } = await supabase
-                                .from('treatments')
-                                .insert([fallbackData])
-                                .select();
-                                
-                            if (fallbackError) throw fallbackError;
-                            
-                            finalData = fallbackResult;
-                            saveSuccessful = true;
-                            console.log('Treatment saved with fallback data:', fallbackResult);
-                            
-                            if (missingColumns.length > 0) {
-                                showNotification(`⚠️ Treatment saved! Missing columns: ${missingColumns.join(', ')}. Please update your database schema.`, 'success');
-                            } else {
-                                showNotification('✅ Treatment saved successfully!', 'success');
-                            }
-                            
-                        } catch (fallbackError) {
-                            console.error('Even fallback save failed:', fallbackError);
-                            
-                            // Last attempt: super minimal data
-                            try {
-                                const superMinimalData = {
-                                    patient_id: currentPatientId,
-                                    treatment_type: treatmentType || 'Treatment',
-                                    notes: notes
-                                };
-                                
-                                const { data: minimalResult, error: minimalError } = await supabase
-                                    .from('treatments')
-                                    .insert([superMinimalData])
-                                    .select();
-                                    
-                                if (minimalError) throw minimalError;
-                                
-                                finalData = minimalResult;
-                                saveSuccessful = true;
-                                console.log('Treatment saved with super minimal data');
-                                showNotification('⚠️ Treatment saved with basic info only! Database schema needs updating. Please check the SQL commands in Supabase connection modal.', 'success');
-                                
-                            } catch (minimalError) {
-                                console.error('All save attempts failed:', minimalError);
-                                throw new Error(`Unable to save treatment. Database schema needs updating. Please run the SQL commands shown in the Supabase connection modal. Error: ${minimalError.message}`);
-                            }
-                        }
-                    }
-                    
-                    if (saveSuccessful && !finalData) {
-                        showNotification('✅ Treatment added successfully to database!', 'success');
-                    }
-                    
-                } else {
-                    console.log('Saving to temp storage - demo mode or sample patient');
-                    // Store temporarily for new patients or demo mode
-                    if (!window.tempTreatments) {
-                        window.tempTreatments = [];
-                    }
-                    
-                    // Get physiotherapist name from dropdown
-                    const physioSelect = document.getElementById('quickTreatmentPhysio');
-                    const selectedOption = physioSelect.options[physioSelect.selectedIndex];
-                    const physioName = selectedOption?.text || '';
-                    
-                    console.log('Selected physio:', physioName, 'Value:', physioSelect.value);
-                    
-                    // Parse the name (format: "Dr. FirstName LastName" or just "FirstName LastName")
-                    let firstName = 'Sarah';  // Default fallback
-                    let lastName = 'Johnson';   // Default fallback
-                    
-                    if (physioName && physioName !== 'Select Physiotherapist' && physioName.trim() !== '') {
-                        const cleanName = physioName.replace(/^Dr\.\s*/, '').replace(/\s*\([^)]*\)$/, '').trim();
-                        console.log('Clean name:', cleanName);
-                        const nameParts = cleanName.split(/\s+/);
-                        if (nameParts.length >= 2) {
-                            firstName = nameParts[0];
-                            lastName = nameParts[1];
-                        } else if (nameParts.length === 1) {
-                            firstName = nameParts[0];
-                            lastName = '';
-                        }
-                        console.log('Parsed names:', firstName, lastName);
-                    }
-                    
-                    // Create proper treatment object with all required fields, matching the database structure
-                    const newTreatment = {
-                        id: 'temp-' + Date.now(),
-                        treatment_type: treatmentType,
-                        description: notes, // This is the main description
-                        notes: `Duration: ${duration} minutes. Added via quick form.`,
-                        duration: parseInt(duration),
-                        created_at: treatmentDateTime.toISOString(),
-                        treatment_date: treatmentDateTime.toISOString(),
-                        patient_id: currentPatientId,
-                        physiotherapist_id: physioId,
-                        physiotherapists: {
-                            id: physioId,
-                            first_name: firstName,
-                            last_name: lastName,
-                            specializations: ['General'],
-                            license_number: 'TEMP-LICENSE'
-                        }
-                    };
-                    
-                    console.log('Created new treatment object:', JSON.stringify(newTreatment, null, 2));
-                    
-                    console.log('New treatment object:', newTreatment);
-                    
-                    window.tempTreatments.unshift(newTreatment); // Add to beginning
-                    console.log('Added to temp storage. Total temp treatments:', window.tempTreatments.length);
-                    showNotification('✅ Treatment added successfully!', 'success');
-                }
-                
-                // Reset and hide the form first
-                document.getElementById('cancelQuickTreatment').click();
-                
-                // Force refresh the treatment history display immediately
-                console.log('Refreshing treatment history...');
-                
-                // Always show the treatment history section
-                const treatmentSection = document.getElementById('treatmentHistorySection');
-                const assignedPhysioSection = document.getElementById('assignedPhysioSection');
-                const viewButton = document.getElementById('viewTreatmentsBtn');
-                
-                treatmentSection.classList.remove('hidden');
-                assignedPhysioSection.classList.remove('hidden');
-                viewButton.innerHTML = '<i class="fas fa-eye-slash mr-1"></i>Hide Treatments';
-                
-                // Refresh displays
-                await loadModalTreatmentHistory();
-                await loadAssignedPhysiotherapist();
-                
-                // Also refresh the main patient details view if we're in that view
-                if (!document.getElementById('patientDetailsView').classList.contains('hidden')) {
-                    console.log('Also refreshing main patient details view...');
-                    await loadPatientDetails(currentPatientId);
-                }
-                
-            } catch (error) {
-                console.error('Error saving treatment:', error);
-                showNotification('❌ Error saving treatment: ' + error.message, 'error');
-            } finally {
-                hideLoading();
-            }
-        });
+        // Note: Treatment section functionality moved to patient details view
 
         // Generate Single Treatment Word Document
         async function generateSingleTreatmentDoc(treatmentId) {
