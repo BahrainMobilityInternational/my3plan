@@ -2379,7 +2379,17 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) throw error;
+                if (error) {
+                    // Handle specific table not found error
+                    if (error.message.includes('relation "physiotherapists" does not exist') || 
+                        error.message.includes('table "public.physiotherapists"') ||
+                        error.message.includes('schema cache')) {
+                        
+                        showDatabaseSetupError('physiotherapists');
+                        return;
+                    }
+                    throw error;
+                }
 
                 // Update stats
                 document.getElementById('totalPhysiotherapists').textContent = physiotherapists?.length || 0;
@@ -2403,6 +2413,139 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                 console.error('Error loading physiotherapists:', error);
                 showNotification('Error loading physiotherapists: ' + error.message, 'error');
             }
+        }
+
+        function showDatabaseSetupError(tableName) {
+            const setupModal = document.createElement('div');
+            setupModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            setupModal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-red-600 mb-2">Database Setup Required</h2>
+                        <p class="text-gray-600 dark:text-gray-400">The "${tableName}" table doesn't exist in your Supabase database.</p>
+                    </div>
+                    
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-yellow-900 dark:text-yellow-100 mb-2 flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i>Required Action:
+                        </h3>
+                        <ol class="list-decimal list-inside text-sm text-yellow-800 dark:text-yellow-200 space-y-2">
+                            <li>Go to your Supabase Dashboard</li>
+                            <li>Click on "SQL Editor" in the left sidebar</li>
+                            <li>Click "New Query"</li>
+                            <li>Copy and paste the SQL commands below</li>
+                            <li>Click "Run" to execute the commands</li>
+                            <li>Refresh this page</li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-gray-800 text-green-400 p-4 rounded text-xs overflow-x-auto mb-6">
+                        <pre>-- COPY AND PASTE THESE COMMANDS INTO SUPABASE SQL EDITOR
+
+-- 1. Create patients table
+CREATE TABLE IF NOT EXISTS patients (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  date_of_birth DATE,
+  address TEXT,
+  medical_history TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2. Create physiotherapists table (REQUIRED)
+CREATE TABLE IF NOT EXISTS physiotherapists (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  license_number TEXT UNIQUE NOT NULL,
+  years_experience INTEGER DEFAULT 0,
+  specializations TEXT[],
+  employment_status TEXT DEFAULT 'full-time',
+  hourly_rate DECIMAL(10,2),
+  start_date DATE,
+  bio TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 3. Create appointments table  
+CREATE TABLE IF NOT EXISTS appointments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  physiotherapist_id UUID REFERENCES physiotherapists(id),
+  appointment_date TIMESTAMP,
+  duration INTEGER,
+  status TEXT DEFAULT 'scheduled',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 4. Create treatments table
+CREATE TABLE IF NOT EXISTS treatments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  appointment_id UUID REFERENCES appointments(id),
+  physiotherapist_id UUID REFERENCES physiotherapists(id),
+  treatment_type TEXT,
+  description TEXT,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 5. Create exercises table
+CREATE TABLE IF NOT EXISTS exercises (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  difficulty_level TEXT,
+  instructions TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 6. Enable Row Level Security (Optional)
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE physiotherapists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE treatments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+
+-- 7. Create policies (Optional)
+CREATE POLICY "Enable all operations for authenticated users" ON patients
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON physiotherapists
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON appointments
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON treatments
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Enable all operations for authenticated users" ON exercises
+  FOR ALL TO authenticated USING (true) WITH CHECK (true);</pre>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <button onclick="window.open('https://supabase.com/dashboard', '_blank')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-external-link-alt mr-2"></i>Open Supabase Dashboard
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-times mr-2"></i>Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(setupModal);
         }
 
         function loadPhysiotherapistsGrid(physiotherapists) {
