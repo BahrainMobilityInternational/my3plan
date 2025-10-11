@@ -2269,17 +2269,39 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
             const appointmentDateTime = `${appointmentDate}T${appointmentTime}:00`;
 
+            // Build form data with only required fields first
             const formData = {
-                patient_id: document.getElementById('appointmentPatient').value,
-                physiotherapist_id: document.getElementById('appointmentPhysiotherapist').value,
                 appointment_date: appointmentDateTime,
-                duration: parseInt(document.getElementById('appointmentDuration').value),
-                status: document.getElementById('appointmentStatus').value,
-                notes: document.getElementById('appointmentNotes').value
+                status: document.getElementById('appointmentStatus').value || 'scheduled',
+                notes: document.getElementById('appointmentNotes').value || ''
             };
+
+            // Add optional fields only if they have values
+            const patientId = document.getElementById('appointmentPatient').value;
+            const physioId = document.getElementById('appointmentPhysiotherapist').value;
+            const duration = document.getElementById('appointmentDuration').value;
+
+            if (patientId) formData.patient_id = patientId;
+            if (duration) formData.duration = parseInt(duration);
 
             try {
                 showLoading();
+
+                // Check if physiotherapist_id column exists by testing the table structure
+                let includePhysioId = false;
+                try {
+                    const { data: testData } = await supabase
+                        .from('appointments')
+                        .select('physiotherapist_id')
+                        .limit(1);
+                    includePhysioId = true;
+                } catch (testError) {
+                    console.log('physiotherapist_id column not found, creating appointment without it');
+                }
+
+                if (includePhysioId && physioId) {
+                    formData.physiotherapist_id = physioId;
+                }
                 
                 if (currentAppointmentId) {
                     const { error } = await supabase
@@ -2294,7 +2316,14 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                         .from('appointments')
                         .insert([formData]);
                     
-                    if (error) throw error;
+                    if (error) {
+                        // If error is about missing column, show helpful message
+                        if (error.message.includes('physiotherapist_id') || error.message.includes('patient_id')) {
+                            showDatabaseColumnError(error.message);
+                            return;
+                        }
+                        throw error;
+                    }
                     showNotification('Appointment created successfully!');
                 }
 
@@ -2304,7 +2333,15 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
             } catch (error) {
                 console.error('Error saving appointment:', error);
-                showNotification('Error saving appointment: ' + error.message, 'error');
+                
+                let errorMessage = 'Error saving appointment: ';
+                if (error.message.includes('column') && error.message.includes('does not exist')) {
+                    errorMessage = 'Database table needs to be updated. Please run the SQL setup commands.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
             } finally {
                 hideLoading();
             }
@@ -3017,6 +3054,67 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 console.error('Error loading physiotherapists:', error);
                 showNotification('Error loading physiotherapists: ' + error.message, 'error');
             }
+        }
+
+        function showDatabaseColumnError(errorMessage) {
+            const setupModal = document.createElement('div');
+            setupModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            setupModal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-database text-orange-500 text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-orange-600 mb-2">Database Column Missing</h2>
+                        <p class="text-gray-600 dark:text-gray-400">Your database table structure needs to be updated.</p>
+                    </div>
+                    
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-red-900 dark:text-red-100 mb-2 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>Error Details:
+                        </h3>
+                        <p class="text-sm text-red-800 dark:text-red-200 font-mono bg-red-100 dark:bg-red-800 p-2 rounded">
+                            ${errorMessage}
+                        </p>
+                    </div>
+
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i>Quick Fix:
+                        </h3>
+                        <ol class="list-decimal list-inside text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                            <li>Go to your Supabase Dashboard</li>
+                            <li>Click on "SQL Editor" in the left sidebar</li>
+                            <li>Copy and run the SQL commands below</li>
+                            <li>Try creating the appointment again</li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-gray-800 text-green-400 p-4 rounded text-xs overflow-x-auto mb-6">
+                        <pre>-- Run this SQL command to fix missing columns:
+
+-- Add missing columns to appointments table
+ALTER TABLE appointments 
+ADD COLUMN IF NOT EXISTS patient_id UUID REFERENCES patients(id),
+ADD COLUMN IF NOT EXISTS physiotherapist_id UUID REFERENCES physiotherapists(id),
+ADD COLUMN IF NOT EXISTS duration INTEGER,
+ADD COLUMN IF NOT EXISTS notes TEXT;
+
+-- Verify table structure
+\\d appointments;</pre>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <button onclick="window.open('https://supabase.com/dashboard', '_blank')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-external-link-alt mr-2"></i>Open Supabase Dashboard
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-times mr-2"></i>Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(setupModal);
         }
 
         function showDatabaseSetupError(tableName) {
