@@ -4839,17 +4839,81 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 if (supabase && currentPatientId && currentPatientId !== 'sample-id') {
                     console.log('Saving to database with data:', treatmentData);
                     
-                    // Save to database
-                    const { data, error } = await supabase
-                        .from('treatments')
-                        .insert([treatmentData])
-                        .select();
+                    // Save to database with intelligent error handling
+                    let saveSuccessful = false;
+                    let finalData = null;
                     
-                    if (error) {
-                        console.error('Database error details:', error);
+                    try {
+                        // First attempt: Try with all fields
+                        const { data, error } = await supabase
+                            .from('treatments')
+                            .insert([treatmentData])
+                            .select();
                         
-                        // If duration column doesn't exist, try without it
-                        if (error.message.includes('duration')) {
+                        if (error) throw error;
+                        
+                        finalData = data;
+                        saveSuccessful = true;
+                        console.log('Treatment saved successfully:', data);
+                        
+                    } catch (error) {
+                        console.error('First attempt failed:', error);
+                        
+                        // Second attempt: Try without physiotherapist_id if it's missing
+                        if (error.message.includes('physiotherapist_id')) {
+                            console.log('physiotherapist_id column not found, retrying without it...');
+                            const treatmentDataWithoutPhysio = { ...treatmentData };
+                            delete treatmentDataWithoutPhysio.physiotherapist_id;
+                            
+                            try {
+                                const { data: retryData, error: retryError } = await supabase
+                                    .from('treatments')
+                                    .insert([treatmentDataWithoutPhysio])
+                                    .select();
+                                    
+                                if (retryError) throw retryError;
+                                
+                                finalData = retryData;
+                                saveSuccessful = true;
+                                console.log('Treatment saved successfully without physiotherapist_id field');
+                                showNotification('⚠️ Treatment saved! Note: Please update your database schema to include physiotherapist_id column.', 'success');
+                                
+                            } catch (retryError) {
+                                console.error('Retry without physiotherapist_id failed:', retryError);
+                                
+                                // Third attempt: Try with minimal fields only
+                                if (retryError.message.includes('duration') || retryError.message.includes('treatment_date')) {
+                                    console.log('Trying with minimal fields only...');
+                                    const minimalData = {
+                                        patient_id: currentPatientId,
+                                        treatment_type: treatmentType,
+                                        description: notes
+                                    };
+                                    
+                                    try {
+                                        const { data: minimalResult, error: minimalError } = await supabase
+                                            .from('treatments')
+                                            .insert([minimalData])
+                                            .select();
+                                            
+                                        if (minimalError) throw minimalError;
+                                        
+                                        finalData = minimalResult;
+                                        saveSuccessful = true;
+                                        console.log('Treatment saved with minimal fields');
+                                        showNotification('⚠️ Treatment saved with basic info! Please run the database update commands from the Supabase connection modal.', 'success');
+                                        
+                                    } catch (minimalError) {
+                                        console.error('Even minimal save failed:', minimalError);
+                                        throw new Error(`Database schema needs updating. Please run the SQL commands shown in the Supabase connection modal. Error: ${minimalError.message}`);
+                                    }
+                                } else {
+                                    throw retryError;
+                                }
+                            }
+                        } 
+                        // Handle other missing columns
+                        else if (error.message.includes('duration')) {
                             console.log('Duration column not found, retrying without duration field...');
                             const treatmentDataWithoutDuration = { ...treatmentData };
                             delete treatmentDataWithoutDuration.duration;
@@ -4860,14 +4924,36 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                                 .select();
                                 
                             if (retryError) throw retryError;
+                            
+                            finalData = retryData;
+                            saveSuccessful = true;
                             console.log('Treatment saved successfully without duration field');
+                            showNotification('⚠️ Treatment saved! Note: Please update your database schema to include duration column.', 'success');
+                        }
+                        else if (error.message.includes('treatment_date')) {
+                            console.log('treatment_date column not found, retrying without it...');
+                            const treatmentDataWithoutDate = { ...treatmentData };
+                            delete treatmentDataWithoutDate.treatment_date;
+                            
+                            const { data: retryData, error: retryError } = await supabase
+                                .from('treatments')
+                                .insert([treatmentDataWithoutDate])
+                                .select();
+                                
+                            if (retryError) throw retryError;
+                            
+                            finalData = retryData;
+                            saveSuccessful = true;
+                            console.log('Treatment saved successfully without treatment_date field');
+                            showNotification('⚠️ Treatment saved! Note: Please update your database schema to include treatment_date column.', 'success');
                         } else {
                             throw error;
                         }
                     }
                     
-                    console.log('Treatment saved successfully:', data);
-                    showNotification('✅ Treatment added successfully to database!', 'success');
+                    if (saveSuccessful && !finalData) {
+                        showNotification('✅ Treatment added successfully to database!', 'success');
+                    }
                     
                 } else {
                     console.log('Saving to temp storage - demo mode or sample patient');
