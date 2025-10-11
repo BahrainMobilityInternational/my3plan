@@ -3396,8 +3396,8 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                     
                     showNotification('Welcome to PhysioTech! You are logged in as Administrator.');
                     
-                    // Auto-reconnect to Supabase if available
-                    await reconnectSupabase();
+                    // Auto-connect to Supabase with your credentials
+                    await autoConnectSupabase();
                     
                 } else {
                     showLoginError('Invalid email or password');
@@ -3454,6 +3454,45 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                 toggleIcon.classList.add('fa-eye');
             }
         });
+
+        // Auto-connect to Supabase with your credentials
+        async function autoConnectSupabase() {
+            // ⚠️ REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS ⚠️
+            const url = 'https://your-project-ref.supabase.co'; // Your actual URL from the image
+            const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Your actual key from the image
+            
+            // Only auto-connect if real credentials are provided
+            if (!url.includes('your-project-ref') && !key.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...')) {
+                try {
+                    showLoading();
+                    supabase = window.supabase.createClient(url, key);
+                    
+                    // Test connection
+                    await supabase.from('patients').select('count').limit(1);
+                    
+                    document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
+                    saveConnectionDetails(url, key);
+                    
+                    showNotification('Auto-connected to Supabase successfully!');
+                    
+                    // Load initial data
+                    await loadDashboardData();
+                    await loadPatients();
+                    
+                    return true;
+                } catch (error) {
+                    console.log('Auto-connection failed:', error);
+                    showNotification('Auto-connection failed. Please connect manually.', 'error');
+                }
+                finally {
+                    hideLoading();
+                }
+            } else {
+                // Fallback to manual connection or try reconnect
+                await reconnectSupabase();
+            }
+            return false;
+        }
 
         // Pre-fill admin credentials for demo (remove in production)
         document.addEventListener('DOMContentLoaded', () => {
