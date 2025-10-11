@@ -15,8 +15,10 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#5D5CDE',
-                        secondary: '#6366f1',
+                        primary: '#0F766E',
+                        secondary: '#0D9488',
+                        medical: '#2C7A7B',
+                        sage: '#10B981',
                     }
                 }
             }
@@ -40,6 +42,172 @@
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
+    <!-- Login Page -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-50 to-cyan-50">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-8">
+            <div class="absolute top-20 left-20 w-96 h-96 bg-primary rounded-full blur-3xl"></div>
+            <div class="absolute bottom-20 right-20 w-96 h-96 bg-sage rounded-full blur-3xl"></div>
+            <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-medical rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2"></div>
+        </div>
+
+        <div class="flex w-full max-w-6xl mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10">
+            <!-- Left Side - Login Form -->
+            <div class="w-full lg:w-1/2 p-8 lg:p-12">
+                <div class="max-w-md mx-auto">
+                    <!-- Logo and Title -->
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-2xl mb-6 shadow-lg border-2 border-gray-100">
+                            <img src="https://pfst.cf2.poecdn.net/base/image/8b6401e48101612f660ccec8b51614f103f2770892e0de9e4ad8f101949526a1?w=225&h=225" 
+                                 alt="Bahrain Mobility International" 
+                                 class="w-20 h-20 object-contain rounded-xl">
+                        </div>
+                        <h1 class="text-4xl font-bold text-gray-900 mb-2">Log In</h1>
+                        <p class="text-gray-600">Welcome back to Bahrain Mobility International</p>
+                    </div>
+
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label for="loginEmail" class="block text-sm font-semibold text-gray-700 mb-3">Email</label>
+                            <div class="relative">
+                                <input type="email" 
+                                       id="loginEmail" 
+                                       name="email"
+                                       required 
+                                       autocomplete="email"
+                                       placeholder="Enter your email address"
+                                       class="w-full px-4 py-4 pl-12 border-2 border-gray-200 rounded-xl bg-white text-gray-900 text-base focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none transition-colors z-10 relative">
+                                <i class="fas fa-envelope absolute left-4 top-5 text-gray-400 pointer-events-none z-0"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="loginPassword" class="block text-sm font-semibold text-gray-700 mb-3">Password</label>
+                            <div class="relative">
+                                <input type="password" 
+                                       id="loginPassword" 
+                                       name="password"
+                                       required 
+                                       autocomplete="current-password"
+                                       placeholder="Enter your password"
+                                       class="w-full px-4 py-4 pl-12 pr-12 border-2 border-gray-200 rounded-xl bg-white text-gray-900 text-base focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none transition-colors z-10 relative">
+                                <i class="fas fa-lock absolute left-4 top-5 text-gray-400 pointer-events-none z-0"></i>
+                                <button type="button" id="togglePassword" class="absolute right-4 top-5 text-gray-400 hover:text-gray-600 focus:outline-none z-20">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
+                                <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                            </label>
+                            <button type="button" class="text-sm text-primary hover:text-secondary font-medium">Forgot password?</button>
+                        </div>
+
+                        <button type="submit" class="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 px-4 rounded-xl hover:from-secondary hover:to-medical transition-all duration-200 font-semibold text-lg shadow-lg">
+                            Log In
+                        </button>
+
+                        <div id="loginError" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                        </div>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="my-8 text-center">
+                        <span class="text-gray-400 text-sm">Or continue with</span>
+                    </div>
+
+                    <!-- Social Login -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="flex items-center justify-center py-3 px-4 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                            <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700">Google</span>
+                        </button>
+                        <button class="flex items-center justify-center py-3 px-4 border-2 border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                            <svg class="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700">Facebook</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <p class="text-sm text-gray-500">
+                            Don't have an account? <button class="text-primary hover:text-secondary font-medium">Sign up</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Visual -->
+            <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-secondary to-sage items-center justify-center p-12 relative">
+                <!-- Decorative Elements -->
+                <div class="absolute top-10 right-10 w-20 h-20 bg-white bg-opacity-20 rounded-full"></div>
+                <div class="absolute bottom-10 left-10 w-16 h-16 bg-white bg-opacity-15 rounded-full"></div>
+                <div class="absolute top-1/2 right-20 w-3 h-3 bg-white bg-opacity-30 rounded-full"></div>
+                <div class="absolute top-20 left-1/3 w-2 h-2 bg-white bg-opacity-25 rounded-full"></div>
+
+                <!-- Main Content -->
+                <div class="text-center text-white z-10">
+                    <h2 class="text-4xl font-bold mb-6">Welcome to PhysioTech</h2>
+                    <p class="text-xl text-white text-opacity-90 mb-8 leading-relaxed">
+                        Professional physiotherapy management system for modern healthcare providers
+                    </p>
+                    
+                    <!-- Features Grid -->
+                    <div class="grid grid-cols-2 gap-6 text-white text-opacity-80">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-users text-xl"></i>
+                            </div>
+                            <p class="text-sm font-medium">Patient Management</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-calendar-check text-xl"></i>
+                            </div>
+                            <p class="text-sm font-medium">Appointment Scheduling</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-chart-line text-xl"></i>
+                            </div>
+                            <p class="text-sm font-medium">Analytics & Reports</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-stethoscope text-xl"></i>
+                            </div>
+                            <p class="text-sm font-medium">Treatment Records</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floating Card -->
+                <div class="absolute bottom-8 right-8 bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-4 border border-white border-opacity-20">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-white"></i>
+                        </div>
+                        <div class="text-white">
+                            <p class="text-sm font-semibold">Secure & Reliable</p>
+                            <p class="text-xs text-white text-opacity-70">Enterprise-grade security</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application (Hidden until login) -->
+    <div id="mainApp" class="hidden">
     <!-- Navigation -->
     <nav class="bg-primary shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,12 +217,28 @@
                     <span class="text-white text-xl font-bold">PhysioTech</span>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <!-- User Info -->
+                    <div class="flex items-center space-x-3 text-white">
+                        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-sm"></i>
+                        </div>
+                        <div class="hidden md:block">
+                            <p class="text-sm font-medium" id="userEmail">Admin User</p>
+                            <p class="text-xs text-gray-200">Administrator</p>
+                        </div>
+                    </div>
+                    
                     <button id="connectSupabase" class="bg-white text-primary px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
                         <i class="fas fa-database mr-2"></i>Connect Supabase
                     </button>
                     <div id="connectionStatus" class="text-white">
                         <i class="fas fa-circle text-red-400 mr-1"></i>Disconnected
                     </div>
+                    
+                    <!-- Logout Button -->
+                    <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
                 </div>
             </div>
         </div>
@@ -75,6 +259,9 @@
                 </button>
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="treatments">
                     <i class="fas fa-notes-medical mr-3"></i>Treatments
+                </button>
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physiotherapists">
+                    <i class="fas fa-user-md mr-3"></i>Physiotherapists
                 </button>
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="exercises">
                     <i class="fas fa-dumbbell mr-3"></i>Exercises
@@ -208,6 +395,66 @@
 
                 <!-- Treatments List -->
                 <div class="space-y-4" id="treatmentsList">
+                </div>
+            </div>
+
+            <!-- Physiotherapists View -->
+            <div id="physiotherapists" class="view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-3xl font-bold">Physiotherapists</h1>
+                    <button id="addPhysiotherapistBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Add Physiotherapist
+                    </button>
+                </div>
+
+                <!-- Staff Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-cyan-100">Total Staff</p>
+                                <p class="text-3xl font-bold" id="totalPhysiotherapists">0</p>
+                            </div>
+                            <i class="fas fa-user-md text-4xl text-cyan-200"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-emerald-100">Active Today</p>
+                                <p class="text-3xl font-bold" id="activeToday">0</p>
+                            </div>
+                            <i class="fas fa-clock text-4xl text-emerald-200"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-violet-500 to-violet-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-violet-100">Avg Experience</p>
+                                <p class="text-3xl font-bold" id="avgExperience">0<span class="text-lg"> yrs</span></p>
+                            </div>
+                            <i class="fas fa-award text-4xl text-violet-200"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-rose-500 to-rose-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-rose-100">Avg Rating</p>
+                                <p class="text-3xl font-bold" id="avgRating">0<span class="text-lg">/5</span></p>
+                            </div>
+                            <i class="fas fa-star text-4xl text-rose-200"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physiotherapist Search -->
+                <div class="mb-6">
+                    <input type="text" id="physiotherapistSearch" placeholder="Search physiotherapists..." 
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                </div>
+
+                <!-- Physiotherapists Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="physiotherapistsGrid">
                 </div>
             </div>
 
@@ -460,6 +707,24 @@ CREATE TABLE exercises (
   difficulty_level TEXT,
   instructions TEXT,
   created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create physiotherapists table
+CREATE TABLE physiotherapists (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  license_number TEXT UNIQUE NOT NULL,
+  years_experience INTEGER DEFAULT 0,
+  specializations TEXT[], -- Array of specializations
+  employment_status TEXT DEFAULT 'full-time',
+  hourly_rate DECIMAL(10,2),
+  start_date DATE,
+  bio TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
 );</pre>
                     </div>
                 </div>
@@ -469,6 +734,100 @@ CREATE TABLE exercises (
                     <button id="confirmConnection" class="px-4 py-2 bg-primary text-white hover:bg-secondary rounded-lg">Connect</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Physiotherapist Modal -->
+    <div id="physiotherapistModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6" id="physiotherapistModalTitle">Add Physiotherapist</h2>
+            <form id="physiotherapistForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">First Name</label>
+                        <input type="text" id="physioFirstName" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Last Name</label>
+                        <input type="text" id="physioLastName" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Email</label>
+                    <input type="email" id="physioEmail" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Phone</label>
+                    <input type="tel" id="physioPhone" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">License Number</label>
+                        <input type="text" id="licenseNumber" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Years of Experience</label>
+                        <input type="number" id="yearsExperience" min="0" max="50" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Specializations</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="specialization mr-2" value="Orthopedic">
+                            <span class="text-sm">Orthopedic</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="specialization mr-2" value="Neurological">
+                            <span class="text-sm">Neurological</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="specialization mr-2" value="Sports">
+                            <span class="text-sm">Sports</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="specialization mr-2" value="Pediatric">
+                            <span class="text-sm">Pediatric</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="specialization mr-2" value="Geriatric">
+                            <span class="text-sm">Geriatric</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="specialization mr-2" value="Cardiopulmonary">
+                            <span class="text-sm">Cardiopulmonary</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Employment Status</label>
+                    <select id="employmentStatus" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                        <option value="">Select Status</option>
+                        <option value="full-time">Full Time</option>
+                        <option value="part-time">Part Time</option>
+                        <option value="contract">Contract</option>
+                        <option value="intern">Intern</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Hourly Rate ($)</label>
+                        <input type="number" id="hourlyRate" min="0" step="0.01" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Start Date</label>
+                        <input type="date" id="startDate" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Bio/Notes</label>
+                    <textarea id="physioBio" rows="4" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base" placeholder="Education, certifications, additional notes..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancelPhysiotherapist" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white hover:bg-secondary rounded-lg">Save Physiotherapist</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -524,6 +883,8 @@ CREATE TABLE exercises (
             </div>
         </div>
     </div>
+
+    </div> <!-- Close mainApp div -->
 
     <script>
         // Dark mode setup
@@ -788,6 +1149,9 @@ CREATE TABLE exercises (
                     break;
                 case 'treatments':
                     loadTreatments();
+                    break;
+                case 'physiotherapists':
+                    loadPhysiotherapists();
                     break;
                 case 'exercises':
                     loadExercises();
@@ -1621,6 +1985,306 @@ CREATE TABLE exercises (
             showNotification('Reports refreshed successfully!');
         });
 
+        // Physiotherapist management functions
+        let currentPhysiotherapistId = null;
+
+        async function loadPhysiotherapists() {
+            if (!supabase) return;
+
+            try {
+                const { data: physiotherapists, error } = await supabase
+                    .from('physiotherapists')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // Update stats
+                document.getElementById('totalPhysiotherapists').textContent = physiotherapists?.length || 0;
+                
+                const activeToday = physiotherapists?.filter(p => p.is_active)?.length || 0;
+                document.getElementById('activeToday').textContent = activeToday;
+
+                const avgExp = physiotherapists?.length > 0 
+                    ? Math.round(physiotherapists.reduce((sum, p) => sum + (p.years_experience || 0), 0) / physiotherapists.length)
+                    : 0;
+                document.getElementById('avgExperience').textContent = avgExp;
+
+                // Simulated rating
+                const avgRating = 4.2 + Math.random() * 0.6;
+                document.getElementById('avgRating').textContent = avgRating.toFixed(1);
+
+                // Load physiotherapists grid
+                loadPhysiotherapistsGrid(physiotherapists || []);
+
+            } catch (error) {
+                console.error('Error loading physiotherapists:', error);
+                showNotification('Error loading physiotherapists: ' + error.message, 'error');
+            }
+        }
+
+        function loadPhysiotherapistsGrid(physiotherapists) {
+            const grid = document.getElementById('physiotherapistsGrid');
+            grid.innerHTML = '';
+
+            if (physiotherapists.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-user-md text-gray-400 text-6xl mb-4"></i>
+                        <p class="text-gray-500 text-lg">No physiotherapists found</p>
+                        <p class="text-gray-400">Add your first team member to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            physiotherapists.forEach(physio => {
+                const specializations = Array.isArray(physio.specializations) 
+                    ? physio.specializations.slice(0, 3) 
+                    : [];
+                
+                const statusColor = physio.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                const statusText = physio.is_active ? 'Active' : 'Inactive';
+
+                const card = document.createElement('div');
+                card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                ${physio.first_name.charAt(0)}${physio.last_name.charAt(0)}
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-lg font-semibold">${physio.first_name} ${physio.last_name}</h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm">${physio.employment_status || 'Full Time'}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColor}">
+                            ${statusText}
+                        </span>
+                    </div>
+
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-envelope w-4 mr-2"></i>
+                            ${physio.email}
+                        </div>
+                        ${physio.phone ? `
+                            <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-phone w-4 mr-2"></i>
+                                ${physio.phone}
+                            </div>
+                        ` : ''}
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-id-card w-4 mr-2"></i>
+                            License: ${physio.license_number}
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-calendar w-4 mr-2"></i>
+                            ${physio.years_experience || 0} years experience
+                        </div>
+                        ${physio.hourly_rate ? `
+                            <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-dollar-sign w-4 mr-2"></i>
+                                $${physio.hourly_rate}/hour
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${specializations.length > 0 ? `
+                        <div class="mb-4">
+                            <p class="text-sm font-medium mb-2">Specializations:</p>
+                            <div class="flex flex-wrap gap-1">
+                                ${specializations.map(spec => `
+                                    <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+                                        ${spec}
+                                    </span>
+                                `).join('')}
+                                ${physio.specializations?.length > 3 ? `
+                                    <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded text-xs">
+                                        +${physio.specializations.length - 3} more
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="flex justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button onclick="editPhysiotherapist('${physio.id}')" class="px-3 py-1 text-primary hover:text-secondary text-sm">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                        <button onclick="deletePhysiotherapist('${physio.id}')" class="px-3 py-1 text-red-500 hover:text-red-700 text-sm">
+                            <i class="fas fa-trash mr-1"></i>Delete
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Physiotherapist modal functions
+        document.getElementById('addPhysiotherapistBtn').addEventListener('click', () => {
+            document.getElementById('physiotherapistModalTitle').textContent = 'Add Physiotherapist';
+            document.getElementById('physiotherapistForm').reset();
+            document.querySelectorAll('.specialization').forEach(cb => cb.checked = false);
+            currentPhysiotherapistId = null;
+            document.getElementById('physiotherapistModal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancelPhysiotherapist').addEventListener('click', () => {
+            document.getElementById('physiotherapistModal').classList.add('hidden');
+        });
+
+        document.getElementById('physiotherapistForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!supabase) {
+                showNotification('Please connect to Supabase first', 'error');
+                return;
+            }
+
+            // Get selected specializations
+            const specializations = Array.from(document.querySelectorAll('.specialization:checked'))
+                .map(cb => cb.value);
+
+            const formData = {
+                first_name: document.getElementById('physioFirstName').value,
+                last_name: document.getElementById('physioLastName').value,
+                email: document.getElementById('physioEmail').value,
+                phone: document.getElementById('physioPhone').value,
+                license_number: document.getElementById('licenseNumber').value,
+                years_experience: parseInt(document.getElementById('yearsExperience').value) || 0,
+                specializations: specializations,
+                employment_status: document.getElementById('employmentStatus').value,
+                hourly_rate: parseFloat(document.getElementById('hourlyRate').value) || null,
+                start_date: document.getElementById('startDate').value || null,
+                bio: document.getElementById('physioBio').value
+            };
+
+            try {
+                showLoading();
+                
+                if (currentPhysiotherapistId) {
+                    const { error } = await supabase
+                        .from('physiotherapists')
+                        .update(formData)
+                        .eq('id', currentPhysiotherapistId);
+                    
+                    if (error) throw error;
+                    showNotification('Physiotherapist updated successfully!');
+                } else {
+                    const { error } = await supabase
+                        .from('physiotherapists')
+                        .insert([formData]);
+                    
+                    if (error) throw error;
+                    showNotification('Physiotherapist added successfully!');
+                }
+
+                document.getElementById('physiotherapistModal').classList.add('hidden');
+                await loadPhysiotherapists();
+
+            } catch (error) {
+                console.error('Error saving physiotherapist:', error);
+                showNotification('Error saving physiotherapist: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function editPhysiotherapist(id) {
+            if (!supabase) return;
+
+            try {
+                const { data: physio, error } = await supabase
+                    .from('physiotherapists')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+
+                document.getElementById('physiotherapistModalTitle').textContent = 'Edit Physiotherapist';
+                document.getElementById('physioFirstName').value = physio.first_name;
+                document.getElementById('physioLastName').value = physio.last_name;
+                document.getElementById('physioEmail').value = physio.email || '';
+                document.getElementById('physioPhone').value = physio.phone || '';
+                document.getElementById('licenseNumber').value = physio.license_number || '';
+                document.getElementById('yearsExperience').value = physio.years_experience || '';
+                document.getElementById('employmentStatus').value = physio.employment_status || '';
+                document.getElementById('hourlyRate').value = physio.hourly_rate || '';
+                document.getElementById('startDate').value = physio.start_date || '';
+                document.getElementById('physioBio').value = physio.bio || '';
+
+                // Set specializations
+                document.querySelectorAll('.specialization').forEach(cb => {
+                    cb.checked = physio.specializations?.includes(cb.value) || false;
+                });
+                
+                currentPhysiotherapistId = id;
+                document.getElementById('physiotherapistModal').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error loading physiotherapist:', error);
+                showNotification('Error loading physiotherapist: ' + error.message, 'error');
+            }
+        }
+
+        async function deletePhysiotherapist(id) {
+            if (!supabase) return;
+
+            // Custom confirmation dialog
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            confirmDialog.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">Are you sure you want to delete this physiotherapist?</p>
+                    <div class="flex justify-end space-x-3">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancel</button>
+                        <button class="confirm-btn px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded">Delete</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmDialog);
+
+            confirmDialog.querySelector('.cancel-btn').addEventListener('click', () => {
+                confirmDialog.remove();
+            });
+
+            confirmDialog.querySelector('.confirm-btn').addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    const { error } = await supabase
+                        .from('physiotherapists')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    
+                    showNotification('Physiotherapist deleted successfully!');
+                    await loadPhysiotherapists();
+
+                } catch (error) {
+                    console.error('Error deleting physiotherapist:', error);
+                    showNotification('Error deleting physiotherapist: ' + error.message, 'error');
+                } finally {
+                    hideLoading();
+                    confirmDialog.remove();
+                }
+            });
+        }
+
+        // Physiotherapist search functionality
+        document.getElementById('physiotherapistSearch').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('#physiotherapistsGrid > div');
+            
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+
         // Patient search functionality
         document.getElementById('patientSearch').addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
@@ -1663,13 +2327,197 @@ CREATE TABLE exercises (
             }
         });
 
-        // Also try to reconnect immediately
-        (async () => {
-            const reconnected = await reconnectSupabase();
-            if (reconnected) {
-                showNotification('Welcome back! Auto-reconnected to Supabase.', 'success');
+        // Authentication System
+        let currentUser = null;
+        
+        // Predefined admin user
+        const adminUser = {
+            email: 'DhariBmi@gmail.com',
+            password: 'Dharui1979',
+            role: 'admin',
+            name: 'Admin User'
+        };
+
+        // Store login state in memory (since localStorage is not available)
+        let isLoggedIn = false;
+
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (!email || !password) {
+                showLoginError('Please fill in all fields');
+                return;
             }
-        })();
+
+            try {
+                showLoading();
+                
+                // Check admin credentials
+                if (email === adminUser.email && password === adminUser.password) {
+                    // Successful login
+                    currentUser = {
+                        email: adminUser.email,
+                        role: adminUser.role,
+                        name: adminUser.name
+                    };
+                    
+                    isLoggedIn = true;
+                    
+                    // Hide login page and show main app
+                    document.getElementById('loginPage').classList.add('hidden');
+                    document.getElementById('mainApp').classList.remove('hidden');
+                    
+                    // Update user info in header
+                    document.getElementById('userEmail').textContent = currentUser.email;
+                    
+                    showNotification('Welcome to PhysioTech! You are logged in as Administrator.');
+                    
+                    // Auto-reconnect to Supabase if available
+                    await reconnectSupabase();
+                    
+                } else {
+                    // Check if we have Supabase connection for other users
+                    if (supabase) {
+                        try {
+                            // Try Supabase authentication (if configured)
+                            const { data, error } = await supabase.auth.signInWithPassword({
+                                email: email,
+                                password: password
+                            });
+                            
+                            if (error) throw error;
+                            
+                            currentUser = {
+                                email: data.user.email,
+                                role: 'user',
+                                name: data.user.email
+                            };
+                            
+                            isLoggedIn = true;
+                            
+                            document.getElementById('loginPage').classList.add('hidden');
+                            document.getElementById('mainApp').classList.remove('hidden');
+                            document.getElementById('userEmail').textContent = currentUser.email;
+                            
+                            showNotification('Welcome to PhysioTech!');
+                            
+                        } catch (supabaseError) {
+                            console.log('Supabase auth failed:', supabaseError);
+                            showLoginError('Invalid email or password');
+                        }
+                    } else {
+                        showLoginError('Invalid email or password');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showLoginError('Login failed. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                showLoading();
+                
+                // Sign out from Supabase if connected
+                if (supabase && currentUser.role !== 'admin') {
+                    await supabase.auth.signOut();
+                }
+                
+                // Clear user data
+                currentUser = null;
+                isLoggedIn = false;
+                
+                // Clear forms
+                document.getElementById('loginForm').reset();
+                
+                // Show login page and hide main app
+                document.getElementById('mainApp').classList.add('hidden');
+                document.getElementById('loginPage').classList.remove('hidden');
+                
+                // Clear connection details
+                clearConnectionDetails();
+                
+                showNotification('You have been logged out successfully.');
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                showNotification('Error during logout: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Password toggle functionality
+        document.getElementById('togglePassword').addEventListener('click', () => {
+            const passwordInput = document.getElementById('loginPassword');
+            const toggleIcon = document.querySelector('#togglePassword i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Check authentication status on page load
+        function checkAuthStatus() {
+            if (!isLoggedIn) {
+                document.getElementById('loginPage').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            } else {
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+            }
+        }
+
+        // Initialize authentication
+        checkAuthStatus();
+
+        // Override the auto-reconnect to only work when logged in
+        window.addEventListener('load', async () => {
+            if (isLoggedIn) {
+                const reconnected = await reconnectSupabase();
+                
+                if (!reconnected) {
+                    setTimeout(() => {
+                        showNotification('Please connect to Supabase to start using the system', 'error');
+                    }, 1000);
+                } else {
+                    showNotification('Welcome back! Auto-reconnected to Supabase.', 'success');
+                }
+            }
+        });
+
+        // Pre-fill admin credentials for demo (remove in production)
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loginEmail').value = 'DhariBmi@gmail.com';
+            document.getElementById('loginPassword').value = 'Dharui1979';
+        });
     </script>
 </body>
 </html>
