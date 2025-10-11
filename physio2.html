@@ -4180,25 +4180,33 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
             }
         });
 
-        // Auto-connect to Supabase with your credentials
+        // Auto-connect to Supabase with saved or provided credentials
         async function autoConnectSupabase() {
-            // ⚠️ REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS ⚠️
-            const url = 'https://your-project-ref.supabase.co'; // Your actual URL from the image
-            const key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Your actual key from the image
+            // First try to reconnect with saved credentials
+            const reconnected = await reconnectSupabase();
+            if (reconnected) {
+                return true;
+            }
+
+            // Your actual Supabase credentials (replace these with your real values)
+            const defaultUrl = 'https://rntasjnwcurpbigmdl.supabase.co';  // Replace with your actual URL
+            const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudGFzam53Y3VycGJpZ21kbCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzMxMzEzMjI3LCJleHAiOjIwNDY4ODkyMjd9.7k6hqQ6LyoJoCTDsZqEEX_o0Q7Ia6xKCmg4u_kj4Fbc';  // Replace with your actual key
             
-            // Only auto-connect if real credentials are provided
-            if (!url.includes('your-project-ref') && !key.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...')) {
+            // Only try default credentials if they look real (not placeholders)
+            if (defaultUrl.includes('.supabase.co') && !defaultUrl.includes('your-project-ref') && 
+                defaultKey.startsWith('eyJ') && defaultKey.length > 100) {
                 try {
+                    console.log('Attempting auto-connection with default credentials...');
                     showLoading();
-                    supabase = window.supabase.createClient(url, key);
+                    supabase = window.supabase.createClient(defaultUrl, defaultKey);
                     
                     // Test connection
                     await supabase.from('patients').select('count').limit(1);
                     
                     document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
-                    saveConnectionDetails(url, key);
+                    saveConnectionDetails(defaultUrl, defaultKey);
                     
-                    showNotification('Auto-connected to Supabase successfully!');
+                    showNotification('🎉 Auto-connected to Supabase successfully!');
                     
                     // Load initial data
                     await loadDashboardData();
@@ -4207,15 +4215,18 @@ CREATE POLICY "Enable all operations for authenticated users" ON exercises
                     return true;
                 } catch (error) {
                     console.log('Auto-connection failed:', error);
-                    showNotification('Auto-connection failed. Please connect manually.', 'error');
+                    // Don't show error notification for failed auto-connection, just fall back to manual
                 }
                 finally {
                     hideLoading();
                 }
-            } else {
-                // Fallback to manual connection or try reconnect
-                await reconnectSupabase();
             }
+            
+            // Show helpful message for manual connection
+            setTimeout(() => {
+                showNotification('💡 Click "Connect Supabase" to set up your database connection', 'error');
+            }, 2000);
+            
             return false;
         }
 
