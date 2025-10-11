@@ -244,19 +244,88 @@
 
     <!-- Supabase Connection Modal -->
     <div id="supabaseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h2 class="text-2xl font-bold mb-6">Connect to Supabase</h2>
+            
+            <!-- Help Section -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">Quick Setup Guide:</h3>
+                <ol class="list-decimal list-inside text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <li>Go to <a href="https://supabase.com" target="_blank" class="underline">supabase.com</a> and create a new project</li>
+                    <li>Find your project URL (format: https://abc123.supabase.co)</li>
+                    <li>Get your anon key from Settings → API</li>
+                    <li>Run the SQL commands from the setup instructions to create tables</li>
+                </ol>
+            </div>
+
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-2">Supabase URL</label>
-                    <input type="text" id="supabaseUrl" placeholder="https://your-project.supabase.co" 
+                    <input type="text" id="supabaseUrl" placeholder="https://your-project-ref.supabase.co" 
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Format: https://[project-ref].supabase.co</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-2">Anon Key</label>
-                    <input type="password" id="supabaseKey" placeholder="Your anon key" 
+                    <input type="password" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Find in Settings → API → anon/public key</p>
                 </div>
+                
+                <!-- Database Setup Instructions -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <h4 class="font-medium mb-2">Database Setup Required:</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">After connecting, run these SQL commands in your Supabase SQL Editor:</p>
+                    <button id="showSqlBtn" class="text-primary hover:text-secondary text-sm underline mt-1">Show SQL Commands</button>
+                    <div id="sqlCommands" class="hidden mt-3 bg-gray-800 text-green-400 p-3 rounded text-xs overflow-x-auto">
+                        <pre>-- Create patients table
+CREATE TABLE patients (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  date_of_birth DATE,
+  address TEXT,
+  medical_history TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create appointments table  
+CREATE TABLE appointments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  appointment_date TIMESTAMP,
+  duration INTEGER,
+  status TEXT DEFAULT 'scheduled',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create treatments table
+CREATE TABLE treatments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  appointment_id UUID REFERENCES appointments(id),
+  treatment_type TEXT,
+  description TEXT,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create exercises table
+CREATE TABLE exercises (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  difficulty_level TEXT,
+  instructions TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);</pre>
+                    </div>
+                </div>
+
                 <div class="flex justify-end space-x-3 mt-6">
                     <button id="cancelConnection" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
                     <button id="confirmConnection" class="px-4 py-2 bg-primary text-white hover:bg-secondary rounded-lg">Connect</button>
@@ -368,11 +437,17 @@
         });
 
         document.getElementById('confirmConnection').addEventListener('click', async () => {
-            const url = document.getElementById('supabaseUrl').value;
-            const key = document.getElementById('supabaseKey').value;
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
 
             if (!url || !key) {
                 showNotification('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Validate URL format
+            if (!url.includes('.supabase.co')) {
+                showNotification('Invalid Supabase URL format. Should be: https://your-project-ref.supabase.co', 'error');
                 return;
             }
 
@@ -380,27 +455,49 @@
                 showLoading();
                 supabase = window.supabase.createClient(url, key);
                 
-                // Test connection
-                const { data, error } = await supabase.from('patients').select('count').limit(1);
+                // Test connection with a simple query
+                const { data, error } = await supabase.auth.getUser();
                 
-                if (error && !error.message.includes('relation "patients" does not exist')) {
-                    throw error;
+                if (error && error.message.includes('Invalid API key')) {
+                    throw new Error('Invalid API key. Please check your anon key.');
                 }
 
-                // Create tables if they don't exist
-                await initializeDatabase();
+                // Try to access a table (this will help us know if the connection works)
+                try {
+                    await supabase.from('patients').select('count').limit(1);
+                } catch (tableError) {
+                    if (tableError.message.includes('relation "patients" does not exist')) {
+                        showNotification('Connection successful! Please create the database tables as shown in the instructions.', 'success');
+                    } else if (tableError.message.includes('permission denied')) {
+                        showNotification('Connection successful! Please enable Row Level Security policies for your tables.', 'success');
+                    } else {
+                        console.log('Table access error (this is normal for new projects):', tableError);
+                    }
+                }
 
                 document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
                 document.getElementById('supabaseModal').classList.add('hidden');
                 showNotification('Successfully connected to Supabase!');
                 
-                // Load initial data
+                // Try to load initial data
                 await loadDashboardData();
                 await loadPatients();
                 
             } catch (error) {
                 console.error('Connection error:', error);
-                showNotification('Failed to connect to Supabase: ' + error.message, 'error');
+                let errorMessage = 'Failed to connect to Supabase: ';
+                
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Network error. Please check your URL and internet connection.';
+                } else if (error.message.includes('Invalid API key')) {
+                    errorMessage += 'Invalid API key. Please check your anon key.';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage += 'CORS error. Please check your Supabase project settings.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
             } finally {
                 hideLoading();
             }
@@ -802,6 +899,20 @@
         // Initialize with dashboard view
         document.querySelector('[data-view="dashboard"]').classList.add('bg-primary', 'text-white');
         showView('dashboard');
+
+        // SQL Commands toggle
+        document.getElementById('showSqlBtn').addEventListener('click', () => {
+            const sqlCommands = document.getElementById('sqlCommands');
+            const btn = document.getElementById('showSqlBtn');
+            
+            if (sqlCommands.classList.contains('hidden')) {
+                sqlCommands.classList.remove('hidden');
+                btn.textContent = 'Hide SQL Commands';
+            } else {
+                sqlCommands.classList.add('hidden');
+                btn.textContent = 'Show SQL Commands';
+            }
+        });
 
         // Show connection prompt
         setTimeout(() => {
