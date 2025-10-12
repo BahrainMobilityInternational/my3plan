@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -614,9 +614,7 @@
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="exercises">
                     <i class="fas fa-dumbbell mr-3"></i>Exercises
                 </button>
-                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="ai-analysis">
-                    <i class="fas fa-robot mr-3"></i>AI Document Analysis
-                </button>
+
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="reports">
                     <i class="fas fa-chart-bar mr-3"></i>Reports
                 </button>
@@ -1100,155 +1098,7 @@
                 </div>
             </div>
 
-            <!-- AI Document Analysis View -->
-            <div id="ai-analysis" class="view hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-3xl font-bold">AI Document Analysis</h1>
-                </div>
 
-                <!-- Analysis Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-purple-100">Documents Analyzed</p>
-                                <p class="text-3xl font-bold" id="totalAnalyzed">0</p>
-                            </div>
-                            <i class="fas fa-file-medical-alt text-4xl text-purple-200"></i>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-6 rounded-lg shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-indigo-100">Avg Processing Time</p>
-                                <p class="text-3xl font-bold" id="avgProcessingTime">0s</p>
-                            </div>
-                            <i class="fas fa-clock text-4xl text-indigo-200"></i>
-                        </div>
-                    </div>
-                    <div class="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-6 rounded-lg shadow-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-teal-100">Data Points Extracted</p>
-                                <p class="text-3xl font-bold" id="dataExtracted">0</p>
-                            </div>
-                            <i class="fas fa-database text-4xl text-teal-200"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Document Upload Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Upload Area -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-                        <h3 class="text-xl font-semibold mb-4">Upload Documents for Analysis</h3>
-                        
-                        <!-- Analysis Type Selection -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">Analysis Type</label>
-                            <select id="analysisType" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
-                                <option value="general">General Medical Document</option>
-                                <option value="medical-report">Medical Report</option>
-                                <option value="lab-results">Laboratory Results</option>
-                                <option value="treatment-notes">Treatment Notes</option>
-                                <option value="insurance-form">Insurance Form</option>
-                                <option value="prescription">Prescription</option>
-                                <option value="diagnostic-image">Diagnostic Image</option>
-                                <option value="patient-form">Patient Form</option>
-                            </select>
-                        </div>
-
-                        <!-- File Upload Area -->
-                        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
-                            <input type="file" id="documentUpload" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" class="hidden">
-                            <div class="mb-4">
-                                <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-4"></i>
-                                <p class="text-gray-600 dark:text-gray-400 mb-2">Drag and drop files here, or click to browse</p>
-                                <p class="text-gray-500 text-sm">Supports PDF, Word docs, images, and text files</p>
-                            </div>
-                        </div>
-
-                        <!-- Uploaded Files List -->
-                        <div id="uploadedFiles" class="mt-4 space-y-3">
-                            <!-- Files will be displayed here -->
-                        </div>
-
-                        <!-- Analyze Button - Prominent when files are uploaded -->
-                        <div id="analyzeButtonContainer" class="mt-6 text-center hidden">
-                            <button id="analyzeBtn" class="bg-primary text-white px-8 py-4 rounded-lg hover:bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed animate-pulse text-lg font-semibold shadow-lg">
-                                <i class="fas fa-brain mr-3 text-xl"></i>Analyze Documents Now
-                            </button>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Click to start AI analysis of your uploaded documents</p>
-                        </div>
-                    </div>
-
-                    <!-- Analysis Results -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-xl font-semibold">Analysis Results</h3>
-                            <div class="flex space-x-2">
-                                <button id="saveToPatientBtn" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                    <i class="fas fa-save mr-1"></i>Save to Patient
-                                </button>
-                                <button id="generateReportBtn" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                    <i class="fas fa-file-word mr-1"></i>Generate Report
-                                </button>
-                                <button id="exportDataBtn" class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                    <i class="fas fa-download mr-1"></i>Export Data
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Analysis Status -->
-                        <div id="analysisStatus" class="hidden text-center py-8">
-                            <i class="fas fa-brain text-primary text-4xl mb-4 animate-pulse"></i>
-                            <p class="text-lg font-medium">Analyzing documents with AI...</p>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm">This may take a few moments</p>
-                        </div>
-
-                        <!-- Default State -->
-                        <div id="defaultAnalysisState" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                            <i class="fas fa-robot text-4xl mb-4"></i>
-                            <p>Upload documents and click "Analyze" to get started</p>
-                        </div>
-
-                        <!-- Results Display -->
-                        <div id="analysisResults" class="hidden">
-                            <!-- Key Information -->
-                            <div class="mb-6">
-                                <h4 class="text-lg font-semibold mb-3">Key Information</h4>
-                                <div id="keyInfo" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                                    <!-- Key info will be populated here -->
-                                </div>
-                            </div>
-
-                            <!-- Extracted Data -->
-                            <div class="mb-6">
-                                <h4 class="text-lg font-semibold mb-3">Extracted Data</h4>
-                                <div id="extractedData" class="space-y-3">
-                                    <!-- Extracted data will be populated here -->
-                                </div>
-                            </div>
-
-                            <!-- AI Summary -->
-                            <div class="mb-6">
-                                <h4 class="text-lg font-semibold mb-3">AI Summary</h4>
-                                <div id="aiSummary" class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                                    <!-- AI summary will be populated here -->
-                                </div>
-                            </div>
-
-                            <!-- Recommendations -->
-                            <div class="mb-6">
-                                <h4 class="text-lg font-semibold mb-3">Recommendations</h4>
-                                <div id="recommendations" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                                    <!-- Recommendations will be populated here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Reports View -->
             <div id="reports" class="view hidden">
