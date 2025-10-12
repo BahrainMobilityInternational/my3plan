@@ -4599,10 +4599,13 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     checkbox.checked = physio.specializations?.includes(checkbox.value) || false;
                 });
 
-                // Hide password fields for editing
+                // Hide password fields for editing and remove required attributes
                 const passwordGrid = document.getElementById('physioPassword').closest('.grid');
                 if (passwordGrid) {
                     passwordGrid.style.display = 'none';
+                    // Remove required attributes during edit mode
+                    document.getElementById('physioPassword').removeAttribute('required');
+                    document.getElementById('physioConfirmPassword').removeAttribute('required');
                 }
 
                 // Show modal
