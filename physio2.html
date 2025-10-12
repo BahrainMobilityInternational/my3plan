@@ -4337,6 +4337,22 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
         // Physiotherapist functions
         document.getElementById('addPhysiotherapistBtn').addEventListener('click', () => {
+            // Reset form and state for new physiotherapist
+            document.getElementById('physiotherapistModalTitle').textContent = 'Add Physiotherapist';
+            document.getElementById('physiotherapistForm').reset();
+            currentPhysiotherapistId = null;
+            
+            // Show password fields for new physiotherapists
+            const passwordGrid = document.getElementById('physioPassword').closest('.grid');
+            if (passwordGrid) {
+                passwordGrid.style.display = '';
+            }
+            
+            // Clear all specialization checkboxes
+            document.querySelectorAll('.specialization').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
             document.getElementById('physiotherapistModal').classList.remove('hidden');
         });
 
@@ -4584,7 +4600,10 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 });
 
                 // Hide password fields for editing
-                document.getElementById('physioPassword').closest('.grid').style.display = 'none';
+                const passwordGrid = document.getElementById('physioPassword').closest('.grid');
+                if (passwordGrid) {
+                    passwordGrid.style.display = 'none';
+                }
 
                 // Show modal
                 document.getElementById('physiotherapistModal').classList.remove('hidden');
