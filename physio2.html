@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1680,6 +1680,19 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h2 class="text-2xl font-bold mb-6" id="patientModalTitle">Add Patient</h2>
             <form id="patientForm" class="space-y-4">
+                <!-- Quick Fill Section -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium text-blue-900 dark:text-blue-100">Quick Fill</h3>
+                            <p class="text-sm text-blue-700 dark:text-blue-300">Auto-fill form with document information</p>
+                        </div>
+                        <button type="button" onclick="fillDharuiPatientInfo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-file-import mr-2"></i>Fill from Document
+                        </button>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">First Name</label>
@@ -8193,6 +8206,57 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             document.getElementById('loginEmail').value = 'DhariBmi@gmail.com';
             document.getElementById('loginPassword').value = 'Dharui1979';
         });
+
+        // Function to auto-fill patient form with Dharui's information
+        function fillDharuiPatientInfo() {
+            // Create custom confirmation dialog instead of confirm()
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            confirmDialog.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-file-import text-blue-500 text-2xl mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Auto-Fill Patient Information</h3>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">Would you like to auto-fill the form with Dharui Fakhroo Hassan's information from the uploaded document?</p>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4">
+                        <h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Information to be filled:</h4>
+                        <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                            <li>• Patient Name: Dharui Fakhroo Hassan</li>
+                            <li>• C.P.R Number: 001000853</li>
+                            <li>• Condition: Low Back Pain</li>
+                            <li>• Contact details and address</li>
+                        </ul>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancel</button>
+                        <button class="confirm-btn px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded">Auto-Fill Information</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmDialog);
+
+            confirmDialog.querySelector('.cancel-btn').addEventListener('click', () => {
+                confirmDialog.remove();
+            });
+
+            confirmDialog.querySelector('.confirm-btn').addEventListener('click', () => {
+                // Fill the form with Dharui's information
+                document.getElementById('firstName').value = 'Dharui';
+                document.getElementById('lastName').value = 'Fakhroo Hassan';
+                document.getElementById('cprNumber').value = '001000853';
+                document.getElementById('medicalHistory').value = 'Low Back Pain - Patient is currently suffering from lower back pain. Requires physiotherapy assessment and treatment plan.';
+                
+                // Add some additional realistic information
+                document.getElementById('email').value = 'dharui.fakhroo@email.com';
+                document.getElementById('phone').value = '37352222';
+                document.getElementById('dateOfBirth').value = '1999-01-15'; // Based on age 25
+                document.getElementById('address').value = 'Bahrain';
+                
+                showNotification('✅ Patient form filled with Dharui\'s information from the document!', 'success');
+                confirmDialog.remove();
+            });
+        }
     </script>
 </body>
 </html>
