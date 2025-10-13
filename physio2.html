@@ -435,7 +435,7 @@
                         <i class="fas fa-calendar mr-3"></i>My Appointments
                     </button>
                     <button class="physio-nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physio-patients">
-                        <i class="fas fa-users mr-3"></i>My Patients
+                        <i class="fas fa-folder-open mr-3"></i>Patient File
                     </button>
                     <button class="physio-nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physio-exercises">
                         <i class="fas fa-dumbbell mr-3"></i>Exercises
@@ -1772,6 +1772,114 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" id="cancelAppointment" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
                     <button type="submit" class="px-4 py-2 bg-primary text-white hover:bg-secondary rounded-lg">Save Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Physiotherapist Patient Edit Modal (Restricted) -->
+    <div id="physioPatientEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6">Patient Information - Limited Edit</h2>
+            <form id="physioPatientForm" class="space-y-4">
+                <!-- Read-only patient info -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                    <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>Patient Information (Read-Only)
+                    </h3>
+                    <p class="text-sm text-blue-800 dark:text-blue-200">As a physiotherapist, you can view patient details but cannot edit personal information.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">First Name</label>
+                        <input type="text" id="physioFirstNameView" readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-base cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Last Name</label>
+                        <input type="text" id="physioLastNameView" readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-base cursor-not-allowed">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Email</label>
+                    <input type="email" id="physioEmailView" readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-base cursor-not-allowed">
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Phone</label>
+                        <input type="tel" id="physioPhoneView" readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-base cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">C.P.R Number</label>
+                        <input type="text" id="physioCprView" readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-base cursor-not-allowed">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Date of Birth</label>
+                    <input type="date" id="physioDateOfBirthView" readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-base cursor-not-allowed">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Address</label>
+                    <textarea id="physioAddressView" rows="3" readonly class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-base cursor-not-allowed"></textarea>
+                </div>
+                
+                <!-- Editable medical history -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h3 class="font-semibold text-green-900 dark:text-green-100 mb-4">
+                        <i class="fas fa-edit mr-2"></i>Editable Medical Information
+                    </h3>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Medical History & Treatment Notes</label>
+                        <textarea id="physioMedicalHistoryEdit" rows="6" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="Add medical history, treatment notes, observations..."></textarea>
+                        <p class="text-xs text-gray-500 mt-1">You can update medical history and add treatment notes</p>
+                    </div>
+                </div>
+
+                <!-- Add new treatment section -->
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h3 class="font-semibold text-green-900 dark:text-green-100 mb-4">
+                        <i class="fas fa-plus mr-2"></i>Add New Treatment
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Treatment Type</label>
+                            <select id="physioNewTreatmentType" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                                <option value="">Select Treatment Type</option>
+                                <option value="Manual Therapy">Manual Therapy</option>
+                                <option value="Exercise Therapy">Exercise Therapy</option>
+                                <option value="Electrotherapy">Electrotherapy</option>
+                                <option value="Massage Therapy">Massage Therapy</option>
+                                <option value="Heat/Cold Therapy">Heat/Cold Therapy</option>
+                                <option value="Ultrasound">Ultrasound</option>
+                                <option value="Assessment">Initial Assessment</option>
+                                <option value="Follow-up">Follow-up Session</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Treatment Description</label>
+                            <textarea id="physioTreatmentDescription" rows="4" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base" placeholder="Describe the treatment provided..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Treatment Notes</label>
+                            <textarea id="physioTreatmentNotes" rows="3" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base" placeholder="Additional notes, patient response, recommendations..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" id="cancelPhysioPatientEdit" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-secondary text-white hover:bg-primary rounded-lg">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
                 </div>
             </form>
         </div>
@@ -3595,13 +3703,16 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                         <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                             <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">Active</span>
                             <div class="flex space-x-2">
-                                <button onclick="viewPatientDetails('${patient.id}')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <button onclick="viewPatientDetails('${patient.id}')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button onclick="editPatient('${patient.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <button onclick="editPatient('${patient.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Patient">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button onclick="deletePatient('${patient.id}')" class="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <button onclick="assignPatientToPhysiotherapist('${patient.id}')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Assign to Physiotherapist">
+                                    <i class="fas fa-user-md"></i>
+                                </button>
+                                <button onclick="deletePatient('${patient.id}')" class="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Patient">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -3785,18 +3896,27 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     }
                 }
 
-                document.getElementById('patientModalTitle').textContent = 'Edit Patient';
-                document.getElementById('firstName').value = patient.first_name;
-                document.getElementById('lastName').value = patient.last_name;
-                document.getElementById('email').value = patient.email || '';
-                document.getElementById('phone').value = patient.phone || '';
-                document.getElementById('cprNumber').value = patient.cpr_number || '';
-                document.getElementById('dateOfBirth').value = patient.date_of_birth || '';
-                document.getElementById('address').value = patient.address || '';
-                document.getElementById('medicalHistory').value = patient.medical_history || '';
+                // Check user role to determine edit permissions
+                const isPhysiotherapist = currentUser && currentUser.role === 'physiotherapist';
                 
-                currentPatientId = id;
-                document.getElementById('patientModal').classList.remove('hidden');
+                if (isPhysiotherapist) {
+                    // Physiotherapist has limited editing - show restricted modal
+                    showPhysiotherapistPatientEditModal(patient);
+                } else {
+                    // Admin has full editing access
+                    document.getElementById('patientModalTitle').textContent = 'Edit Patient';
+                    document.getElementById('firstName').value = patient.first_name;
+                    document.getElementById('lastName').value = patient.last_name;
+                    document.getElementById('email').value = patient.email || '';
+                    document.getElementById('phone').value = patient.phone || '';
+                    document.getElementById('cprNumber').value = patient.cpr_number || '';
+                    document.getElementById('dateOfBirth').value = patient.date_of_birth || '';
+                    document.getElementById('address').value = patient.address || '';
+                    document.getElementById('medicalHistory').value = patient.medical_history || '';
+                    
+                    currentPatientId = id;
+                    document.getElementById('patientModal').classList.remove('hidden');
+                }
 
             } catch (error) {
                 console.error('Error loading patient:', error);
@@ -4475,33 +4595,96 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
         async function loadPhysiotherapists() {
             if (!supabase) {
-                // Show sample data
+                // Show sample data including Mariam
                 const grid = document.getElementById('physiotherapistsGrid');
                 grid.innerHTML = `
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
                         <div class="flex items-center mb-4">
                             <div class="w-16 h-16 bg-secondary rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-                                SJ
+                                MA
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold">Dr. Sarah Johnson</h3>
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">Orthopedic Specialist</p>
+                                <h3 class="text-lg font-semibold">Dr. Mariam Abdulatheem Ali</h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm">Orthopedic, Sports Medicine, Manual Therapy</p>
+                                <p class="text-gray-500 text-sm">7 years experience</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-envelope w-4 mr-2 text-gray-400"></i>
+                                <span>Mariambmi@gmail.com</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-phone w-4 mr-2 text-gray-400"></i>
+                                <span>97362123</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-id-card w-4 mr-2 text-gray-400"></i>
+                                <span>License: PT-2024-MA</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">Active</span>
+                            <div class="flex space-x-2">
+                                <button onclick="editPhysiotherapist('mariam-physio-001')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Physiotherapist">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deletePhysiotherapist('mariam-physio-001')" class="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Physiotherapist">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                        <div class="flex items-center mb-4">
+                            <div class="w-16 h-16 bg-secondary rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                DF
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold">Dr. Dhari Fakhroo</h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm">Orthopedic, Neurological, Pediatric, Geriatric</p>
                                 <p class="text-gray-500 text-sm">5 years experience</p>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Active</span>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-envelope w-4 mr-2 text-gray-400"></i>
+                                <span>Dharui12bmi@gmail.com</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-phone w-4 mr-2 text-gray-400"></i>
+                                <span>4444444444</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-id-card w-4 mr-2 text-gray-400"></i>
+                                <span>License: 4455745145</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">Active</span>
                             <div class="flex space-x-2">
-                                <button class="p-2 text-blue-600 hover:text-blue-800">
+                                <button onclick="editPhysiotherapist('dhari-physio-001')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Physiotherapist">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="p-2 text-red-500 hover:text-red-700">
+                                <button onclick="deletePhysiotherapist('dhari-physio-001')" class="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Physiotherapist">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
                 `;
+                
+                // Update stats for demo mode
+                document.getElementById('totalPhysiotherapists').textContent = '2';
+                document.getElementById('activeToday').textContent = '2';
+                document.getElementById('avgExperience').textContent = '6'; // (7 + 5) / 2
+                document.getElementById('avgRating').textContent = '4.8';
+                
                 return;
             }
 
@@ -7137,6 +7320,249 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 }
             } else {
                 showNotification('No uploaded documents found', 'error');
+            }
+        }
+
+        // Physiotherapist Patient Edit Modal Functions
+        function showPhysiotherapistPatientEditModal(patient) {
+            // Fill in read-only patient information
+            document.getElementById('physioFirstNameView').value = patient.first_name;
+            document.getElementById('physioLastNameView').value = patient.last_name;
+            document.getElementById('physioEmailView').value = patient.email || '';
+            document.getElementById('physioPhoneView').value = patient.phone || '';
+            document.getElementById('physioCprView').value = patient.cpr_number || '';
+            document.getElementById('physioDateOfBirthView').value = patient.date_of_birth || '';
+            document.getElementById('physioAddressView').value = patient.address || '';
+            
+            // Fill in editable medical history
+            document.getElementById('physioMedicalHistoryEdit').value = patient.medical_history || '';
+            
+            // Clear treatment form
+            document.getElementById('physioNewTreatmentType').value = '';
+            document.getElementById('physioTreatmentDescription').value = '';
+            document.getElementById('physioTreatmentNotes').value = '';
+            
+            // Show the modal
+            document.getElementById('physioPatientEditModal').classList.remove('hidden');
+        }
+
+        // Handle physiotherapist patient form submission
+        document.getElementById('physioPatientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentPatientId) {
+                showNotification('No patient selected', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                // Update medical history (only field physiotherapists can edit)
+                const updatedMedicalHistory = document.getElementById('physioMedicalHistoryEdit').value.trim();
+                
+                if (supabase) {
+                    const { error } = await supabase
+                        .from('patients')
+                        .update({ medical_history: updatedMedicalHistory })
+                        .eq('id', currentPatientId);
+                    
+                    if (error) throw error;
+                }
+                
+                // Add new treatment if provided
+                const treatmentType = document.getElementById('physioNewTreatmentType').value;
+                const treatmentDescription = document.getElementById('physioTreatmentDescription').value;
+                const treatmentNotes = document.getElementById('physioTreatmentNotes').value;
+                
+                if (treatmentType && treatmentDescription) {
+                    const treatmentData = {
+                        patient_id: currentPatientId,
+                        physiotherapist_id: currentUser?.physioId || null,
+                        treatment_type: treatmentType,
+                        description: treatmentDescription,
+                        notes: treatmentNotes,
+                        duration: 60 // Default duration
+                    };
+                    
+                    if (supabase) {
+                        const { error: treatmentError } = await supabase
+                            .from('treatments')
+                            .insert([treatmentData]);
+                        
+                        if (treatmentError) throw treatmentError;
+                    }
+                    
+                    showNotification('Medical history updated and new treatment added successfully!');
+                } else {
+                    showNotification('Medical history updated successfully!');
+                }
+                
+                // Close modal and refresh data
+                document.getElementById('physioPatientEditModal').classList.add('hidden');
+                
+                // Reload patient details if we're in patient view
+                if (document.getElementById('patientDetailsView') && !document.getElementById('patientDetailsView').classList.contains('hidden')) {
+                    loadPatientDetails(currentPatientId);
+                }
+                
+            } catch (error) {
+                console.error('Error updating patient:', error);
+                showNotification('Error updating patient: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Handle physiotherapist patient edit modal close
+        document.getElementById('cancelPhysioPatientEdit').addEventListener('click', () => {
+            document.getElementById('physioPatientEditModal').classList.add('hidden');
+        });
+
+        // Patient assignment to physiotherapist function
+        async function assignPatientToPhysiotherapist(patientId) {
+            if (!supabase) {
+                showNotification('Please connect to Supabase first', 'error');
+                return;
+            }
+
+            try {
+                // Load available physiotherapists
+                const { data: physiotherapists, error } = await supabase
+                    .from('physiotherapists')
+                    .select('id, first_name, last_name, specializations')
+                    .eq('is_active', true)
+                    .order('first_name');
+
+                if (error) throw error;
+
+                if (!physiotherapists || physiotherapists.length === 0) {
+                    showNotification('No active physiotherapists found. Please add physiotherapists first.', 'error');
+                    return;
+                }
+
+                // Load patient info
+                const { data: patient } = await supabase
+                    .from('patients')
+                    .select('first_name, last_name')
+                    .eq('id', patientId)
+                    .single();
+
+                // Create assignment modal
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-user-md text-primary text-2xl mr-3"></i>
+                            <h3 class="text-lg font-semibold">Assign Patient to Physiotherapist</h3>
+                        </div>
+                        
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                            <h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Patient: ${patient?.first_name || ''} ${patient?.last_name || ''}</h4>
+                            <p class="text-sm text-blue-800 dark:text-blue-200">This patient will be assigned exclusively to the selected physiotherapist. Only that physiotherapist will see appointments for this patient.</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Select Physiotherapist</label>
+                            <select id="selectPhysiotherapist" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                                <option value="">Choose a physiotherapist...</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Assignment Notes (Optional)</label>
+                            <textarea id="assignmentNotes" rows="3" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base" placeholder="Special instructions or notes for this assignment..."></textarea>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancel</button>
+                            <button onclick="confirmAssignment('${patientId}')" class="px-4 py-2 bg-primary text-white hover:bg-secondary rounded">
+                                <i class="fas fa-user-md mr-2"></i>Assign Patient
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                // Populate physiotherapist dropdown
+                const select = document.getElementById('selectPhysiotherapist');
+                physiotherapists.forEach(physio => {
+                    const option = document.createElement('option');
+                    option.value = physio.id;
+                    const specializations = physio.specializations?.length > 0 ? ` (${physio.specializations.join(', ')})` : '';
+                    option.textContent = `Dr. ${physio.first_name} ${physio.last_name}${specializations}`;
+                    select.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Error loading physiotherapists for assignment:', error);
+                showNotification('Error loading physiotherapists: ' + error.message, 'error');
+            }
+        }
+
+        async function confirmAssignment(patientId) {
+            const physiotherapistId = document.getElementById('selectPhysiotherapist').value;
+            const notes = document.getElementById('assignmentNotes').value;
+
+            if (!physiotherapistId) {
+                showNotification('Please select a physiotherapist', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+
+                const { data: physio } = await supabase
+                    .from('physiotherapists')
+                    .select('first_name, last_name')
+                    .eq('id', physiotherapistId)
+                    .single();
+
+                const { data: patient } = await supabase
+                    .from('patients')
+                    .select('first_name, last_name')
+                    .eq('id', patientId)
+                    .single();
+
+                // Create assignment through appointment with special assignment flag
+                const assignmentDate = new Date();
+                assignmentDate.setDate(assignmentDate.getDate() + 1); // Tomorrow
+                assignmentDate.setHours(10, 0, 0, 0); // 10 AM
+
+                const { error: appointmentError } = await supabase
+                    .from('appointments')
+                    .insert([{
+                        patient_id: patientId,
+                        physiotherapist_id: physiotherapistId,
+                        appointment_date: assignmentDate.toISOString(),
+                        duration: 60,
+                        status: 'scheduled',
+                        notes: `🎯 ASSIGNED PATIENT: ${notes || 'This patient has been assigned to this physiotherapist by admin. Only this physiotherapist should see appointments for this patient.'}`
+                    }]);
+
+                if (appointmentError) throw appointmentError;
+
+                // Update all future appointments for this patient to this physiotherapist
+                const { error: updateError } = await supabase
+                    .from('appointments')
+                    .update({ physiotherapist_id: physiotherapistId })
+                    .eq('patient_id', patientId)
+                    .gte('appointment_date', new Date().toISOString());
+
+                if (updateError) console.log('Note: Some appointments may not have been reassigned:', updateError);
+
+                // Close modal
+                document.querySelector('.fixed').remove();
+
+                showNotification(`✅ ${patient.first_name} ${patient.last_name} has been assigned to Dr. ${physio.first_name} ${physio.last_name}. This physiotherapist will now exclusively see appointments for this patient.`, 'success');
+
+                // Reload patients list to update UI
+                await loadPatients();
+
+            } catch (error) {
+                console.error('Error assigning patient:', error);
+                showNotification('Error assigning patient: ' + error.message, 'error');
+            } finally {
+                hideLoading();
             }
         }
 
