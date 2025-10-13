@@ -1172,14 +1172,14 @@
             const addAppointmentBtn = document.getElementById('addAppointmentBtn');
             if (addAppointmentBtn) {
                 addAppointmentBtn.addEventListener('click', () => {
-                    showNotification('Add Appointment feature available in full version!');
+                    showAddAppointmentModal();
                 });
             }
 
             const addPhysiotherapistBtn = document.getElementById('addPhysiotherapistBtn');
             if (addPhysiotherapistBtn) {
                 addPhysiotherapistBtn.addEventListener('click', () => {
-                    showNotification('Add Physiotherapist feature available in full version!');
+                    showAddPhysiotherapistModal();
                 });
             }
 
@@ -1698,6 +1698,511 @@
             
             // Add the new patient card at the beginning of the grid
             patientsGrid.insertBefore(patientCard, patientsGrid.firstChild);
+        }
+
+        // Add Appointment Modal Function
+        function showAddAppointmentModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-plus text-primary text-2xl mr-3"></i>
+                                <h2 class="text-2xl font-bold">Schedule New Appointment</h2>
+                            </div>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form id="addAppointmentForm" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Appointment Details -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-calendar text-primary mr-2"></i>
+                                    Appointment Details
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Patient *</label>
+                                <select id="appointmentPatient" required 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="">Select a patient...</option>
+                                    <option value="dharui-patient">Dharui Fakhroo (Dharui123@gmail.com)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Physiotherapist *</label>
+                                <select id="appointmentPhysiotherapist" required 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="">Select a physiotherapist...</option>
+                                    <option value="mariam-physio-001">Dr. Mariam Abdulatheem Ali</option>
+                                    <option value="dhari-physio-001">Dr. Dhari Fakhroo</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Date *</label>
+                                <input type="date" id="appointmentDate" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Time *</label>
+                                <input type="time" id="appointmentTime" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Duration (minutes)</label>
+                                <select id="appointmentDuration" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="30">30 minutes</option>
+                                    <option value="45">45 minutes</option>
+                                    <option value="60" selected>60 minutes</option>
+                                    <option value="90">90 minutes</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Appointment Type</label>
+                                <select id="appointmentType" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="initial">Initial Assessment</option>
+                                    <option value="follow-up" selected>Follow-up Session</option>
+                                    <option value="treatment">Treatment Session</option>
+                                    <option value="review">Review Session</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-span-full">
+                                <label class="block text-sm font-medium mb-2">Notes</label>
+                                <textarea id="appointmentNotes" rows="4" 
+                                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                          placeholder="Enter any notes or special instructions for this appointment..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-primary text-white hover:bg-secondary rounded-lg transition-colors font-medium">
+                                <i class="fas fa-calendar-plus mr-2"></i>Schedule Appointment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Set default date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('appointmentDate').value = tomorrow.toISOString().split('T')[0];
+            
+            // Set default time to 10:00 AM
+            document.getElementById('appointmentTime').value = '10:00';
+            
+            // Handle form submission
+            document.getElementById('addAppointmentForm').addEventListener('submit', handleAddAppointment);
+        }
+
+        // Handle Add Appointment Form Submission
+        async function handleAddAppointment(e) {
+            e.preventDefault();
+            
+            const patientId = document.getElementById('appointmentPatient').value;
+            const physiotherapistId = document.getElementById('appointmentPhysiotherapist').value;
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('appointmentTime').value;
+            
+            if (!patientId || !physiotherapistId || !date || !time) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // Create appointment object
+                const appointmentDateTime = new Date(`${date}T${time}`);
+                const duration = document.getElementById('appointmentDuration').value;
+                const type = document.getElementById('appointmentType').value;
+                const notes = document.getElementById('appointmentNotes').value.trim();
+                
+                const newAppointment = {
+                    id: `appointment-${Date.now()}`,
+                    patient_id: patientId,
+                    physiotherapist_id: physiotherapistId,
+                    appointment_date: appointmentDateTime.toISOString(),
+                    duration: parseInt(duration),
+                    type: type,
+                    status: 'scheduled',
+                    notes: notes || 'Regular appointment scheduled by administrator',
+                    created_at: new Date().toISOString(),
+                    patient_name: patientId === 'dharui-patient' ? 'Dharui Fakhroo' : 'Unknown Patient',
+                    physiotherapist_name: physiotherapistId === 'mariam-physio-001' ? 'Dr. Mariam Abdulatheem Ali' : 'Dr. Dhari Fakhroo'
+                };
+                
+                // Store appointment in local array for demo
+                if (!window.appointments) {
+                    window.appointments = [];
+                }
+                window.appointments.push(newAppointment);
+                
+                // Add appointment to the appointments view
+                addAppointmentToView(newAppointment);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                hideLoading();
+                
+                const appointmentDateStr = appointmentDateTime.toLocaleDateString();
+                const appointmentTimeStr = appointmentDateTime.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                showNotification(`✅ Appointment scheduled successfully for ${appointmentDateStr} at ${appointmentTimeStr}!`, 'success');
+                
+                // Update appointment count in dashboard
+                const appointmentsTodayElement = document.getElementById('appointmentsToday');
+                if (appointmentsTodayElement) {
+                    const currentCount = parseInt(appointmentsTodayElement.textContent) || 8;
+                    appointmentsTodayElement.textContent = currentCount + 1;
+                }
+                
+                console.log('New appointment created:', newAppointment);
+                
+            } catch (error) {
+                console.error('Error creating appointment:', error);
+                showNotification('Error creating appointment: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        // Add Appointment to View
+        function addAppointmentToView(appointment) {
+            const appointmentsView = document.getElementById('appointments');
+            if (!appointmentsView) return;
+            
+            // Find the existing appointment container or create new one
+            let appointmentsContainer = appointmentsView.querySelector('.appointments-list');
+            if (!appointmentsContainer) {
+                appointmentsContainer = document.createElement('div');
+                appointmentsContainer.className = 'appointments-list space-y-4';
+                // Add after the title and button
+                const existingContent = appointmentsView.querySelector('.bg-white.dark\\:bg-gray-800.rounded-lg.shadow-lg.p-6');
+                if (existingContent) {
+                    existingContent.parentNode.insertBefore(appointmentsContainer, existingContent);
+                } else {
+                    appointmentsView.appendChild(appointmentsContainer);
+                }
+            }
+            
+            const appointmentDate = new Date(appointment.appointment_date);
+            const appointmentTime = appointmentDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const appointmentDateStr = appointmentDate.toLocaleDateString();
+            
+            // Create appointment card
+            const appointmentCard = document.createElement('div');
+            appointmentCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border-l-4 border-blue-500';
+            appointmentCard.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                            ${appointment.patient_name.split(' ').map(n => n.charAt(0)).join('')}
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">${appointment.patient_name}</h4>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">${appointment.physiotherapist_name}</p>
+                            <p class="text-gray-500 text-sm">${appointmentDateStr}, ${appointmentTime} (${appointment.duration} min)</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm">✨ New</span>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">${appointment.notes}</p>
+            `;
+            
+            // Add the new appointment card at the beginning
+            appointmentsContainer.insertBefore(appointmentCard, appointmentsContainer.firstChild);
+        }
+
+        // Add Physiotherapist Modal Function
+        function showAddPhysiotherapistModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-md text-primary text-2xl mr-3"></i>
+                                <h2 class="text-2xl font-bold">Add New Physiotherapist</h2>
+                            </div>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form id="addPhysiotherapistForm" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Personal Information -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-user text-primary mr-2"></i>
+                                    Personal Information
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">First Name *</label>
+                                <input type="text" id="physioFirstName" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Enter first name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Last Name *</label>
+                                <input type="text" id="physioLastName" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Enter last name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email *</label>
+                                <input type="email" id="physioEmail" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="physiotherapist@email.com">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Phone Number</label>
+                                <input type="tel" id="physioPhone" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="97123456">
+                            </div>
+                            
+                            <!-- Professional Information -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center mt-4">
+                                    <i class="fas fa-stethoscope text-primary mr-2"></i>
+                                    Professional Information
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">License Number *</label>
+                                <input type="text" id="physioLicense" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="PT-2024-XX">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Years of Experience</label>
+                                <input type="number" id="physioExperience" min="0" max="50" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="0">
+                            </div>
+                            
+                            <div class="col-span-full">
+                                <label class="block text-sm font-medium mb-2">Specializations</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="Orthopedic" class="physio-specialization mr-2">
+                                        <span class="text-sm">Orthopedic</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="Sports Medicine" class="physio-specialization mr-2">
+                                        <span class="text-sm">Sports Medicine</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="Neurological" class="physio-specialization mr-2">
+                                        <span class="text-sm">Neurological</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="Pediatric" class="physio-specialization mr-2">
+                                        <span class="text-sm">Pediatric</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="Geriatric" class="physio-specialization mr-2">
+                                        <span class="text-sm">Geriatric</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="Manual Therapy" class="physio-specialization mr-2">
+                                        <span class="text-sm">Manual Therapy</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Employment Status</label>
+                                <select id="physioEmploymentStatus" 
+                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="full-time">Full-time</option>
+                                    <option value="part-time">Part-time</option>
+                                    <option value="contract">Contract</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-primary text-white hover:bg-secondary rounded-lg transition-colors font-medium">
+                                <i class="fas fa-user-md mr-2"></i>Add Physiotherapist
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            document.getElementById('addPhysiotherapistForm').addEventListener('submit', handleAddPhysiotherapist);
+        }
+
+        // Handle Add Physiotherapist Form Submission
+        async function handleAddPhysiotherapist(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('physioFirstName').value.trim();
+            const lastName = document.getElementById('physioLastName').value.trim();
+            const email = document.getElementById('physioEmail').value.trim();
+            const license = document.getElementById('physioLicense').value.trim();
+            
+            if (!firstName || !lastName || !email || !license) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // Get selected specializations
+                const specializations = [];
+                document.querySelectorAll('.physio-specialization:checked').forEach(checkbox => {
+                    specializations.push(checkbox.value);
+                });
+                
+                // Create physiotherapist object
+                const newPhysiotherapist = {
+                    id: `physio-${Date.now()}`,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    phone: document.getElementById('physioPhone').value.trim(),
+                    license_number: license,
+                    years_experience: parseInt(document.getElementById('physioExperience').value) || 0,
+                    specializations: specializations,
+                    employment_status: document.getElementById('physioEmploymentStatus').value,
+                    is_active: true,
+                    created_at: new Date().toISOString()
+                };
+                
+                // Store physiotherapist in local array for demo
+                if (!window.physiotherapists) {
+                    window.physiotherapists = [];
+                }
+                window.physiotherapists.push(newPhysiotherapist);
+                
+                // Add physiotherapist card to the grid
+                addPhysiotherapistToGrid(newPhysiotherapist);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                hideLoading();
+                
+                showNotification(`✅ Physiotherapist "Dr. ${firstName} ${lastName}" has been added successfully!`, 'success');
+                
+                console.log('New physiotherapist added:', newPhysiotherapist);
+                
+            } catch (error) {
+                console.error('Error adding physiotherapist:', error);
+                showNotification('Error adding physiotherapist: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        // Add Physiotherapist Card to Grid
+        function addPhysiotherapistToGrid(physiotherapist) {
+            const physiotherapistsGrid = document.getElementById('physiotherapistsGrid');
+            if (!physiotherapistsGrid) return;
+            
+            // Create initials
+            const initials = (physiotherapist.first_name.charAt(0) + physiotherapist.last_name.charAt(0)).toUpperCase();
+            
+            // Create specializations text
+            const specializations = physiotherapist.specializations.length > 0 
+                ? physiotherapist.specializations.join(', ') 
+                : 'General Practice';
+            
+            // Create physiotherapist card
+            const physiotherapistCard = document.createElement('div');
+            physiotherapistCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-purple-500';
+            physiotherapistCard.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                        ${initials}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">Dr. ${physiotherapist.first_name} ${physiotherapist.last_name}</h3>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">${specializations}</p>
+                        <p class="text-gray-500 text-sm">${physiotherapist.years_experience} years experience</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-envelope w-4 mr-2 text-gray-400"></i>
+                        <span>${physiotherapist.email}</span>
+                    </div>
+                    ${physiotherapist.phone ? `
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-phone w-4 mr-2 text-gray-400"></i>
+                            <span>${physiotherapist.phone}</span>
+                        </div>
+                    ` : ''}
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-id-card w-4 mr-2 text-gray-400"></i>
+                        <span>License: ${physiotherapist.license_number}</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <span class="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded text-sm">
+                        ✨ New
+                    </span>
+                    <div class="flex space-x-2">
+                        <button onclick="editPhysiotherapist('${physiotherapist.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add the new physiotherapist card at the beginning of the grid
+            physiotherapistsGrid.insertBefore(physiotherapistCard, physiotherapistsGrid.firstChild);
         }
     </script>
 </body>
