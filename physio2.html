@@ -5688,6 +5688,9 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     document.getElementById('physioUserName').textContent = currentUser.name;
                     document.getElementById('physioUserEmail').textContent = currentUser.email;
                     
+                    // Setup physiotherapist-specific event listeners AFTER dashboard is visible
+                    setupPhysiotherapistEventListeners();
+                    
                     showNotification(`🎵 Welcome back, ${currentUser.name}! Voice announcements are ready.`);
                     
                     // Load physiotherapist dashboard data
@@ -5742,6 +5745,9 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 document.getElementById('physioUserName').textContent = currentUser.name;
                 document.getElementById('physioUserEmail').textContent = currentUser.email;
                 
+                // Setup physiotherapist-specific event listeners AFTER dashboard is visible
+                setupPhysiotherapistEventListeners();
+                
                 showNotification(`Welcome back, ${currentUser.name}!`);
                 
                 // Load physiotherapist dashboard data
@@ -5775,48 +5781,75 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             }
         });
 
-        // Physiotherapist logout
-        const physioLogoutBtn = document.getElementById('physioLogoutBtn');
-        if (physioLogoutBtn) {
-            physioLogoutBtn.addEventListener('click', async () => {
-                try {
-                    showLoading();
-                    
-                    // Sign out from Supabase
-                    if (supabase) {
-                        await supabase.auth.signOut();
-                    }
-                    
-                    // Clear user data
-                    currentUser = null;
-                    isLoggedIn = false;
-                    
-                    // Clear forms
-                    const physioForm = document.getElementById('physioLoginForm');
-                    if (physioForm) {
-                        physioForm.reset();
-                    }
-                    
-                    // Show user type selection and hide physiotherapist dashboard
-                    const physioDashboard = document.getElementById('physioDashboard');
-                    const userTypeSelection = document.getElementById('userTypeSelection');
-                    
-                    if (physioDashboard) {
-                        physioDashboard.classList.add('hidden');
-                    }
-                    if (userTypeSelection) {
-                        userTypeSelection.classList.remove('hidden');
-                    }
-                    
-                    showNotification('You have been logged out successfully.');
-                    
-                } catch (error) {
-                    console.error('Physiotherapist logout error:', error);
-                    showNotification('Error during logout: ' + error.message, 'error');
-                } finally {
-                    hideLoading();
+        // Setup Physiotherapist-specific Event Listeners (called after dashboard is visible)
+        function setupPhysiotherapistEventListeners() {
+            console.log('Setting up physiotherapist event listeners...');
+            
+            // Physiotherapist Supabase connection
+            const physioConnectBtn = document.getElementById('physioConnectSupabase');
+            if (physioConnectBtn) {
+                physioConnectBtn.removeEventListener('click', handlePhysioConnectSupabase);
+                physioConnectBtn.addEventListener('click', handlePhysioConnectSupabase);
+                console.log('Physio connect Supabase button event listener added');
+            }
+            
+            // Physiotherapist logout
+            const physioLogoutBtn = document.getElementById('physioLogoutBtn');
+            if (physioLogoutBtn) {
+                physioLogoutBtn.removeEventListener('click', handlePhysioLogout);
+                physioLogoutBtn.addEventListener('click', handlePhysioLogout);
+                console.log('Physio logout button event listener added');
+            }
+            
+            // Setup physio navigation
+            setupPhysioNavigation();
+            console.log('Physio navigation setup completed');
+        }
+
+        // Separate handler functions to prevent event listener issues
+        function handlePhysioConnectSupabase() {
+            console.log('Physio connect Supabase clicked');
+            document.getElementById('supabaseModal').classList.remove('hidden');
+        }
+
+        async function handlePhysioLogout() {
+            try {
+                showLoading();
+                
+                // Sign out from Supabase
+                if (supabase) {
+                    await supabase.auth.signOut();
                 }
-            });
+                
+                // Clear user data
+                currentUser = null;
+                isLoggedIn = false;
+                
+                // Clear forms
+                const physioForm = document.getElementById('physioLoginForm');
+                if (physioForm) {
+                    physioForm.reset();
+                }
+                
+                // Show user type selection and hide physiotherapist dashboard
+                const physioDashboard = document.getElementById('physioDashboard');
+                const userTypeSelection = document.getElementById('userTypeSelection');
+                
+                if (physioDashboard) {
+                    physioDashboard.classList.add('hidden');
+                }
+                if (userTypeSelection) {
+                    userTypeSelection.classList.remove('hidden');
+                }
+                
+                showNotification('You have been logged out successfully.');
+                
+            } catch (error) {
+                console.error('Physiotherapist logout error:', error);
+                showNotification('Error during logout: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
         }
 
         // Physiotherapist navigation - setup with null checks
