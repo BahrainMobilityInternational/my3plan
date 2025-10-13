@@ -5434,6 +5434,59 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             // Implementation here
         }
 
+        // Function to add Mariam to Supabase database
+        async function addMariamToDatabase() {
+            if (!supabase) {
+                showNotification('Please connect to Supabase first', 'error');
+                return;
+            }
+
+            try {
+                // Check if Mariam already exists
+                const { data: existing } = await supabase
+                    .from('physiotherapists')
+                    .select('id')
+                    .eq('email', 'Mariambmi@gmail.com')
+                    .single();
+
+                if (existing) {
+                    showNotification('Dr. Mariam Abdulatheem Ali already exists in the database!', 'success');
+                    return;
+                }
+
+                // Add Mariam to database
+                const mariamData = {
+                    first_name: 'Mariam',
+                    last_name: 'Abdulatheem Ali',
+                    email: 'Mariambmi@gmail.com',
+                    phone: '97362123',
+                    license_number: 'PT-2024-MA',
+                    years_experience: 7,
+                    specializations: ['Orthopedic', 'Sports Medicine', 'Manual Therapy'],
+                    employment_status: 'full-time',
+                    hourly_rate: 85.00,
+                    start_date: '2020-03-15',
+                    bio: 'Experienced orthopedic physiotherapist specializing in sports rehabilitation and manual therapy techniques. Expert in voice-guided patient care.',
+                    is_active: true
+                };
+
+                const { error } = await supabase
+                    .from('physiotherapists')
+                    .insert([mariamData]);
+
+                if (error) throw error;
+
+                showNotification('✅ Dr. Mariam Abdulatheem Ali has been added to your database!', 'success');
+                
+                // Reload the physiotherapists view
+                await loadPhysiotherapists();
+
+            } catch (error) {
+                console.error('Error adding Mariam:', error);
+                showNotification('Error adding Mariam: ' + error.message, 'error');
+            }
+        }
+
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeApp);
