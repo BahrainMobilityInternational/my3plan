@@ -1165,7 +1165,7 @@
             const addPatientBtn = document.getElementById('addPatientBtn');
             if (addPatientBtn) {
                 addPatientBtn.addEventListener('click', () => {
-                    showNotification('Add Patient feature available in full version!');
+                    showAddPatientModal();
                 });
             }
 
@@ -1435,6 +1435,269 @@
                 console.log('No assigned appointments found');
                 showNotification('📋 No new patient assignments yet. Your regular schedule is displayed.', 'success');
             }
+        }
+
+        // Add Patient Modal Function
+        function showAddPatientModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-plus text-primary text-2xl mr-3"></i>
+                                <h2 class="text-2xl font-bold">Add New Patient</h2>
+                            </div>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form id="addPatientForm" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Personal Information -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-user text-primary mr-2"></i>
+                                    Personal Information
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">First Name *</label>
+                                <input type="text" id="newFirstName" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Enter first name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Last Name *</label>
+                                <input type="text" id="newLastName" required 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Enter last name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email</label>
+                                <input type="email" id="newEmail" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="patient@email.com">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Phone Number</label>
+                                <input type="tel" id="newPhone" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="97123456">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">C.P.R Number</label>
+                                <input type="text" id="newCprNumber" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="001000853">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Date of Birth</label>
+                                <input type="date" id="newDateOfBirth" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                            </div>
+                            
+                            <div class="col-span-full">
+                                <label class="block text-sm font-medium mb-2">Address</label>
+                                <input type="text" id="newAddress" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Patient address">
+                            </div>
+                            
+                            <!-- Medical Information -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center mt-4">
+                                    <i class="fas fa-notes-medical text-primary mr-2"></i>
+                                    Medical Information
+                                </h3>
+                            </div>
+                            
+                            <div class="col-span-full">
+                                <label class="block text-sm font-medium mb-2">Medical History</label>
+                                <textarea id="newMedicalHistory" rows="4" 
+                                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                          placeholder="Enter any relevant medical history, conditions, allergies, or previous treatments..."></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Emergency Contact Name</label>
+                                <input type="text" id="newEmergencyContactName" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Emergency contact name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Emergency Contact Phone</label>
+                                <input type="tel" id="newEmergencyContactPhone" 
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="97123456">
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-primary text-white hover:bg-secondary rounded-lg transition-colors font-medium">
+                                <i class="fas fa-plus mr-2"></i>Add Patient
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            document.getElementById('addPatientForm').addEventListener('submit', handleAddPatient);
+        }
+
+        // Handle Add Patient Form Submission
+        async function handleAddPatient(e) {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('newFirstName').value.trim();
+            const lastName = document.getElementById('newLastName').value.trim();
+            
+            if (!firstName || !lastName) {
+                showNotification('Please fill in the required fields (First Name and Last Name)', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // Create patient object
+                const newPatient = {
+                    id: `patient-${Date.now()}`,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: document.getElementById('newEmail').value.trim(),
+                    phone: document.getElementById('newPhone').value.trim(),
+                    cpr_number: document.getElementById('newCprNumber').value.trim(),
+                    date_of_birth: document.getElementById('newDateOfBirth').value,
+                    address: document.getElementById('newAddress').value.trim(),
+                    medical_history: document.getElementById('newMedicalHistory').value.trim(),
+                    emergency_contact_name: document.getElementById('newEmergencyContactName').value.trim(),
+                    emergency_contact_phone: document.getElementById('newEmergencyContactPhone').value.trim(),
+                    created_at: new Date().toISOString(),
+                    status: 'active'
+                };
+                
+                // Store patient in local array for demo
+                if (!window.patients) {
+                    window.patients = [];
+                }
+                window.patients.push(newPatient);
+                
+                // Add patient card to the grid
+                addPatientToGrid(newPatient);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                hideLoading();
+                
+                showNotification(`✅ Patient "${firstName} ${lastName}" has been added successfully!`, 'success');
+                
+                // Update patient count in dashboard
+                const totalPatientsElement = document.getElementById('totalPatients');
+                if (totalPatientsElement) {
+                    const currentCount = parseInt(totalPatientsElement.textContent) || 15;
+                    totalPatientsElement.textContent = currentCount + 1;
+                }
+                
+                console.log('New patient added:', newPatient);
+                
+            } catch (error) {
+                console.error('Error adding patient:', error);
+                showNotification('Error adding patient: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        // Add Patient Card to Grid
+        function addPatientToGrid(patient) {
+            const patientsGrid = document.getElementById('patientsGrid');
+            if (!patientsGrid) return;
+            
+            // Calculate age from date of birth
+            let age = 'Unknown';
+            if (patient.date_of_birth) {
+                const birthDate = new Date(patient.date_of_birth);
+                const today = new Date();
+                age = today.getFullYear() - birthDate.getFullYear();
+                if (today.getMonth() < birthDate.getMonth() || 
+                    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                age += ' years old';
+            }
+            
+            // Create initials
+            const initials = (patient.first_name.charAt(0) + patient.last_name.charAt(0)).toUpperCase();
+            
+            // Create patient card
+            const patientCard = document.createElement('div');
+            patientCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-green-500';
+            patientCard.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                        ${initials}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">${patient.first_name} ${patient.last_name}</h3>
+                        ${patient.email ? `<p class="text-gray-600 dark:text-gray-400 text-sm">${patient.email}</p>` : ''}
+                        ${patient.phone ? `<p class="text-gray-500 dark:text-gray-500 text-sm">${patient.phone}</p>` : ''}
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-birthday-cake w-4 mr-2 text-gray-400"></i>
+                        <span>${age}</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-calendar w-4 mr-2 text-gray-400"></i>
+                        <span>Added: ${new Date(patient.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-notes-medical w-4 mr-2 text-gray-400"></i>
+                        <span>New patient</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">
+                        ✨ New
+                    </span>
+                    <div class="flex space-x-2">
+                        <button onclick="viewPatientDetails('${patient.id}')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="assignPatientToPhysiotherapist('${patient.id}', '${patient.first_name} ${patient.last_name}')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Assign to Physiotherapist">
+                            <i class="fas fa-user-md"></i>
+                        </button>
+                        <button onclick="editPatient('${patient.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Patient">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add the new patient card at the beginning of the grid
+            patientsGrid.insertBefore(patientCard, patientsGrid.firstChild);
         }
     </script>
 </body>
