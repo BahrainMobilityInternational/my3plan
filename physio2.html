@@ -6446,18 +6446,35 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 let appointmentCount = 0;
                 let assignedPatients = [];
                 
-                // First, check if admin has configured the database connection and inherit it
+                // CRITICAL: Always check and inherit admin connection when physiotherapist logs in
                 const adminConnection = loadConnectionDetails();
-                if (adminConnection && !supabase) {
-                    console.log('Inheriting admin database connection...');
+                console.log('Admin connection found:', !!adminConnection);
+                
+                if (adminConnection) {
+                    console.log('Attempting to inherit admin database connection...');
                     try {
+                        // Create Supabase client with admin credentials
                         supabase = window.supabase.createClient(adminConnection.url, adminConnection.key);
+                        
+                        // Test the connection immediately
+                        console.log('Testing inherited connection...');
+                        await supabase.from('patients').select('count').limit(1);
+                        
+                        // Connection successful - update UI
                         document.getElementById('physioConnectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected (Inherited)';
-                        showNotification('✅ Inherited database connection from admin configuration!', 'success');
+                        console.log('Successfully inherited admin connection');
+                        showNotification('✅ Automatically connected using admin database configuration!', 'success');
+                        
                     } catch (inheritError) {
                         console.error('Error inheriting admin connection:', inheritError);
-                        showNotification('⚠️ Could not inherit admin database connection. Please ask admin to verify configuration.', 'error');
+                        document.getElementById('physioConnectionStatus').innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Connection Failed';
+                        showNotification('⚠️ Could not connect using admin configuration. Please click "Connect Supabase" to set up manually.', 'error');
+                        supabase = null; // Reset if connection failed
                     }
+                } else {
+                    console.log('No admin connection found');
+                    document.getElementById('physioConnectionStatus').innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Disconnected';
+                    showNotification('⚠️ No database configuration found. Please click "Connect Supabase" to set up your connection.', 'error');
                 }
                 
                 if (supabase && currentUser) {
