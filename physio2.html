@@ -411,7 +411,7 @@
                         </div>
                         
                         <!-- Connect Supabase Button for Physiotherapists -->
-                        <button id="physioConnectSupabase" class="bg-white text-secondary px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <button id="physioConnectSupabase" class="bg-white text-primary px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
                             <i class="fas fa-database mr-2"></i>Connect Supabase
                         </button>
                         
@@ -5689,7 +5689,9 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     document.getElementById('physioUserEmail').textContent = currentUser.email;
                     
                     // Setup physiotherapist-specific event listeners AFTER dashboard is visible
-                    setupPhysiotherapistEventListeners();
+                    setTimeout(() => {
+                        setupPhysiotherapistEventListeners();
+                    }, 100);
                     
                     showNotification(`🎵 Welcome back, ${currentUser.name}! Voice announcements are ready.`);
                     
@@ -5785,25 +5787,43 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         function setupPhysiotherapistEventListeners() {
             console.log('Setting up physiotherapist event listeners...');
             
-            // Physiotherapist Supabase connection
-            const physioConnectBtn = document.getElementById('physioConnectSupabase');
-            if (physioConnectBtn) {
-                physioConnectBtn.removeEventListener('click', handlePhysioConnectSupabase);
-                physioConnectBtn.addEventListener('click', handlePhysioConnectSupabase);
-                console.log('Physio connect Supabase button event listener added');
-            }
-            
-            // Physiotherapist logout
-            const physioLogoutBtn = document.getElementById('physioLogoutBtn');
-            if (physioLogoutBtn) {
-                physioLogoutBtn.removeEventListener('click', handlePhysioLogout);
-                physioLogoutBtn.addEventListener('click', handlePhysioLogout);
-                console.log('Physio logout button event listener added');
-            }
-            
-            // Setup physio navigation
-            setupPhysioNavigation();
-            console.log('Physio navigation setup completed');
+            // Wait a moment for DOM to be fully ready
+            setTimeout(() => {
+                // Physiotherapist Supabase connection
+                const physioConnectBtn = document.getElementById('physioConnectSupabase');
+                console.log('Looking for physio connect button:', physioConnectBtn);
+                
+                if (physioConnectBtn) {
+                    // Remove any existing listeners
+                    physioConnectBtn.removeEventListener('click', handlePhysioConnectSupabase);
+                    // Add new listener
+                    physioConnectBtn.addEventListener('click', handlePhysioConnectSupabase);
+                    console.log('Physio connect Supabase button event listener added successfully');
+                    
+                    // Test click handler directly
+                    physioConnectBtn.onclick = function(e) {
+                        e.preventDefault();
+                        console.log('Physio connect button clicked!');
+                        handlePhysioConnectSupabase();
+                    };
+                } else {
+                    console.error('Physio connect button not found!');
+                }
+                
+                // Physiotherapist logout
+                const physioLogoutBtn = document.getElementById('physioLogoutBtn');
+                if (physioLogoutBtn) {
+                    physioLogoutBtn.removeEventListener('click', handlePhysioLogout);
+                    physioLogoutBtn.addEventListener('click', handlePhysioLogout);
+                    console.log('Physio logout button event listener added');
+                } else {
+                    console.error('Physio logout button not found!');
+                }
+                
+                // Setup physio navigation
+                setupPhysioNavigation();
+                console.log('Physio navigation setup completed');
+            }, 100); // Small delay to ensure DOM is ready
         }
 
         // Separate handler functions to prevent event listener issues
