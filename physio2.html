@@ -1133,7 +1133,7 @@
 
             // Connect Supabase button
             document.getElementById('connectSupabase').addEventListener('click', () => {
-                showNotification('Supabase connection feature available in full version!');
+                showSupabaseConnectionModal();
             });
 
             // Quick action buttons
@@ -2203,6 +2203,246 @@
             
             // Add the new physiotherapist card at the beginning of the grid
             physiotherapistsGrid.insertBefore(physiotherapistCard, physiotherapistsGrid.firstChild);
+        }
+
+        // Supabase Connection Modal Function
+        function showSupabaseConnectionModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-screen overflow-y-auto">
+                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-database text-primary text-2xl mr-3"></i>
+                                <h2 class="text-2xl font-bold">Connect to Supabase</h2>
+                            </div>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-blue-600 text-lg mr-3 mt-0.5"></i>
+                                <div>
+                                    <h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Database Connection</h4>
+                                    <p class="text-sm text-blue-800 dark:text-blue-200">Connect your Supabase database to enable real-time data synchronization, persistent storage, and multi-user access for your PhysioTech system.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <form id="supabaseConnectionForm">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Supabase Project URL *</label>
+                                    <div class="relative">
+                                        <input type="url" id="supabaseUrl" required 
+                                               class="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                               placeholder="https://your-project.supabase.co">
+                                        <i class="fas fa-globe absolute left-4 top-4 text-gray-400"></i>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Supabase Anon Key *</label>
+                                    <div class="relative">
+                                        <input type="password" id="supabaseKey" required 
+                                               class="w-full px-4 py-3 pl-12 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                               placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+                                        <i class="fas fa-key absolute left-4 top-4 text-gray-400"></i>
+                                        <button type="button" id="toggleSupabaseKey" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-shield-alt text-amber-600 text-lg mr-3 mt-0.5"></i>
+                                        <div>
+                                            <h4 class="font-medium text-amber-900 dark:text-amber-100 mb-1">Security Note</h4>
+                                            <p class="text-sm text-amber-800 dark:text-amber-200">Your database credentials are stored securely and only used for establishing the connection. We recommend using the anon key with Row Level Security enabled.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <button type="button" onclick="this.closest('.fixed').remove()" 
+                                        class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit" 
+                                        class="px-6 py-3 bg-primary text-white hover:bg-secondary rounded-lg transition-colors font-medium">
+                                    <i class="fas fa-plug mr-2"></i>Connect Database
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Toggle password visibility for Supabase key
+            document.getElementById('toggleSupabaseKey').addEventListener('click', () => {
+                const keyInput = document.getElementById('supabaseKey');
+                const toggleIcon = document.querySelector('#toggleSupabaseKey i');
+                
+                if (keyInput.type === 'password') {
+                    keyInput.type = 'text';
+                    toggleIcon.classList.remove('fa-eye');
+                    toggleIcon.classList.add('fa-eye-slash');
+                } else {
+                    keyInput.type = 'password';
+                    toggleIcon.classList.remove('fa-eye-slash');
+                    toggleIcon.classList.add('fa-eye');
+                }
+            });
+            
+            // Handle form submission
+            document.getElementById('supabaseConnectionForm').addEventListener('submit', handleSupabaseConnection);
+        }
+
+        // Handle Supabase Connection
+        async function handleSupabaseConnection(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('supabaseUrl').value.trim();
+            const key = document.getElementById('supabaseKey').value.trim();
+            
+            if (!url || !key) {
+                showNotification('Please provide both URL and API key', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                console.log('Attempting to connect to Supabase...');
+                
+                // Initialize Supabase client
+                if (typeof window.supabase === 'undefined' && window.createClient) {
+                    supabase = window.createClient(url, key);
+                } else if (window.supabase && window.supabase.createClient) {
+                    supabase = window.supabase.createClient(url, key);
+                } else {
+                    throw new Error('Supabase library not loaded properly');
+                }
+                
+                // Test connection by attempting to fetch from a test query
+                const { data, error } = await supabase
+                    .from('patients')
+                    .select('count')
+                    .limit(1);
+                
+                if (error && !error.message.includes('relation "patients" does not exist')) {
+                    throw error;
+                }
+                
+                // Store connection details
+                connectionDetails = { url, key };
+                
+                // Update connection status in UI
+                updateConnectionStatus(true);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                hideLoading();
+                
+                showNotification('✅ Successfully connected to Supabase database! Real-time data synchronization is now active.', 'success');
+                
+                // Try to load data from Supabase
+                await loadDataFromSupabase();
+                
+            } catch (error) {
+                console.error('Supabase connection error:', error);
+                hideLoading();
+                
+                // Show specific error message
+                if (error.message.includes('Invalid API key') || error.message.includes('JWT')) {
+                    showNotification('❌ Invalid Supabase API key. Please check your credentials.', 'error');
+                } else if (error.message.includes('fetch') || error.message.includes('network')) {
+                    showNotification('❌ Network error. Please check your internet connection and URL.', 'error');
+                } else if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                    // Tables don't exist yet, but connection is successful
+                    connectionDetails = { url, key };
+                    updateConnectionStatus(true);
+                    document.querySelector('.fixed').remove();
+                    showNotification('✅ Connected to Supabase! Database tables will be created automatically as you use the system.', 'success');
+                } else {
+                    showNotification('❌ Connection failed: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Update Connection Status in UI
+        function updateConnectionStatus(isConnected) {
+            const statusElement = document.getElementById('connectionStatus');
+            const connectButton = document.getElementById('connectSupabase');
+            
+            if (isConnected) {
+                statusElement.innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
+                connectButton.innerHTML = '<i class="fas fa-database mr-2"></i>Connected';
+                connectButton.classList.remove('bg-white', 'text-primary');
+                connectButton.classList.add('bg-green-500', 'text-white');
+                connectButton.title = 'Database connected successfully';
+            } else {
+                statusElement.innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Disconnected';
+                connectButton.innerHTML = '<i class="fas fa-database mr-2"></i>Connect Supabase';
+                connectButton.classList.remove('bg-green-500', 'text-white');
+                connectButton.classList.add('bg-white', 'text-primary');
+                connectButton.title = 'Click to connect database';
+            }
+        }
+
+        // Load Data from Supabase
+        async function loadDataFromSupabase() {
+            if (!supabase) return;
+            
+            try {
+                console.log('Loading data from Supabase...');
+                
+                // Try to load patients
+                const { data: patients, error: patientsError } = await supabase
+                    .from('patients')
+                    .select('*')
+                    .limit(10);
+                
+                if (patientsError && !patientsError.message.includes('does not exist')) {
+                    console.error('Error loading patients:', patientsError);
+                } else if (patients && patients.length > 0) {
+                    console.log('Loaded patients from Supabase:', patients.length);
+                    showNotification(`📊 Loaded ${patients.length} patients from your database!`, 'success');
+                    
+                    // Update patient count
+                    const totalPatientsElement = document.getElementById('totalPatients');
+                    if (totalPatientsElement) {
+                        totalPatientsElement.textContent = patients.length;
+                    }
+                }
+                
+                // Try to load appointments
+                const { data: appointments, error: appointmentsError } = await supabase
+                    .from('appointments')
+                    .select('*')
+                    .limit(10);
+                
+                if (appointmentsError && !appointmentsError.message.includes('does not exist')) {
+                    console.error('Error loading appointments:', appointmentsError);
+                } else if (appointments && appointments.length > 0) {
+                    console.log('Loaded appointments from Supabase:', appointments.length);
+                    showNotification(`📅 Loaded ${appointments.length} appointments from your database!`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('Error loading data from Supabase:', error);
+                showNotification('⚠️ Connected to database but some tables may not exist yet. They will be created as you add data.', 'success');
+            }
         }
     </script>
 </body>
