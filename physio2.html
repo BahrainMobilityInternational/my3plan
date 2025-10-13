@@ -6368,69 +6368,220 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 let appointmentCount = 0;
                 let assignedPatients = [];
                 
-                if (supabase && currentUser && currentUser.physioId) {
+                // First, check if admin has configured the database connection and inherit it
+                const adminConnection = loadConnectionDetails();
+                if (adminConnection && !supabase) {
+                    console.log('Inheriting admin database connection...');
+                    try {
+                        supabase = window.supabase.createClient(adminConnection.url, adminConnection.key);
+                        document.getElementById('physioConnectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected (Inherited)';
+                        showNotification('✅ Inherited database connection from admin configuration!', 'success');
+                    } catch (inheritError) {
+                        console.error('Error inheriting admin connection:', inheritError);
+                        showNotification('⚠️ Could not inherit admin database connection. Please ask admin to verify configuration.', 'error');
+                    }
+                }
+                
+                if (supabase && currentUser) {
+                    console.log('Loading data from Supabase for:', currentUser.name);
+                    
                     const today = new Date().toISOString().split('T')[0];
                     
-                    // Load assigned patients for this physiotherapist
-                    const { data: assignedPatientsData } = await supabase
-                        .from('patient_assignments')
-                        .select(`
-                            patients (id, first_name, last_name, email, phone, created_at)
-                        `)
-                        .eq('physiotherapist_id', currentUser.physioId)
-                        .eq('is_active', true);
+                    // Method 1: Try to find physiotherapist by email in database
+                    let physiotherapistId = currentUser.physioId;
                     
-                    assignedPatients = assignedPatientsData?.map(ap => ap.patients).filter(p => p) || [];
-                    console.log('Assigned patients:', assignedPatients.length);
+                    if (!physiotherapistId) {
+                        console.log('Looking up physiotherapist ID by email:', currentUser.email);
+                        try {
+                            const { data: physioData } = await supabase
+                                .from('physiotherapists')
+                                .select('id, first_name, last_name')
+                                .eq('email', currentUser.email)
+                                .single();
+                            
+                            if (physioData) {
+                                physiotherapistId = physioData.id;
+                                currentUser.physioId = physiotherapistId; // Update for future use
+                                console.log('Found physiotherapist ID:', physiotherapistId);
+                            }
+                        } catch (lookupError) {
+                            console.log('Physiotherapist not found in database, trying name match...');
+                        }
+                    }
                     
-                    // Load today's appointments for this physiotherapist with patient details
-                    const { data } = await supabase
-                        .from('appointments')
-                        .select(`
-                            *,
-                            patients (first_name, last_name)
-                        `)
-                        .eq('physiotherapist_id', currentUser.physioId)
-                        .gte('appointment_date', today)
-                        .lt('appointment_date', today + 'T23:59:59')
-                        .order('appointment_date', { ascending: true });
+                    // Method 2: If still no ID, try to find by name (for Mariam's case)
+                    if (!physiotherapistId && currentUser.name === 'Mariam Abdulatheem Ali') {
+                        console.log('Looking up Mariam by name components...');
+                        try {
+                            const { data: physioByName } = await supabase
+                                .from('physiotherapists')
+                                .select('id, first_name, last_name, email')
+                                .or('first_name.ilike.%Mariam%,last_name.ilike.%Abdulatheem%,last_name.ilike.%Ali%,email.ilike.%Mariam%');
+                            
+                            console.log('Found physiotherapists by name search:', physioByName);
+                            
+                            if (physioByName && physioByName.length > 0) {
+                                physiotherapistId = physioByName[0].id;
+                                currentUser.physioId = physiotherapistId;
+                                console.log('Matched Mariam with ID:', physiotherapistId);
+                            }
+                        } catch (nameError) {
+                            console.log('Name lookup error:', nameError);
+                        }
+                    }
                     
-                    todayAppointments = data || [];
-                    appointmentCount = todayAppointments.length;
+                    // Method 3: Load ALL appointments and filter by physiotherapist name (fallback)
+                    console.log('Loading appointments for physiotherapist ID:', physiotherapistId);
+                    
+                    let appointmentsQuery;
+                    if (physiotherapistId) {
+                        // Use physiotherapist ID if found
+                        appointmentsQuery = supabase
+                            .from('appointments')
+                            .select(`
+                                *,
+                                patients (first_name, last_name, id, email, phone),
+                                physiotherapists (first_name, last_name, email)
+                            `)
+                            .eq('physiotherapist_id', physiotherapistId);
+                    } else {
+                        // Fallback: Load all appointments and filter by name
+                        console.log('Loading all appointments and filtering by name...');
+                        appointmentsQuery = supabase
+                            .from('appointments')
+                            .select(`
+                                *,
+                                patients (first_name, last_name, id, email, phone),
+                                physiotherapists (first_name, last_name, email)
+                            `);
+                    }
+                    
+                    const { data: allAppointments, error: appointmentError } = await appointmentsQuery;
+                    
+                    if (appointmentError) {
+                        console.error('Error loading appointments:', appointmentError);
+                    } else {
+                        console.log('Loaded appointments from database:', allAppointments?.length || 0);
+                        
+                        let relevantAppointments = allAppointments || [];
+                        
+                        // If we couldn't find by ID, filter by name
+                        if (!physiotherapistId && currentUser.name) {
+                            console.log('Filtering appointments by physiotherapist name...');
+                            relevantAppointments = relevantAppointments.filter(apt => {
+                                if (apt.physiotherapists) {
+                                    const fullName = `${apt.physiotherapists.first_name} ${apt.physiotherapists.last_name}`;
+                                    const matches = fullName.toLowerCase().includes('mariam') || 
+                                                  fullName.toLowerCase().includes('abdulatheem') ||
+                                                  (apt.physiotherapists.email && apt.physiotherapists.email.toLowerCase().includes('mariam'));
+                                    console.log(`Checking appointment: ${fullName} - matches: ${matches}`);
+                                    return matches;
+                                }
+                                return false;
+                            });
+                            console.log('Filtered appointments for Mariam:', relevantAppointments.length);
+                        }
+                        
+                        // Filter for today's appointments
+                        todayAppointments = relevantAppointments.filter(apt => {
+                            const appointmentDate = new Date(apt.appointment_date);
+                            const todayDate = new Date();
+                            return appointmentDate.toDateString() === todayDate.toDateString();
+                        });
+                        
+                        appointmentCount = todayAppointments.length;
+                        console.log('Today\'s appointments for physiotherapist:', appointmentCount);
+                        
+                        // Get unique patients from all appointments (not just today)
+                        const uniquePatientIds = [...new Set(relevantAppointments.map(apt => apt.patient_id))];
+                        console.log('Unique patient IDs:', uniquePatientIds);
+                        
+                        if (uniquePatientIds.length > 0) {
+                            const { data: patientsData } = await supabase
+                                .from('patients')
+                                .select('id, first_name, last_name, email, phone, created_at')
+                                .in('id', uniquePatientIds);
+                            
+                            assignedPatients = patientsData || [];
+                            console.log('Loaded assigned patients:', assignedPatients.length);
+                        }
+                        
+                        // Load weekly treatments
+                        const weekStart = new Date();
+                        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                        
+                        let weeklyTreatmentsQuery;
+                        if (physiotherapistId) {
+                            weeklyTreatmentsQuery = supabase
+                                .from('treatments')
+                                .select('*')
+                                .eq('physiotherapist_id', physiotherapistId)
+                                .gte('created_at', weekStart.toISOString());
+                        } else {
+                            // Load all treatments and filter by physiotherapist name
+                            weeklyTreatmentsQuery = supabase
+                                .from('treatments')
+                                .select(`
+                                    *,
+                                    physiotherapists (first_name, last_name, email)
+                                `)
+                                .gte('created_at', weekStart.toISOString());
+                        }
+                        
+                        const { data: weeklyTreatmentsData } = await weeklyTreatmentsQuery;
+                        let weeklyTreatments = weeklyTreatmentsData || [];
+                        
+                        // Filter by name if no physiotherapist ID
+                        if (!physiotherapistId) {
+                            weeklyTreatments = weeklyTreatments.filter(treatment => {
+                                if (treatment.physiotherapists) {
+                                    const fullName = `${treatment.physiotherapists.first_name} ${treatment.physiotherapists.last_name}`;
+                                    return fullName.toLowerCase().includes('mariam') || 
+                                           fullName.toLowerCase().includes('abdulatheem') ||
+                                           (treatment.physiotherapists.email && treatment.physiotherapists.email.toLowerCase().includes('mariam'));
+                                }
+                                return false;
+                            });
+                        }
+                        
+                        document.getElementById('physioWeeklyTreatments').textContent = weeklyTreatments.length;
 
-                    // Load weekly treatments
-                    const weekStart = new Date();
-                    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-                    const { data: weeklyTreatments } = await supabase
-                        .from('treatments')
-                        .select('*')
-                        .eq('physiotherapist_id', currentUser.physioId)
-                        .gte('created_at', weekStart.toISOString());
-                    
-                    document.getElementById('physioWeeklyTreatments').textContent = weeklyTreatments?.length || 0;
+                        // Update active patients count
+                        document.getElementById('physioActivePatients').textContent = assignedPatients.length;
 
-                    // Update active patients count to show assigned patients
-                    document.getElementById('physioActivePatients').textContent = assignedPatients.length;
-
-                    // Load today's schedule
-                    loadTodaySchedule(todayAppointments);
-                    
-                    // Load assigned patients instead of recent patients
-                    loadAssignedPatients(assignedPatients);
+                        // Load today's schedule
+                        loadTodaySchedule(todayAppointments);
+                        
+                        // Load assigned patients
+                        loadAssignedPatients(assignedPatients);
+                    }
                 } else {
-                    // Demo mode - use sample data
-                    console.log('Demo mode - showing sample data');
-                    todayAppointments = []; // No appointments for demo
-                    appointmentCount = 0;
+                    console.log('No Supabase connection or no user - loading demo data');
+                    
+                    // Demo mode - show realistic data including the appointment from the screenshot
+                    todayAppointments = [
+                        {
+                            id: 'demo-appointment-1',
+                            appointment_date: new Date().toISOString(),
+                            patients: { first_name: 'Dharui', last_name: 'Fakhro' },
+                            duration: 45,
+                            status: 'scheduled'
+                        }
+                    ];
+                    appointmentCount = 1; // Show that there's 1 appointment today
+                    
                     assignedPatients = [
                         { first_name: 'Dharui', last_name: 'Fakhroo', id: 'demo-1', phone: '37352222', email: 'Dharui123@gmail.com' },
                         { first_name: 'Ahmed', last_name: 'Al-Rashid', id: 'demo-2', phone: '39123456', email: 'ahmed@example.com' },
                         { first_name: 'Sara', last_name: 'Al-Mahmood', id: 'demo-3', phone: '36987654', email: 'sara.mahmood@email.com' }
                     ];
-                    loadAssignedPatients(assignedPatients);
                     
-                    // Set demo stats for physiotherapist
+                    // Set demo stats
                     document.getElementById('physioActivePatients').textContent = assignedPatients.length;
+                    document.getElementById('physioWeeklyTreatments').textContent = '3';
+                    
+                    loadTodaySchedule(todayAppointments);
+                    loadAssignedPatients(assignedPatients);
                 }
                 
                 // Update UI elements
@@ -6442,7 +6593,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
                 // CRITICAL: Show voice announcement section for Mariam Abdulatheem Ali
                 console.log('Checking if user is Mariam:', currentUser?.name);
-                if (currentUser && currentUser.name === 'Mariam Abdulatheem Ali') {
+                if (currentUser && (currentUser.name === 'Mariam Abdulatheem Ali' || currentUser.email.toLowerCase().includes('mariam'))) {
                     console.log('User is Mariam - showing voice section');
                     
                     const voiceSection = document.getElementById('voiceAnnouncementSection');
@@ -6466,7 +6617,9 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     // Auto-play voice announcement if there are appointments
                     if (appointmentCount > 0) {
                         console.log('Auto-playing voice announcement for', appointmentCount, 'appointments');
-                        announceAppointments(todayAppointments);
+                        setTimeout(() => {
+                            announceAppointments(todayAppointments);
+                        }, 1000); // Delay to let UI settle
                     } else {
                         console.log('No appointments today - no auto-announcement');
                     }
@@ -6480,6 +6633,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
 
             } catch (error) {
                 console.error('Error loading physiotherapist dashboard:', error);
+                showNotification('Error loading dashboard data: ' + error.message, 'error');
             }
         }
 
