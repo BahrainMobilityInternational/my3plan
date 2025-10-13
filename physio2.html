@@ -5882,9 +5882,22 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 
                 let todayAppointments = [];
                 let appointmentCount = 0;
+                let assignedPatients = [];
                 
                 if (supabase && currentUser && currentUser.physioId) {
                     const today = new Date().toISOString().split('T')[0];
+                    
+                    // Load assigned patients for this physiotherapist
+                    const { data: assignedPatientsData } = await supabase
+                        .from('patient_assignments')
+                        .select(`
+                            patients (id, first_name, last_name, email, phone, created_at)
+                        `)
+                        .eq('physiotherapist_id', currentUser.physioId)
+                        .eq('is_active', true);
+                    
+                    assignedPatients = assignedPatientsData?.map(ap => ap.patients).filter(p => p) || [];
+                    console.log('Assigned patients:', assignedPatients.length);
                     
                     // Load today's appointments for this physiotherapist with patient details
                     const { data } = await supabase
@@ -5912,28 +5925,28 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                     
                     document.getElementById('physioWeeklyTreatments').textContent = weeklyTreatments?.length || 0;
 
-                    // Load active patients (patients with appointments in last 30 days)
-                    const monthAgo = new Date();
-                    monthAgo.setDate(monthAgo.getDate() - 30);
-                    const { data: recentAppointments } = await supabase
-                        .from('appointments')
-                        .select('patient_id')
-                        .eq('physiotherapist_id', currentUser.physioId)
-                        .gte('appointment_date', monthAgo.toISOString());
-                    
-                    const uniquePatients = new Set(recentAppointments?.map(apt => apt.patient_id) || []);
-                    document.getElementById('physioActivePatients').textContent = uniquePatients.size;
+                    // Update active patients count to show assigned patients
+                    document.getElementById('physioActivePatients').textContent = assignedPatients.length;
 
                     // Load today's schedule
                     loadTodaySchedule(todayAppointments);
                     
-                    // Load recent patients
-                    loadRecentPatients(Array.from(uniquePatients));
+                    // Load assigned patients instead of recent patients
+                    loadAssignedPatients(assignedPatients);
                 } else {
                     // Demo mode - use sample data
                     console.log('Demo mode - showing sample data');
                     todayAppointments = []; // No appointments for demo
                     appointmentCount = 0;
+                    assignedPatients = [
+                        { first_name: 'Dharui', last_name: 'Fakhroo', id: 'demo-1', phone: '37352222', email: 'Dharui123@gmail.com' },
+                        { first_name: 'Ahmed', last_name: 'Al-Rashid', id: 'demo-2', phone: '39123456', email: 'ahmed@example.com' },
+                        { first_name: 'Sara', last_name: 'Al-Mahmood', id: 'demo-3', phone: '36987654', email: 'sara.mahmood@email.com' }
+                    ];
+                    loadAssignedPatients(assignedPatients);
+                    
+                    // Set demo stats for physiotherapist
+                    document.getElementById('physioActivePatients').textContent = assignedPatients.length;
                 }
                 
                 // Update UI elements
@@ -6071,6 +6084,42 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             } catch (error) {
                 console.error('Error loading recent patients:', error);
             }
+        }
+
+        async function loadAssignedPatients(assignedPatients) {
+            const patientsContainer = document.getElementById('recentPatients');
+            patientsContainer.innerHTML = '';
+
+            if (assignedPatients.length === 0) {
+                patientsContainer.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No assigned patients</p>';
+                return;
+            }
+
+            assignedPatients.slice(0, 5).forEach(patient => {
+                const patientCard = document.createElement('div');
+                patientCard.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-2';
+                patientCard.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-secondary bg-opacity-20 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-secondary font-semibold text-sm">${patient.first_name.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">${patient.first_name} ${patient.last_name}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Assigned patient</p>
+                        </div>
+                    </div>
+                    <button onclick="viewPatientFromPhysioView('${patient.id}')" class="text-secondary hover:text-primary text-sm" title="View Patient">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                `;
+                patientsContainer.appendChild(patientCard);
+            });
+        }
+
+        function viewPatientFromPhysioView(patientId) {
+            // Switch to admin view to see patient details (if allowed)
+            // Or implement a limited physiotherapist patient view
+            showNotification('Patient view from physiotherapist dashboard coming soon!', 'success');
         }
 
         // Voice notification for Mariam Abdulatheem Ali
