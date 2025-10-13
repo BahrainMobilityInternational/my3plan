@@ -637,6 +637,9 @@
                 <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="reports">
                     <i class="fas fa-chart-bar mr-3"></i>Reports
                 </button>
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="settings">
+                    <i class="fas fa-cog mr-3"></i>System Settings
+                </button>
             </nav>
         </div>
 
@@ -1118,6 +1121,213 @@
             </div>
 
 
+
+            <!-- System Settings View -->
+            <div id="settings" class="view hidden">
+                <div class="max-w-4xl mx-auto">
+                    <h1 class="text-3xl font-bold mb-6">System Settings</h1>
+                    
+                    <!-- Database Configuration Section -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 class="text-2xl font-semibold mb-2">Database Configuration</h2>
+                                <p class="text-gray-600 dark:text-gray-400">Manage Supabase connection for all physiotherapists</p>
+                            </div>
+                            <div id="adminConnectionStatus" class="flex items-center">
+                                <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Not Connected</span>
+                            </div>
+                        </div>
+
+                        <!-- Current Configuration Display -->
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                            <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                                <i class="fas fa-info-circle mr-2"></i>Current Configuration
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="font-medium text-blue-800 dark:text-blue-200">Supabase URL:</span>
+                                    <div class="text-blue-700 dark:text-blue-300 font-mono bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded mt-1" id="currentSupabaseUrl">
+                                        Not configured
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-blue-800 dark:text-blue-200">API Key Status:</span>
+                                    <div class="text-blue-700 dark:text-blue-300 mt-1" id="currentApiKeyStatus">
+                                        <i class="fas fa-times-circle text-red-500 mr-1"></i>Not configured
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Form -->
+                        <form id="adminSupabaseForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Supabase Project URL</label>
+                                <input type="text" id="adminSupabaseUrl" placeholder="https://your-project-ref.supabase.co" 
+                                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Format: https://[project-ref].supabase.co</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Anon Key</label>
+                                <div class="relative">
+                                    <input type="password" id="adminSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+                                           class="w-full px-4 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                                    <button type="button" id="toggleAdminKey" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Find in Settings → API → anon/public key</p>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3">
+                                <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition-colors">
+                                    <i class="fas fa-save mr-2"></i>Save & Test Connection
+                                </button>
+                                <button type="button" id="clearAdminConfig" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                                    <i class="fas fa-trash mr-2"></i>Clear Configuration
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Database Setup Instructions -->
+                        <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold">Database Setup Instructions</h3>
+                                <button id="toggleDbInstructions" class="text-primary hover:text-secondary text-sm">
+                                    <i class="fas fa-chevron-down mr-1"></i>Show Instructions
+                                </button>
+                            </div>
+                            
+                            <div id="dbInstructionsContent" class="hidden">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <h4 class="font-medium mb-2">Required SQL Commands</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Run these commands in your Supabase SQL Editor:</p>
+                                    <div class="bg-gray-800 text-green-400 p-3 rounded text-xs overflow-x-auto">
+                                        <pre>-- Create all required tables for PhysioTech
+CREATE TABLE IF NOT EXISTS patients (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  cpr_number TEXT,
+  date_of_birth DATE,
+  address TEXT,
+  medical_history TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS physiotherapists (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  license_number TEXT UNIQUE NOT NULL,
+  years_experience INTEGER DEFAULT 0,
+  specializations TEXT[],
+  employment_status TEXT DEFAULT 'full-time',
+  hourly_rate DECIMAL(10,2),
+  start_date DATE,
+  bio TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS appointments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  physiotherapist_id UUID REFERENCES physiotherapists(id),
+  appointment_date TIMESTAMP,
+  duration INTEGER,
+  status TEXT DEFAULT 'scheduled',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS treatments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES patients(id),
+  appointment_id UUID REFERENCES appointments(id),
+  physiotherapist_id UUID REFERENCES physiotherapists(id),
+  treatment_type TEXT,
+  description TEXT,
+  notes TEXT,
+  duration INTEGER DEFAULT 60,
+  treatment_date TIMESTAMP DEFAULT NOW(),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Disable RLS for easier development
+ALTER TABLE patients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE physiotherapists DISABLE ROW LEVEL SECURITY;
+ALTER TABLE appointments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE treatments DISABLE ROW LEVEL SECURITY;</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Physiotherapist Access Management -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+                        <h2 class="text-2xl font-semibold mb-4">Physiotherapist Database Access</h2>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">When you configure the database connection above, all physiotherapists will automatically inherit this configuration for their login sessions.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                                <h3 class="font-semibold text-green-900 dark:text-green-100 mb-2">
+                                    <i class="fas fa-check-circle mr-2"></i>What Physiotherapists Get
+                                </h3>
+                                <ul class="text-sm text-green-800 dark:text-green-200 space-y-1">
+                                    <li>• Automatic database connection</li>
+                                    <li>• Access to their assigned patients</li>
+                                    <li>• Treatment recording capabilities</li>
+                                    <li>• Appointment viewing and management</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                                    <i class="fas fa-shield-alt mr-2"></i>Security & Privacy
+                                </h3>
+                                <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                                    <li>• Physiotherapists cannot see database credentials</li>
+                                    <li>• Connection is managed centrally by admin</li>
+                                    <li>• Access is automatically inherited</li>
+                                    <li>• No manual setup required for staff</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Information -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                        <h2 class="text-2xl font-semibold mb-4">System Information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Version</h3>
+                                <p class="text-2xl font-bold text-primary">v1.0.0</p>
+                                <p class="text-sm text-gray-500">PhysioTech Pro</p>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Database Status</h3>
+                                <p class="text-lg font-semibold" id="systemDbStatus">
+                                    <i class="fas fa-times-circle text-red-500 mr-1"></i>Not Connected
+                                </p>
+                                <p class="text-sm text-gray-500">Supabase Connection</p>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Active Users</h3>
+                                <p class="text-2xl font-bold text-secondary" id="activeUsersCount">1</p>
+                                <p class="text-sm text-gray-500">Currently logged in</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Reports View -->
             <div id="reports" class="view hidden">
@@ -5602,6 +5812,181 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 } else {
                     showNotification('🔄 Auto-reconnected to Supabase across tabs!', 'success');
                 }
+            }
+        });
+
+        // Admin System Settings Functions
+        function loadSystemSettings() {
+            const savedConnection = loadConnectionDetails();
+            const currentUrl = document.getElementById('currentSupabaseUrl');
+            const currentKeyStatus = document.getElementById('currentApiKeyStatus');
+            const systemDbStatus = document.getElementById('systemDbStatus');
+            const adminConnectionStatus = document.getElementById('adminConnectionStatus');
+            
+            if (savedConnection) {
+                currentUrl.textContent = savedConnection.url;
+                currentKeyStatus.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Configured';
+                systemDbStatus.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i>Connected';
+                adminConnectionStatus.innerHTML = '<div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div><span class="text-sm text-gray-600 dark:text-gray-400">Connected</span>';
+            } else {
+                currentUrl.textContent = 'Not configured';
+                currentKeyStatus.innerHTML = '<i class="fas fa-times-circle text-red-500 mr-1"></i>Not configured';
+                systemDbStatus.innerHTML = '<i class="fas fa-times-circle text-red-500 mr-1"></i>Not Connected';
+                adminConnectionStatus.innerHTML = '<div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div><span class="text-sm text-gray-600 dark:text-gray-400">Not Connected</span>';
+            }
+        }
+
+        // Setup admin settings event handlers
+        document.getElementById('adminSupabaseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = document.getElementById('adminSupabaseUrl').value.trim();
+            const key = document.getElementById('adminSupabaseKey').value.trim();
+
+            if (!url || !key) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Validate URL format
+            if (!url.includes('.supabase.co')) {
+                showNotification('Invalid Supabase URL format. Should be: https://your-project-ref.supabase.co', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                // Test the connection
+                const testClient = window.supabase.createClient(url, key);
+                
+                // Try to access a table (this will help us know if the connection works)
+                try {
+                    await testClient.from('patients').select('count').limit(1);
+                } catch (tableError) {
+                    if (tableError.message.includes('relation "patients" does not exist')) {
+                        showNotification('⚠️ Connection successful! Please create the database tables as shown in the setup instructions.', 'success');
+                    } else if (tableError.message.includes('permission denied')) {
+                        showNotification('⚠️ Connection successful! Please enable Row Level Security policies for your tables.', 'success');
+                    } else {
+                        console.log('Table access error (this may be normal for new projects):', tableError);
+                    }
+                }
+
+                // Save the configuration for the entire system
+                saveConnectionDetails(url, key);
+                supabase = testClient;
+                
+                showNotification('✅ Admin Configuration Saved Successfully! All physiotherapists will now inherit this database connection.', 'success');
+                
+                // Update UI
+                loadSystemSettings();
+                
+                // Update main app connection status too
+                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
+                
+                // Load initial data
+                await loadDashboardData();
+                await loadPatients();
+                
+            } catch (error) {
+                console.error('Admin connection error:', error);
+                let errorMessage = 'Failed to connect to Supabase: ';
+                
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Network error. Please check your URL and internet connection.';
+                } else if (error.message.includes('Invalid API key')) {
+                    errorMessage += 'Invalid API key. Please check your anon key.';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage += 'CORS error. Please check your Supabase project settings.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // Clear admin configuration
+        document.getElementById('clearAdminConfig').addEventListener('click', () => {
+            // Create custom confirmation dialog
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            confirmDialog.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Clear Database Configuration</h3>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">This will disconnect the entire system from Supabase. All admin and physiotherapist users will lose database access until a new configuration is set.</p>
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
+                        <h4 class="font-medium text-red-900 dark:text-red-100 mb-2">⚠️ This will affect:</h4>
+                        <ul class="text-sm text-red-800 dark:text-red-200 space-y-1">
+                            <li>• All physiotherapist dashboards</li>
+                            <li>• Admin database access</li>
+                            <li>• Data synchronization</li>
+                            <li>• System functionality</li>
+                        </ul>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancel</button>
+                        <button class="confirm-btn px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded">Clear Configuration</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmDialog);
+
+            confirmDialog.querySelector('.cancel-btn').addEventListener('click', () => {
+                confirmDialog.remove();
+            });
+
+            confirmDialog.querySelector('.confirm-btn').addEventListener('click', () => {
+                // Clear the configuration
+                clearConnectionDetails();
+                supabase = null;
+                
+                // Clear form fields
+                document.getElementById('adminSupabaseUrl').value = '';
+                document.getElementById('adminSupabaseKey').value = '';
+                
+                // Update UI
+                loadSystemSettings();
+                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Disconnected';
+                
+                showNotification('❌ Database configuration cleared. System is now disconnected.', 'success');
+                confirmDialog.remove();
+            });
+        });
+
+        // Toggle admin key visibility
+        document.getElementById('toggleAdminKey').addEventListener('click', () => {
+            const keyInput = document.getElementById('adminSupabaseKey');
+            const toggleIcon = document.querySelector('#toggleAdminKey i');
+            
+            if (keyInput.type === 'password') {
+                keyInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                keyInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        });
+
+        // Toggle database instructions
+        document.getElementById('toggleDbInstructions').addEventListener('click', () => {
+            const content = document.getElementById('dbInstructionsContent');
+            const button = document.getElementById('toggleDbInstructions');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                button.innerHTML = '<i class="fas fa-chevron-up mr-1"></i>Hide Instructions';
+            } else {
+                content.classList.add('hidden');
+                button.innerHTML = '<i class="fas fa-chevron-down mr-1"></i>Show Instructions';
             }
         });
 
