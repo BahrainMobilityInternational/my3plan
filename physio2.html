@@ -5787,30 +5787,64 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         function setupPhysiotherapistEventListeners() {
             console.log('Setting up physiotherapist event listeners...');
             
-            // Wait a moment for DOM to be fully ready
-            setTimeout(() => {
-                // Physiotherapist Supabase connection
+            // Use a more aggressive approach to ensure the button works
+            const setupButton = () => {
                 const physioConnectBtn = document.getElementById('physioConnectSupabase');
                 console.log('Looking for physio connect button:', physioConnectBtn);
                 
                 if (physioConnectBtn) {
-                    // Remove any existing listeners
+                    // Force remove any existing handlers
+                    physioConnectBtn.onclick = null;
                     physioConnectBtn.removeEventListener('click', handlePhysioConnectSupabase);
-                    // Add new listener
-                    physioConnectBtn.addEventListener('click', handlePhysioConnectSupabase);
-                    console.log('Physio connect Supabase button event listener added successfully');
                     
-                    // Test click handler directly
+                    // Add the click handler using multiple methods for maximum compatibility
+                    physioConnectBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Physio connect button clicked via addEventListener!');
+                        document.getElementById('supabaseModal').classList.remove('hidden');
+                    });
+                    
+                    // Also set onclick as backup
                     physioConnectBtn.onclick = function(e) {
                         e.preventDefault();
-                        console.log('Physio connect button clicked!');
-                        handlePhysioConnectSupabase();
+                        e.stopPropagation();
+                        console.log('Physio connect button clicked via onclick!');
+                        document.getElementById('supabaseModal').classList.remove('hidden');
                     };
+                    
+                    console.log('Physio connect button handlers attached successfully');
+                    
+                    // Test that the button is clickable
+                    if (physioConnectBtn.style.pointerEvents === 'none') {
+                        physioConnectBtn.style.pointerEvents = 'auto';
+                        console.log('Fixed pointer events for physio button');
+                    }
+                    
+                    return true;
                 } else {
                     console.error('Physio connect button not found!');
+                    return false;
                 }
+            };
+            
+            // Try immediately
+            if (!setupButton()) {
+                // If not found, try again after a delay
+                setTimeout(() => {
+                    console.log('Retrying physio button setup...');
+                    setupButton();
+                }, 100);
                 
-                // Physiotherapist logout
+                // And try once more with a longer delay
+                setTimeout(() => {
+                    console.log('Final retry for physio button setup...');
+                    setupButton();
+                }, 500);
+            }
+            
+            // Setup logout button
+            setTimeout(() => {
                 const physioLogoutBtn = document.getElementById('physioLogoutBtn');
                 if (physioLogoutBtn) {
                     physioLogoutBtn.removeEventListener('click', handlePhysioLogout);
@@ -5819,11 +5853,13 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 } else {
                     console.error('Physio logout button not found!');
                 }
-                
-                // Setup physio navigation
+            }, 100);
+            
+            // Setup physio navigation
+            setTimeout(() => {
                 setupPhysioNavigation();
                 console.log('Physio navigation setup completed');
-            }, 100); // Small delay to ensure DOM is ready
+            }, 100);
         }
 
         // Separate handler functions to prevent event listener issues
