@@ -454,13 +454,29 @@
                     
                     <!-- Welcome Card -->
                     <div class="bg-gradient-to-r from-secondary to-sage text-white p-6 rounded-lg shadow-lg mb-8">
-                        <div class="flex items-center">
-                            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
-                                <i class="fas fa-user-md text-2xl"></i>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-user-md text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-bold">Welcome back!</h2>
+                                    <p class="text-white text-opacity-90">You have <span id="todayAppointmentsCount">0</span> appointments today</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 class="text-2xl font-bold">Welcome back!</h2>
-                                <p class="text-white text-opacity-90">You have <span id="todayAppointmentsCount">0</span> appointments today</p>
+                            
+                            <!-- Voice Announcement Button - Always visible for testing -->
+                            <div id="voiceAnnouncementSection" class="bg-white bg-opacity-10 rounded-lg p-4 border border-white border-opacity-30 block">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-white font-semibold text-lg">🎵 Voice Assistant</h3>
+                                        <p class="text-white text-opacity-90 text-sm">Personal appointment announcements for you</p>
+                                    </div>
+                                    <button id="playVoiceAnnouncementBtn" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg transform hover:scale-105">
+                                        <i class="fas fa-volume-up text-xl"></i>
+                                        <span class="font-medium">Play Voice Announcements</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5359,6 +5375,29 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             document.getElementById('userTypeSelection').classList.remove('hidden');
         });
 
+        // Predefined physiotherapist user - Mariam Abdulatheem Ali
+        const mariamUser = {
+            email: 'Mariambmi@gmail.com',
+            password: 'Mariam1979!',
+            role: 'physiotherapist',
+            name: 'Mariam Abdulatheem Ali',
+            physioData: {
+                id: 'mariam-physio-001',
+                first_name: 'Mariam',
+                last_name: 'Abdulatheem Ali',
+                email: 'Mariambmi@gmail.com',
+                phone: '97362123',
+                license_number: 'PT-2024-MA',
+                years_experience: 7,
+                specializations: ['Orthopedic', 'Sports Medicine', 'Manual Therapy'],
+                employment_status: 'full-time',
+                hourly_rate: 85.00,
+                start_date: '2020-03-15',
+                bio: 'Experienced orthopedic physiotherapist specializing in sports rehabilitation and manual therapy techniques. Expert in voice-guided patient care.',
+                is_active: true
+            }
+        };
+
         // Physiotherapist login functionality
         document.getElementById('physioLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -5371,15 +5410,55 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 return;
             }
 
-            if (!supabase) {
-                showPhysioLoginError('Please ensure Supabase is connected first. Contact your administrator.');
-                return;
-            }
-
             try {
                 showLoading();
                 
-                // Try Supabase authentication for physiotherapists
+                console.log('Login attempt with:', { email, password: password.substring(0, 3) + '***' });
+                console.log('Expected:', { email: mariamUser.email, password: mariamUser.password.substring(0, 3) + '***' });
+                
+                // Check if this is Mariam's predefined account (case-insensitive email check)
+                if (email.toLowerCase() === mariamUser.email.toLowerCase() && password === mariamUser.password) {
+                    console.log('Mariam login successful!');
+                    
+                    // Clear any existing error
+                    document.getElementById('physioLoginError').classList.add('hidden');
+                    
+                    // Successful login for Mariam
+                    currentUser = {
+                        email: mariamUser.email,
+                        role: mariamUser.role,
+                        name: mariamUser.name,
+                        physioId: mariamUser.physioData.id,
+                        physioData: mariamUser.physioData
+                    };
+                    
+                    isLoggedIn = true;
+                    
+                    // Hide login page and show physiotherapist dashboard
+                    document.getElementById('physioLoginPage').classList.add('hidden');
+                    document.getElementById('physioDashboard').classList.remove('hidden');
+                    
+                    // Update user info in physiotherapist header
+                    document.getElementById('physioUserName').textContent = currentUser.name;
+                    document.getElementById('physioUserEmail').textContent = currentUser.email;
+                    
+                    showNotification(`🎵 Welcome back, ${currentUser.name}! Voice announcements are ready.`);
+                    
+                    // Load physiotherapist dashboard data
+                    await loadPhysiotherapistDashboard();
+                    
+                    hideLoading();
+                    return;
+                }
+                
+                // If not Mariam, try Supabase authentication for other physiotherapists
+                if (!supabase) {
+                    console.log('No Supabase connection, rejecting non-Mariam login');
+                    showPhysioLoginError('Invalid email or password. Only registered physiotherapists can log in.');
+                    hideLoading();
+                    return;
+                }
+                
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
@@ -5562,51 +5641,109 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         }
 
         async function loadPhysiotherapistDashboard() {
-            if (!supabase || !currentUser || currentUser.role !== 'physiotherapist') return;
-
             try {
-                const today = new Date().toISOString().split('T')[0];
+                console.log('Loading physiotherapist dashboard for:', currentUser?.name);
                 
-                // Load today's appointments for this physiotherapist
-                const { data: todayAppointments } = await supabase
-                    .from('appointments')
-                    .select('*')
-                    .eq('physiotherapist_id', currentUser.physioId)
-                    .gte('appointment_date', today)
-                    .lt('appointment_date', today + 'T23:59:59');
+                let todayAppointments = [];
+                let appointmentCount = 0;
                 
-                const appointmentCount = todayAppointments?.length || 0;
-                document.getElementById('physioTodayAppointments').textContent = appointmentCount;
-                document.getElementById('todayAppointmentsCount').textContent = appointmentCount;
+                if (supabase && currentUser && currentUser.physioId) {
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    // Load today's appointments for this physiotherapist with patient details
+                    const { data } = await supabase
+                        .from('appointments')
+                        .select(`
+                            *,
+                            patients (first_name, last_name)
+                        `)
+                        .eq('physiotherapist_id', currentUser.physioId)
+                        .gte('appointment_date', today)
+                        .lt('appointment_date', today + 'T23:59:59')
+                        .order('appointment_date', { ascending: true });
+                    
+                    todayAppointments = data || [];
+                    appointmentCount = todayAppointments.length;
 
-                // Load weekly treatments
-                const weekStart = new Date();
-                weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-                const { data: weeklyTreatments } = await supabase
-                    .from('treatments')
-                    .select('*')
-                    .eq('physiotherapist_id', currentUser.physioId)
-                    .gte('created_at', weekStart.toISOString());
-                
-                document.getElementById('physioWeeklyTreatments').textContent = weeklyTreatments?.length || 0;
+                    // Load weekly treatments
+                    const weekStart = new Date();
+                    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                    const { data: weeklyTreatments } = await supabase
+                        .from('treatments')
+                        .select('*')
+                        .eq('physiotherapist_id', currentUser.physioId)
+                        .gte('created_at', weekStart.toISOString());
+                    
+                    document.getElementById('physioWeeklyTreatments').textContent = weeklyTreatments?.length || 0;
 
-                // Load active patients (patients with appointments in last 30 days)
-                const monthAgo = new Date();
-                monthAgo.setDate(monthAgo.getDate() - 30);
-                const { data: recentAppointments } = await supabase
-                    .from('appointments')
-                    .select('patient_id')
-                    .eq('physiotherapist_id', currentUser.physioId)
-                    .gte('appointment_date', monthAgo.toISOString());
-                
-                const uniquePatients = new Set(recentAppointments?.map(apt => apt.patient_id) || []);
-                document.getElementById('physioActivePatients').textContent = uniquePatients.size;
+                    // Load active patients (patients with appointments in last 30 days)
+                    const monthAgo = new Date();
+                    monthAgo.setDate(monthAgo.getDate() - 30);
+                    const { data: recentAppointments } = await supabase
+                        .from('appointments')
+                        .select('patient_id')
+                        .eq('physiotherapist_id', currentUser.physioId)
+                        .gte('appointment_date', monthAgo.toISOString());
+                    
+                    const uniquePatients = new Set(recentAppointments?.map(apt => apt.patient_id) || []);
+                    document.getElementById('physioActivePatients').textContent = uniquePatients.size;
 
-                // Load today's schedule
-                loadTodaySchedule(todayAppointments || []);
+                    // Load today's schedule
+                    loadTodaySchedule(todayAppointments);
+                    
+                    // Load recent patients
+                    loadRecentPatients(Array.from(uniquePatients));
+                } else {
+                    // Demo mode - use sample data
+                    console.log('Demo mode - showing sample data');
+                    todayAppointments = []; // No appointments for demo
+                    appointmentCount = 0;
+                }
                 
-                // Load recent patients
-                loadRecentPatients(Array.from(uniquePatients));
+                // Update UI elements
+                const todayCountElement = document.getElementById('physioTodayAppointments');
+                const todayCountElement2 = document.getElementById('todayAppointmentsCount');
+                
+                if (todayCountElement) todayCountElement.textContent = appointmentCount;
+                if (todayCountElement2) todayCountElement2.textContent = appointmentCount;
+
+                // CRITICAL: Show voice announcement section for Mariam Abdulatheem Ali
+                console.log('Checking if user is Mariam:', currentUser?.name);
+                if (currentUser && currentUser.name === 'Mariam Abdulatheem Ali') {
+                    console.log('User is Mariam - showing voice section');
+                    
+                    const voiceSection = document.getElementById('voiceAnnouncementSection');
+                    if (voiceSection) {
+                        voiceSection.classList.remove('hidden');
+                        console.log('Voice section made visible');
+                        
+                        // Setup the button click handler
+                        const playVoiceBtn = document.getElementById('playVoiceAnnouncementBtn');
+                        if (playVoiceBtn) {
+                            playVoiceBtn.removeEventListener('click', playVoiceAnnouncement);
+                            playVoiceBtn.addEventListener('click', playVoiceAnnouncement);
+                            console.log('Voice button event listener added');
+                        } else {
+                            console.error('Voice button not found!');
+                        }
+                    } else {
+                        console.error('Voice section element not found!');
+                    }
+                    
+                    // Auto-play voice announcement if there are appointments
+                    if (appointmentCount > 0) {
+                        console.log('Auto-playing voice announcement for', appointmentCount, 'appointments');
+                        announceAppointments(todayAppointments);
+                    } else {
+                        console.log('No appointments today - no auto-announcement');
+                    }
+                } else {
+                    console.log('User is not Mariam - hiding voice section');
+                    const voiceSection = document.getElementById('voiceAnnouncementSection');
+                    if (voiceSection) {
+                        voiceSection.classList.add('hidden');
+                    }
+                }
 
             } catch (error) {
                 console.error('Error loading physiotherapist dashboard:', error);
@@ -5697,6 +5834,143 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 });
             } catch (error) {
                 console.error('Error loading recent patients:', error);
+            }
+        }
+
+        // Voice notification for Mariam Abdulatheem Ali
+        async function announceAppointments(todayAppointments) {
+            if (!todayAppointments || todayAppointments.length === 0) return;
+            
+            // Create appointment announcement text
+            let announcementText = `Good morning Mariam! You have ${todayAppointments.length} appointment${todayAppointments.length > 1 ? 's' : ''} today. `;
+            
+            todayAppointments.forEach((appointment, index) => {
+                const time = new Date(appointment.appointment_date).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const patientName = appointment.patients 
+                    ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
+                    : 'a patient';
+                
+                announcementText += `At ${time}, you have an appointment with ${patientName}. `;
+            });
+            
+            announcementText += 'Have a wonderful day treating your patients!';
+            
+            try {
+                // Check if Poe API is available
+                if (window.Poe && typeof window.Poe.sendUserMessage === 'function') {
+                    // Register handler for voice response
+                    window.Poe.registerHandler("voice-announcement", (result, context) => {
+                        if (result.status === "complete") {
+                            console.log('Voice announcement completed for Mariam');
+                            showNotification('🎵 Voice announcement completed!', 'success');
+                        } else if (result.status === "error") {
+                            console.error('Voice announcement error:', result.responses[0]?.statusText);
+                            showNotification('Error with voice announcement, check chat for details', 'error');
+                        }
+                    });
+
+                    // Send to ElevenLabs for voice synthesis
+                    await window.Poe.sendUserMessage(
+                        `@ElevenLabs-v2.5-Turbo ${announcementText} --voice Monika Sogam`,
+                        {
+                            handler: "voice-announcement",
+                            stream: false,
+                            openChat: false,
+                            handlerContext: { 
+                                type: 'appointment-announcement',
+                                physiotherapist: 'Mariam Abdulatheem Ali'
+                            }
+                        }
+                    );
+
+                    // Show initial notification
+                    showNotification('🔊 Mariam: Generating voice announcement for your appointments...', 'success');
+                    
+                } else {
+                    // Fallback: show notification only
+                    showNotification(`📢 Mariam: ${announcementText}`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('Error with voice announcement:', error);
+                // Fallback notification
+                showNotification(`📢 Mariam: ${announcementText}`, 'success');
+            }
+        }
+
+        // Manual voice announcement button for Mariam
+        async function playVoiceAnnouncement() {
+            try {
+                showLoading();
+                
+                // Get today's appointments for the voice announcement
+                let todayAppointments = [];
+                
+                if (supabase && currentUser && currentUser.physioId) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const { data } = await supabase
+                        .from('appointments')
+                        .select(`
+                            *,
+                            patients (first_name, last_name)
+                        `)
+                        .eq('physiotherapist_id', currentUser.physioId)
+                        .gte('appointment_date', today)
+                        .lt('appointment_date', today + 'T23:59:59')
+                        .order('appointment_date', { ascending: true });
+                    
+                    todayAppointments = data || [];
+                } else {
+                    // Sample data for demo
+                    todayAppointments = [
+                        {
+                            appointment_date: new Date().toISOString(),
+                            patients: { first_name: 'Ahmed', last_name: 'Al-Rashid' }
+                        },
+                        {
+                            appointment_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+                            patients: { first_name: 'Fatima', last_name: 'Al-Zahra' }
+                        }
+                    ];
+                }
+                
+                hideLoading();
+                
+                if (todayAppointments.length === 0) {
+                    // Announce no appointments
+                    const noAppointmentText = "Good day Mariam! You have no appointments scheduled for today. Enjoy your free time and have a wonderful day!";
+                    
+                    if (window.Poe && typeof window.Poe.sendUserMessage === 'function') {
+                        await window.Poe.sendUserMessage(
+                            `@ElevenLabs-v2.5-Turbo ${noAppointmentText} --voice Monika Sogam`,
+                            {
+                                handler: "voice-announcement",
+                                stream: false,
+                                openChat: false,
+                                handlerContext: { 
+                                    type: 'no-appointments',
+                                    physiotherapist: 'Mariam Abdulatheem Ali'
+                                }
+                            }
+                        );
+                        showNotification('🔊 Generating voice message...', 'success');
+                    } else {
+                        showNotification(`📢 ${noAppointmentText}`, 'success');
+                    }
+                } else {
+                    // Announce appointments
+                    await announceAppointments(todayAppointments);
+                }
+                
+            } catch (error) {
+                console.error('Error playing voice announcement:', error);
+                showNotification('Error playing voice announcement: ' + error.message, 'error');
+            } finally {
+                hideLoading();
             }
         }
 
@@ -6909,6 +7183,13 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 if (window.tempTreatments && window.tempTreatments.length > 0) {
                     console.log('Adding temp treatments:', window.tempTreatments.length);
                     allTreatments = [...window.tempTreatments, ...allTreatments];
+                }
+
+                // Add voice announcement button event listener for Mariam
+                const playVoiceBtn = document.getElementById('playVoiceAnnouncementBtn');
+                if (playVoiceBtn) {
+                    playVoiceBtn.removeEventListener('click', playVoiceAnnouncement);
+                    playVoiceBtn.addEventListener('click', playVoiceAnnouncement);
                 }
                 
                 // No sample treatments - show real data only
