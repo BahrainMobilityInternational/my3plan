@@ -2038,6 +2038,11 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
             document.getElementById('supabaseModal').classList.remove('hidden');
         });
 
+        // Physiotherapist Supabase connection
+        document.getElementById('physioConnectSupabase').addEventListener('click', () => {
+            document.getElementById('supabaseModal').classList.remove('hidden');
+        });
+
         document.getElementById('cancelConnection').addEventListener('click', () => {
             document.getElementById('supabaseModal').classList.add('hidden');
         });
