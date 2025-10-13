@@ -6172,61 +6172,59 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         function setupPhysiotherapistEventListeners() {
             console.log('Setting up physiotherapist event listeners...');
             
-            // Use a more aggressive approach to ensure the button works
-            const setupButton = () => {
+            // Setup the connect button with better error handling
+            const setupPhysioConnectButton = () => {
                 const physioConnectBtn = document.getElementById('physioConnectSupabase');
-                console.log('Looking for physio connect button:', physioConnectBtn);
+                console.log('Setting up physio connect button:', !!physioConnectBtn);
                 
                 if (physioConnectBtn) {
-                    // Force remove any existing handlers
+                    // Clear any existing listeners
                     physioConnectBtn.onclick = null;
-                    physioConnectBtn.removeEventListener('click', handlePhysioConnectSupabase);
+                    const newButton = physioConnectBtn.cloneNode(true);
+                    physioConnectBtn.parentNode.replaceChild(newButton, physioConnectBtn);
                     
-                    // Add the click handler using multiple methods for maximum compatibility
-                    physioConnectBtn.addEventListener('click', function(e) {
+                    // Add the event listener to the new button
+                    newButton.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Physio connect button clicked via addEventListener!');
-                        document.getElementById('supabaseModal').classList.remove('hidden');
+                        console.log('Physio connect button clicked - opening modal');
+                        
+                        // Check if admin has already configured the connection
+                        const adminConnection = loadConnectionDetails();
+                        if (adminConnection) {
+                            console.log('Admin connection found - using it for physiotherapist');
+                            showPhysiotherapistConnectionOptions(adminConnection);
+                        } else {
+                            console.log('No admin connection - showing manual setup');
+                            document.getElementById('supabaseModal').classList.remove('hidden');
+                        }
                     });
                     
-                    // Also set onclick as backup
-                    physioConnectBtn.onclick = function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Physio connect button clicked via onclick!');
-                        document.getElementById('supabaseModal').classList.remove('hidden');
-                    };
-                    
-                    console.log('Physio connect button handlers attached successfully');
-                    
-                    // Test that the button is clickable
-                    if (physioConnectBtn.style.pointerEvents === 'none') {
-                        physioConnectBtn.style.pointerEvents = 'auto';
-                        console.log('Fixed pointer events for physio button');
-                    }
-                    
+                    console.log('Physio connect button setup complete');
                     return true;
                 } else {
-                    console.error('Physio connect button not found!');
+                    console.error('Physio connect button element not found!');
                     return false;
                 }
             };
             
-            // Try immediately
-            if (!setupButton()) {
-                // If not found, try again after a delay
-                setTimeout(() => {
-                    console.log('Retrying physio button setup...');
-                    setupButton();
-                }, 100);
+            // Try to setup the button multiple times
+            let attempts = 0;
+            const maxAttempts = 5;
+            const trySetup = () => {
+                attempts++;
+                console.log(`Attempt ${attempts} to setup physio connect button`);
                 
-                // And try once more with a longer delay
-                setTimeout(() => {
-                    console.log('Final retry for physio button setup...');
-                    setupButton();
-                }, 500);
-            }
+                if (setupPhysioConnectButton()) {
+                    console.log('Physio connect button setup successful');
+                } else if (attempts < maxAttempts) {
+                    setTimeout(trySetup, 200 * attempts); // Increasing delay
+                } else {
+                    console.error('Failed to setup physio connect button after', maxAttempts, 'attempts');
+                }
+            };
+            
+            trySetup();
             
             // Setup logout button
             setTimeout(() => {
@@ -6245,6 +6243,86 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 setupPhysioNavigation();
                 console.log('Physio navigation setup completed');
             }, 100);
+        }
+
+        // Show connection options for physiotherapists
+        function showPhysiotherapistConnectionOptions(adminConnection) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-full mx-4">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-database text-primary text-2xl mr-3"></i>
+                        <h2 class="text-2xl font-bold">Database Connection</h2>
+                    </div>
+                    
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                            <i class="fas fa-info-circle mr-2"></i>Admin Configuration Found
+                        </h3>
+                        <p class="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                            Your administrator has already configured the database connection. You can use this configuration or set up your own.
+                        </p>
+                        <div class="text-xs font-mono text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-800 p-2 rounded">
+                            Database: ${adminConnection.url.split('.')[0].split('//')[1]}...supabase.co
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button id="useAdminConnection" class="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-secondary transition-colors font-medium">
+                            <i class="fas fa-download mr-2"></i>Use Admin Configuration
+                        </button>
+                        
+                        <button id="setupOwnConnection" class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors font-medium">
+                            <i class="fas fa-cog mr-2"></i>Set Up Own Connection
+                        </button>
+                        
+                        <button id="cancelPhysioConnection" class="w-full text-gray-600 dark:text-gray-400 py-2 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle button clicks
+            modal.querySelector('#useAdminConnection').addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    console.log('Using admin connection for physiotherapist...');
+                    
+                    // Create Supabase client with admin credentials
+                    supabase = window.supabase.createClient(adminConnection.url, adminConnection.key);
+                    
+                    // Test the connection
+                    await supabase.from('patients').select('count').limit(1);
+                    
+                    // Update connection status
+                    document.getElementById('physioConnectionStatus').innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected (Inherited)';
+                    
+                    showNotification('✅ Successfully connected using admin configuration!', 'success');
+                    
+                    // Reload dashboard data
+                    await loadPhysiotherapistDashboard();
+                    
+                } catch (error) {
+                    console.error('Error using admin connection:', error);
+                    showNotification('❌ Failed to connect using admin configuration: ' + error.message, 'error');
+                } finally {
+                    hideLoading();
+                    modal.remove();
+                }
+            });
+            
+            modal.querySelector('#setupOwnConnection').addEventListener('click', () => {
+                modal.remove();
+                document.getElementById('supabaseModal').classList.remove('hidden');
+            });
+            
+            modal.querySelector('#cancelPhysioConnection').addEventListener('click', () => {
+                modal.remove();
+            });
         }
 
         // Separate handler functions to prevent event listener issues
