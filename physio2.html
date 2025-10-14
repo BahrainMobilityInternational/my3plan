@@ -865,16 +865,37 @@
         }
 
         function showView(viewName) {
-            // Hide all views
-            document.querySelectorAll('.view').forEach(view => {
-                view.classList.add('hidden');
-            });
-            
-            // Show target view
-            const targetView = document.getElementById(viewName);
-            if (targetView) {
-                targetView.classList.remove('hidden');
-                currentView = viewName;
+            try {
+                console.log('Switching to view:', viewName);
+                
+                // Hide all views
+                document.querySelectorAll('.view').forEach(view => {
+                    view.classList.add('hidden');
+                });
+                
+                // Show target view
+                const targetView = document.getElementById(viewName);
+                if (targetView) {
+                    targetView.classList.remove('hidden');
+                    currentView = viewName;
+                    console.log('Successfully switched to view:', viewName);
+                } else {
+                    console.error('Target view not found:', viewName);
+                    // Fallback to dashboard if view not found
+                    const dashboardView = document.getElementById('dashboard');
+                    if (dashboardView) {
+                        dashboardView.classList.remove('hidden');
+                        currentView = 'dashboard';
+                    }
+                }
+            } catch (error) {
+                console.error('Error switching views:', error);
+                // Ensure dashboard is visible as fallback
+                const dashboardView = document.getElementById('dashboard');
+                if (dashboardView) {
+                    dashboardView.classList.remove('hidden');
+                    currentView = 'dashboard';
+                }
             }
         }
 
