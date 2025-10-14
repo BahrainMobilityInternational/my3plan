@@ -2382,21 +2382,30 @@
 
         // Update Connection Status in UI
         function updateConnectionStatus(isConnected) {
-            const statusElement = document.getElementById('connectionStatus');
-            const connectButton = document.getElementById('connectSupabase');
-            
-            if (isConnected) {
-                statusElement.innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
-                connectButton.innerHTML = '<i class="fas fa-database mr-2"></i>Connected';
-                connectButton.classList.remove('bg-white', 'text-primary');
-                connectButton.classList.add('bg-green-500', 'text-white');
-                connectButton.title = 'Database connected successfully';
-            } else {
-                statusElement.innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Disconnected';
-                connectButton.innerHTML = '<i class="fas fa-database mr-2"></i>Connect Supabase';
-                connectButton.classList.remove('bg-green-500', 'text-white');
-                connectButton.classList.add('bg-white', 'text-primary');
-                connectButton.title = 'Click to connect database';
+            try {
+                const statusElement = document.getElementById('connectionStatus');
+                const connectButton = document.getElementById('connectSupabase');
+                
+                if (!statusElement || !connectButton) {
+                    console.error('Connection status elements not found');
+                    return;
+                }
+                
+                if (isConnected) {
+                    statusElement.innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
+                    connectButton.innerHTML = '<i class="fas fa-database mr-2"></i>Connected';
+                    connectButton.classList.remove('bg-white', 'text-primary', 'hover:bg-gray-100');
+                    connectButton.classList.add('bg-green-500', 'text-white', 'hover:bg-green-600');
+                    connectButton.title = 'Database connected successfully';
+                } else {
+                    statusElement.innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Disconnected';
+                    connectButton.innerHTML = '<i class="fas fa-database mr-2"></i>Connect Supabase';
+                    connectButton.classList.remove('bg-green-500', 'text-white', 'hover:bg-green-600');
+                    connectButton.classList.add('bg-white', 'text-primary', 'hover:bg-gray-100');
+                    connectButton.title = 'Click to connect database';
+                }
+            } catch (error) {
+                console.error('Error updating connection status:', error);
             }
         }
 
