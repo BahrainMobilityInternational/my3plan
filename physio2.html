@@ -4392,9 +4392,8 @@
             document.getElementById('supabaseConnectionForm').addEventListener('submit', handleSupabaseConnection);
         }
 
-        // 🛡️ ULTRA-SAFE Supabase Connection Handler - ZERO-CRASH VERSION
+        // 🚀 STREAMLINED Supabase Connection Handler - WORKING VERSION
         async function handleSupabaseConnection(e) {
-            // ULTRA SAFE event handling
             try {
                 if (e && e.preventDefault) {
                     e.preventDefault();
@@ -4403,9 +4402,9 @@
                 console.error('Event handling error:', eventError);
             }
             
-            // Global processing flag to prevent multiple connections
+            // Check if already processing
             if (window.supabaseConnectionInProgress) {
-                console.log('⚠️ Supabase connection already in progress, ignoring duplicate request');
+                showNotification('⚠️ Connection already in progress, please wait...', 'error');
                 return;
             }
             
