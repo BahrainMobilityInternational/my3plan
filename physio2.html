@@ -25,576 +25,8 @@
                 }
             }
         }
-        // Enhanced Patient File Functions
-let currentModalPatientId = null;
-
-// Main function to load patients from Supabase
-async function loadPhysiotherapistPatients() {
-    try {
-        console.log('Loading patients for physiotherapist:', currentUser?.name);
-        
-        const patientsList = document.getElementById('physioPatientsList');
-        if (!patientsList) {
-            console.error('Patients list element not found');
-            return;
-        }
-        
-        // Show loading state
-        patientsList.innerHTML = `
-            <div class="p-8 text-center">
-                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-4"></i>
-                <p class="text-gray-500">Loading your patients...</p>
-            </div>
-        `;
-
-        let assignedPatients = [];
-        let totalTreatments = 0;
-        let physiotherapistId = currentUser?.physioId;
-
-        if (supabase) {
-            console.log('Loading from Supabase database...');
-            
-            // Get physiotherapist ID
-            if (!physiotherapistId) {
-                const { data: physioData, error: physioError } = await supabase
-                    .from('physiotherapists')
-                    .select('id')
-                    .eq('email', currentUser.email)
-                    .single();
-                
-                if (physioError) {
-                    throw new Error('Physiotherapist not found in database');
-                }
-                
-                physiotherapistId = physioData.id;
-                currentUser.physioId = physiotherapistId;
-            }
-
-            // Get assigned patients through appointments
-            const { data: appointmentData, error: appointmentError } = await supabase
-                .from('appointments')
-                .select(`
-                    patient_id,
-                    patients (*)
-                `)
-                .eq('physiotherapist_id', physiotherapistId);
-            
-            if (appointmentError) {
-                throw new Error('Failed to load patient assignments');
-            }
-
-            // Get unique patients
-            const uniquePatientIds = [...new Set(appointmentData.map(apt => apt.patient_id))];
-            
-            if (uniquePatientIds.length > 0) {
-                const { data: patientsData, error: patientsError } = await supabase
-                    .from('patients')
-                    .select('*')
-                    .in('id', uniquePatientIds)
-                    .order('created_at', { ascending: false });
-                
-                if (patientsError) {
-                    throw new Error('Failed to load patient data');
-                }
-                
-                assignedPatients = patientsData || [];
-                
-                // Get treatment counts
-                for (let patient of assignedPatients) {
-                    const { data: treatments } = await supabase
-                        .from('treatments')
-                        .select('id')
-                        .eq('patient_id', patient.id);
-                    
-                    patient.treatmentCount = treatments?.length || 0;
-                    totalTreatments += patient.treatmentCount;
-                }
-            }
-
-        } else {
-            // Fallback sample data
-            assignedPatients = [
-                {
-                    id: 'demo-patient-1',
-                    first_name: 'Dharui',
-                    last_name: 'Fakhroo Hassan',
-                    email: 'dharui123@gmail.com',
-                    phone: '37352222',
-                    cpr_number: '001000853',
-                    date_of_birth: '1999-01-15',
-                    address: 'Bahrain',
-                    medical_history: 'Low Back Pain - Patient is currently suffering from lower back pain.',
-                    treatmentCount: 3,
-                    created_at: '2024-11-01T10:00:00Z'
-                }
-            ];
-            totalTreatments = 3;
-        }
-
-        // Update statistics
-        updatePhysiotherapistPatientStats(assignedPatients, totalTreatments);
-        displayPhysiotherapistPatients(assignedPatients);
-
-    } catch (error) {
-        console.error('Error loading patients:', error);
-        document.getElementById('physioPatientsList').innerHTML = `
-            <div class="p-8 text-center text-red-500">
-                <i class="fas fa-exclamation-triangle text-2xl mb-4"></i>
-                <p class="font-medium">Error loading patients</p>
-                <p class="text-sm mt-2">${error.message}</p>
-                <button onclick="loadPhysiotherapistPatients()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
-                    <i class="fas fa-sync-alt mr-2"></i>Retry
-                </button>
-            </div>
-        `;
-    }
-}
-
-// Update statistics
-function updatePhysiotherapistPatientStats(patients, totalTreatments) {
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    
-    const weekPatients = patients.filter(patient => {
-        const lastActivity = new Date(patient.created_at);
-        return lastActivity >= startOfWeek;
-    });
-    
-    const avgDuration = totalTreatments > 0 ? Math.round(60 + (Math.random() * 30)) : 60;
-    
-    document.getElementById('physioTotalPatients').textContent = patients.length;
-    document.getElementById('physioWeekPatients').textContent = weekPatients.length;
-    document.getElementById('physioTotalTreatments').textContent = totalTreatments;
-    document.getElementById('physioAvgDuration').textContent = avgDuration;
-}
-
-// Display patients
-function displayPhysiotherapistPatients(patients) {
-    const patientsList = document.getElementById('physioPatientsList');
-    patientsList.innerHTML = '';
-
-    if (patients.length === 0) {
-        patientsList.innerHTML = `
-            <div class="p-8 text-center text-gray-500">
-                <i class="fas fa-user-friends text-3xl mb-4"></i>
-                <p class="text-lg mb-2">No patients assigned yet</p>
-                <p class="text-sm">Patients assigned to you will appear here.</p>
-            </div>
-        `;
-        return;
-    }
-
-    patients.forEach(patient => {
-        const age = patient.date_of_birth ? 
-            new Date().getFullYear() - new Date(patient.date_of_birth).getFullYear() : '--';
-        
-        const initials = `${patient.first_name?.charAt(0) || ''}${patient.last_name?.charAt(0) || ''}`;
-
-        const patientCard = document.createElement('div');
-        patientCard.className = 'p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer';
-        
-        patientCard.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center flex-1">
-                    <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center text-white font-bold mr-4">
-                        <span class="text-sm">${initials}</span>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex items-center mb-1">
-                            <h3 class="text-base font-semibold text-gray-900 dark:text-white mr-3">${patient.first_name} ${patient.last_name}</h3>
-                            <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-xs">
-                                Active
-                            </span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
-                            <div><i class="fas fa-birthday-cake w-3 mr-1"></i>Age: ${age}</div>
-                            <div><i class="fas fa-phone w-3 mr-1"></i>${patient.phone || '--'}</div>
-                            <div><i class="fas fa-notes-medical w-3 mr-1"></i>${patient.treatmentCount || 0} treatments</div>
-                            <div><i class="fas fa-id-card w-3 mr-1"></i>${patient.cpr_number}</div>
-                        </div>
-                        <div class="mt-2 text-xs text-gray-500">
-                            <i class="fas fa-stethoscope mr-1"></i>
-                            ${patient.medical_history ? patient.medical_history.substring(0, 60) + '...' : 'No medical history'}
-                        </div>
-                    </div>
-                </div>
-                <div class="flex flex-col gap-1 ml-4">
-                    <button onclick="openPatientDetails('${patient.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                        <i class="fas fa-eye mr-1"></i>View
-                    </button>
-                    <button onclick="quickTreatment('${patient.id}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition-colors">
-                        <i class="fas fa-plus mr-1"></i>Add
-                    </button>
-                </div>
-            </div>
-        `;
-
-        patientCard.addEventListener('click', (e) => {
-            if (!e.target.closest('button')) {
-                openPatientDetails(patient.id);
-            }
-        });
-
-        patientsList.appendChild(patientCard);
-    });
-}
-
-// Modal functions
-function openPatientDetails(patientId) {
-    currentModalPatientId = patientId;
-    loadPatientDetailsModal(patientId);
-    document.getElementById('physioPatientModal').classList.remove('hidden');
-}
-
-function closePhysioPatientModal() {
-    document.getElementById('physioPatientModal').classList.add('hidden');
-    currentModalPatientId = null;
-}
-
-async function loadPatientDetailsModal(patientId) {
-    try {
-        let patient = null;
-        let treatments = [];
-
-        if (supabase && !patientId.startsWith('demo-')) {
-            // Load from database
-            const { data: patientData } = await supabase
-                .from('patients')
-                .select('*')
-                .eq('id', patientId)
-                .single();
-            
-            patient = patientData;
-            
-            const { data: treatmentData } = await supabase
-                .from('treatments')
-                .select(`
-                    *,
-                    physiotherapists (first_name, last_name)
-                `)
-                .eq('patient_id', patientId)
-                .order('created_at', { ascending: false });
-            
-            treatments = treatmentData || [];
-        } else {
-            // Sample data
-            patient = {
-                id: 'demo-patient-1',
-                first_name: 'Dharui',
-                last_name: 'Fakhroo Hassan',
-                email: 'dharui123@gmail.com',
-                phone: '37352222',
-                cpr_number: '001000853',
-                date_of_birth: '1999-01-15',
-                address: 'Bahrain',
-                medical_history: 'Low Back Pain - Patient is currently suffering from lower back pain.'
-            };
-            treatments = [];
-        }
-
-        if (patient) {
-            populatePatientModal(patient, treatments);
-        }
-
-    } catch (error) {
-        console.error('Error loading patient details:', error);
-        showNotification('Error loading patient details: ' + error.message, 'error');
-    }
-}
-
-function populatePatientModal(patient, treatments) {
-    const fullName = `${patient.first_name} ${patient.last_name}`;
-    const initials = `${patient.first_name?.charAt(0) || ''}${patient.last_name?.charAt(0) || ''}`;
-    const age = patient.date_of_birth ? 
-        new Date().getFullYear() - new Date(patient.date_of_birth).getFullYear() : '--';
-
-    document.getElementById('modalPatientName').textContent = fullName;
-    document.getElementById('modalPatientInitials').textContent = initials;
-    document.getElementById('modalPatientFullName').textContent = fullName;
-    document.getElementById('modalPatientAge').textContent = `Age: ${age}`;
-    document.getElementById('modalPatientEmail').textContent = patient.email || '--';
-    document.getElementById('modalPatientPhone').textContent = patient.phone || '--';
-    document.getElementById('modalPatientCPR').textContent = patient.cpr_number || '--';
-    document.getElementById('modalPatientAddress').textContent = patient.address || '--';
-    document.getElementById('modalMedicalHistory').textContent = patient.medical_history || 'No medical history recorded';
-
-    document.getElementById('modalTotalSessions').textContent = treatments.length;
-    document.getElementById('modalLastSession').textContent = treatments.length > 0 ? 
-        new Date(treatments[0].created_at).toLocaleDateString() : '--';
-    document.getElementById('modalProgress').textContent = treatments.length > 3 ? 'Excellent' : 
-        treatments.length > 1 ? 'Good' : 'Starting';
-
-    loadModalTreatmentHistory(treatments);
-}
-
-function loadModalTreatmentHistory(treatments) {
-    const container = document.getElementById('modalTreatmentHistory');
-    container.innerHTML = '';
-
-    if (treatments.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-6 text-gray-500">
-                <i class="fas fa-notes-medical text-2xl mb-2"></i>
-                <p class="text-sm">No treatments recorded yet</p>
-            </div>
-        `;
-        return;
-    }
-
-    treatments.forEach(treatment => {
-        const therapistName = treatment.physiotherapists ? 
-            `Dr. ${treatment.physiotherapists.first_name} ${treatment.physiotherapists.last_name}` : 
-            'Dr. Unknown';
-        
-        const treatmentDate = new Date(treatment.created_at).toLocaleDateString();
-
-        const treatmentCard = document.createElement('div');
-        treatmentCard.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600';
-        treatmentCard.innerHTML = `
-            <div class="flex items-start justify-between mb-2">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-green-100 dark:bg-green-800 rounded-lg flex items-center justify-center mr-3">
-                        <i class="fas fa-notes-medical text-green-600 dark:text-green-300 text-xs"></i>
-                    </div>
-                    <div>
-                        <h5 class="font-semibold text-sm text-gray-900 dark:text-white">${treatment.treatment_type}</h5>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">${therapistName} • ${treatmentDate} • ${treatment.duration || 60} min</p>
-                    </div>
-                </div>
-                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">Done</span>
-            </div>
-            <p class="text-xs text-gray-700 dark:text-gray-300 mb-1">${treatment.description || 'No description'}</p>
-            ${treatment.notes ? `<p class="text-xs text-gray-600 dark:text-gray-400"><strong>Notes:</strong> ${treatment.notes}</p>` : ''}
-        `;
-        container.appendChild(treatmentCard);
-    });
-}
-
-// Treatment form functions
-function toggleTreatmentForm() {
-    const form = document.getElementById('newTreatmentForm');
-    form.classList.toggle('hidden');
-}
-
-async function saveTreatment() {
-    const treatmentType = document.getElementById('treatmentType').value;
-    const treatmentDuration = document.getElementById('treatmentDuration').value;
-    const treatmentDescription = document.getElementById('treatmentDescription').value;
-    const treatmentNotes = document.getElementById('treatmentNotes').value;
-
-    if (!treatmentType || !treatmentDescription) {
-        showNotification('Please fill in treatment type and description', 'error');
-        return;
-    }
-
-    try {
-        const treatmentData = {
-            patient_id: currentModalPatientId,
-            physiotherapist_id: currentUser?.physioId,
-            treatment_type: treatmentType,
-            description: treatmentDescription,
-            notes: treatmentNotes,
-            duration: parseInt(treatmentDuration) || 60
-        };
-
-        if (supabase && !currentModalPatientId?.startsWith('demo-')) {
-            const { error } = await supabase
-                .from('treatments')
-                .insert([treatmentData]);
-            
-            if (error) throw new Error('Failed to save treatment');
-        }
-
-        showNotification('✅ Treatment added successfully!', 'success');
-        
-        // Clear form
-        document.getElementById('treatmentType').value = '';
-        document.getElementById('treatmentDescription').value = '';
-        document.getElementById('treatmentNotes').value = '';
-        document.getElementById('treatmentDuration').value = '60';
-        
-        toggleTreatmentForm();
-        await loadPatientDetailsModal(currentModalPatientId);
-        loadPhysiotherapistPatients(); // Refresh list
-
-    } catch (error) {
-        console.error('Error saving treatment:', error);
-        showNotification('Error saving treatment: ' + error.message, 'error');
-    }
-}
-
-// Utility functions
-function startTreatmentSession() {
-    showNotification('🏥 Treatment session started!', 'success');
-}
-
-function scheduleAppointment() {
-    showNotification('📅 Appointment scheduling coming soon!', 'success');
-}
-
-function generatePatientReport() {
-    showNotification('📄 Report generation coming soon!', 'success');
-}
-
-function quickTreatment(patientId) {
-    openPatientDetails(patientId);
-    setTimeout(() => toggleTreatmentForm(), 500);
-}
-
-function refreshPhysioPatients() {
-    showNotification('🔄 Refreshing...', 'success');
-    loadPhysiotherapistPatients();
-}
-
-function exportPhysioPatients() {
-    showNotification('📊 Export coming soon!', 'success');
-}
-
-function exportTreatmentHistory() {
-    showNotification('📄 Export coming soon!', 'success');
-}
-
-// Auto-load when Patient File is clicked
-document.addEventListener('click', function(e) {
-    if (e.target.closest('[data-view="physio-patients"]')) {
-        setTimeout(() => loadPhysiotherapistPatients(), 100);
-    }
-});
     </script>
     <style>
-        /* Enhanced Patient File Styles */
-.card-enhanced {
-    background: white;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-}
-
-.dark .card-enhanced {
-    background: #374151;
-    border-color: #4b5563;
-}
-
-.card-enhanced:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    transform: translateY(-1px);
-}
-
-.hover-lift {
-    transition: all 0.3s ease;
-}
-
-.hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.btn-enhanced {
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.btn-enhanced:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.enhanced-input {
-    transition: all 0.3s ease;
-}
-
-.focus-enhanced:focus {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(93, 92, 222, 0.15);
-    border-color: #5D5CDE;
-}
-
-.heading-enhanced {
-    background: linear-gradient(135deg, #0F766E, #0D9488);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 700;
-}
-
-.skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loading 1.5s infinite;
-}
-
-.dark .skeleton {
-    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-    background-size: 200% 100%;
-}
-
-@keyframes loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.scale-in {
-    animation: scaleIn 0.3s ease-out;
-}
-
-@keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-.modal-backdrop {
-    backdrop-filter: blur(4px);
-}
-
-.custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #CBD5E0 #F7FAFC;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #F7FAFC;
-    border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #CBD5E0;
-    border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #A0AEC0;
-}
-
-/* Compact layout fixes */
-#physio-patients {
-    font-size: 14px;
-}
-
-#physio-patients .heading-enhanced {
-    font-size: 1.75rem !important;
-}
-
-#physio-patients .grid {
-    gap: 1rem !important;
-}
-
-#physio-patients .p-6 {
-    padding: 1rem !important;
-}
         .fade-in {
             animation: fadeIn 0.3s ease-in;
         }
@@ -1208,288 +640,441 @@ document.addEventListener('click', function(e) {
                         </div>
                     </div>
                 </div>
-<!-- Enhanced Patient File View -->
-<div id="physio-patients" class="physio-view hidden">
-    <!-- Patient File Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div class="mb-4 lg:mb-0">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white heading-enhanced">My Patients</h1>
-                <p class="text-gray-600 dark:text-gray-400 mt-1">Manage your assigned patients and treatment records</p>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <button onclick="refreshPhysioPatients()" class="btn-enhanced bg-secondary hover:bg-secondary/80 text-white px-4 py-2 rounded-lg transition-all duration-300">
-                    <i class="fas fa-sync-alt mr-2"></i>Refresh
-                </button>
-                <button onclick="exportPhysioPatients()" class="btn-enhanced bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg transition-all duration-300">
-                    <i class="fas fa-download mr-2"></i>Export List
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Search and Filter Section -->
-    <div class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 p-3">
-        <div class="flex flex-col lg:flex-row gap-3">
-            <div class="flex-1">
-                <div class="relative">
-                    <input type="text" id="physioPatientSearch" placeholder="Search patients by name, phone, or C.P.R number..." 
-                           class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base enhanced-input focus-enhanced">
-                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <div id="physio-patients" class="physio-view hidden">
+                    <h1 class="text-3xl font-bold mb-6">My Patients</h1>
+                    <p class="text-gray-600">Patient management for physiotherapists coming soon...</p>
                 </div>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-2">
-                <select id="physioPatientStatusFilter" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm enhanced-input focus-enhanced">
-                    <option value="">All Patients</option>
-                    <option value="active">Active Treatment</option>
-                    <option value="completed">Treatment Completed</option>
-                    <option value="scheduled">Upcoming Appointments</option>
-                </select>
-                <select id="physioPatientSortBy" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm enhanced-input focus-enhanced">
-                    <option value="name">Sort by Name</option>
-                    <option value="recent">Recent Activity</option>
-                    <option value="next_appointment">Next Appointment</option>
-                    <option value="treatments">Treatment Count</option>
-                </select>
-            </div>
-        </div>
-    </div>
 
-    <!-- Patient Statistics Cards -->
-    <div class="p-4 bg-gray-50 dark:bg-gray-900/50">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="card-enhanced rounded-lg p-4 hover-lift">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                        <i class="fas fa-users text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">Total Patients</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white" id="physioTotalPatients">0</p>
-                    </div>
+                <div id="physio-exercises" class="physio-view hidden">
+                    <h1 class="text-3xl font-bold mb-6">Exercises</h1>
+                    <p class="text-gray-600">Exercise assignment for physiotherapists coming soon...</p>
                 </div>
-            </div>
-            
-            <div class="card-enhanced rounded-lg p-4 hover-lift">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3">
-                        <i class="fas fa-calendar-check text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">This Week</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white" id="physioWeekPatients">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card-enhanced rounded-lg p-4 hover-lift">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                        <i class="fas fa-notes-medical text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">Treatments</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white" id="physioTotalTreatments">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card-enhanced rounded-lg p-4 hover-lift">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mr-3">
-                        <i class="fas fa-clock text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">Avg. Session</p>
-                        <p class="text-xl font-bold text-gray-900 dark:text-white" id="physioAvgDuration">60</p>
-                        <span class="text-xs text-gray-500">min</span>
-                    </div>
+
+                <div id="physio-profile" class="physio-view hidden">
+                    <h1 class="text-3xl font-bold mb-6">My Profile</h1>
+                    <p class="text-gray-600">Profile management for physiotherapists coming soon...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Patients List -->
-    <div class="flex-1 bg-white dark:bg-gray-800">
-        <div id="physioPatientsList" class="custom-scrollbar">
-            <!-- Loading state will be replaced by JavaScript -->
-            <div class="p-8 text-center">
-                <div class="skeleton w-full h-16 rounded-lg mb-4"></div>
-                <div class="skeleton w-3/4 h-16 rounded-lg mb-4 mx-auto"></div>
-                <div class="skeleton w-full h-16 rounded-lg"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Patient Details Modal -->
-    <div id="physioPatientModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden scale-in">
-            <!-- Modal Header -->
-            <div class="bg-gradient-to-r from-secondary to-primary p-4 text-white">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-3">
-                            <i class="fas fa-user-injured text-lg"></i>
+    <!-- Main Application (Hidden until login) -->
+    <div id="mainApp" class="hidden">
+    <!-- Navigation -->
+    <nav class="bg-primary shadow-lg fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-heartbeat text-white text-2xl mr-3"></i>
+                    <span class="text-white text-xl font-bold">PhysioTech</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- User Info -->
+                    <div class="flex items-center space-x-3 text-white">
+                        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-sm"></i>
                         </div>
-                        <div>
-                            <h2 class="text-xl font-bold" id="modalPatientName">Patient Details</h2>
-                            <p class="text-white/80 text-sm" id="modalPatientInfo">Complete patient information</p>
+                        <div class="hidden md:block">
+                            <p class="text-sm font-medium" id="userEmail">Admin User</p>
+                            <p class="text-xs text-gray-200">Administrator</p>
                         </div>
                     </div>
-                    <button onclick="closePhysioPatientModal()" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                        <i class="fas fa-times text-sm"></i>
+                    
+                    <button id="connectSupabase" class="bg-white text-primary px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-database mr-2"></i>Connect Supabase
+                    </button>
+                    <div id="connectionStatus" class="text-white">
+                        <i class="fas fa-circle text-red-400 mr-1"></i>Disconnected
+                    </div>
+                    
+                    <!-- Logout Button -->
+                    <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
                     </button>
                 </div>
             </div>
+        </div>
+    </nav>
 
-            <!-- Modal Content -->
-            <div class="p-4 overflow-y-auto max-h-[calc(90vh-80px)] custom-scrollbar">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <!-- Patient Info Column -->
-                    <div class="lg:col-span-1">
-                        <!-- Patient Avatar and Basic Info -->
-                        <div class="card-enhanced rounded-lg p-4 mb-4">
-                            <div class="text-center mb-3">
-                                <div class="w-16 h-16 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <span class="text-xl font-bold text-white" id="modalPatientInitials">--</span>
+    <div class="flex pt-16">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-50 dark:bg-gray-800 min-h-screen p-4 fixed left-0 top-16 bottom-0 overflow-y-auto">
+            <nav class="space-y-2">
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="dashboard">
+                    <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
+                </button>
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="patients">
+                    <i class="fas fa-users mr-3"></i>Patients
+                </button>
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="appointments">
+                    <i class="fas fa-calendar mr-3"></i>Appointments
+                </button>
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physiotherapists">
+                    <i class="fas fa-user-md mr-3"></i>Physiotherapists
+                </button>
+
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="exercises">
+                    <i class="fas fa-dumbbell mr-3"></i>Exercises
+                </button>
+
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="reports">
+                    <i class="fas fa-chart-bar mr-3"></i>Reports
+                </button>
+                <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="settings">
+                    <i class="fas fa-cog mr-3"></i>System Settings
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 ml-64 p-6">
+            <!-- Dashboard View -->
+            <div id="dashboard" class="view">
+                <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100">Total Patients</p>
+                                <p class="text-3xl font-bold" id="totalPatients">0</p>
+                            </div>
+                            <i class="fas fa-users text-4xl text-blue-200"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100">Appointments Today</p>
+                                <p class="text-3xl font-bold" id="appointmentsToday">0</p>
+                            </div>
+                            <i class="fas fa-calendar-day text-4xl text-green-200"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100">Active Treatments</p>
+                                <p class="text-3xl font-bold" id="activeTreatments">0</p>
+                            </div>
+                            <i class="fas fa-stethoscope text-4xl text-purple-200"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-100">Revenue (Month)</p>
+                                <p class="text-3xl font-bold" id="monthlyRevenue">$0</p>
+                            </div>
+                            <i class="fas fa-dollar-sign text-4xl text-orange-200"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold mb-4">Weekly Appointments</h3>
+                        <canvas id="appointmentsChart"></canvas>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold mb-4">Treatment Types</h3>
+                        <canvas id="treatmentsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patients View -->
+            <div id="patients" class="view hidden">
+                <!-- Patient List View -->
+                <div id="patientListView">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold">Patients</h1>
+                        <button id="addPatientBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Patient
+                        </button>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="mb-6">
+                        <input type="text" id="patientSearch" placeholder="Search patients by name, email, or phone..." 
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-base">
+                    </div>
+
+                    <!-- Patients Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="patientsGrid">
+                        <!-- Sample Patient Card -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                            <div class="flex items-center mb-4">
+                                <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                    JD
                                 </div>
-                                <h3 class="text-lg font-bold heading-enhanced" id="modalPatientFullName">Patient Name</h3>
-                                <p class="text-gray-600 dark:text-gray-400 text-sm" id="modalPatientAge">Age: --</p>
+                                <div>
+                                    <h3 class="text-lg font-semibold">John Doe</h3>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm">john.doe@email.com</p>
+                                    <p class="text-gray-500 dark:text-gray-500 text-sm">+1 (555) 123-4567</p>
+                                </div>
                             </div>
                             
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-center">
-                                    <i class="fas fa-envelope w-4 text-gray-400 mr-2"></i>
-                                    <span id="modalPatientEmail">--</span>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-birthday-cake w-4 mr-2 text-gray-400"></i>
+                                    <span>32 years old</span>
                                 </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-phone w-4 text-gray-400 mr-2"></i>
-                                    <span id="modalPatientPhone">--</span>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-calendar w-4 mr-2 text-gray-400"></i>
+                                    <span>Last visit: Nov 15, 2024</span>
                                 </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-id-card w-4 text-gray-400 mr-2"></i>
-                                    <span id="modalPatientCPR">--</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <i class="fas fa-map-marker-alt w-4 text-gray-400 mr-2"></i>
-                                    <span id="modalPatientAddress">--</span>
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-notes-medical w-4 mr-2 text-gray-400"></i>
+                                    <span>5 treatments completed</span>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Quick Actions -->
-                        <div class="card-enhanced rounded-lg p-4 mb-4">
-                            <h4 class="font-semibold mb-3 heading-enhanced text-sm">Quick Actions</h4>
-                            <div class="space-y-2">
-                                <button onclick="startTreatmentSession()" class="w-full btn-enhanced bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-all duration-300 text-sm">
-                                    <i class="fas fa-play mr-2"></i>Start Session
-                                </button>
-                                <button onclick="scheduleAppointment()" class="w-full btn-enhanced bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-all duration-300 text-sm">
-                                    <i class="fas fa-calendar-plus mr-2"></i>Schedule
-                                </button>
-                                <button onclick="generatePatientReport()" class="w-full btn-enhanced bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg transition-all duration-300 text-sm">
-                                    <i class="fas fa-file-medical mr-2"></i>Report
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Treatment Stats -->
-                        <div class="card-enhanced rounded-lg p-4">
-                            <h4 class="font-semibold mb-3 heading-enhanced text-sm">Statistics</h4>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600 dark:text-gray-400">Total Sessions</span>
-                                    <span class="font-semibold" id="modalTotalSessions">0</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600 dark:text-gray-400">Last Session</span>
-                                    <span class="font-semibold" id="modalLastSession">--</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-600 dark:text-gray-400">Progress</span>
-                                    <span class="font-semibold text-green-600" id="modalProgress">Good</span>
+                            <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">Active</span>
+                                <div class="flex space-x-2">
+                                    <button onclick="viewPatientDetails('sample-id')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button onclick="editPatient('sample-id')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deletePatient('sample-id')" class="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Treatment History Column -->
-                    <div class="lg:col-span-2">
-                        <!-- Medical History -->
-                        <div class="card-enhanced rounded-lg p-4 mb-4">
-                            <h4 class="font-semibold mb-3 heading-enhanced text-sm">Medical History</h4>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                                <p class="text-sm leading-relaxed" id="modalMedicalHistory">No medical history recorded</p>
+                <!-- Patient Details View -->
+                <div id="patientDetailsView" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <button id="backToPatientsList" class="mr-4 p-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-arrow-left text-xl"></i>
+                            </button>
+                            <div>
+                                <h1 class="text-3xl font-bold" id="patientDetailsName">Patient Details</h1>
+                                <p class="text-gray-600 dark:text-gray-400" id="patientDetailsEmail">patient@email.com</p>
                             </div>
                         </div>
+                        <div class="flex space-x-3">
+                            <button id="editPatientBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-edit mr-2"></i>Edit Patient
+                            </button>
+                            <button id="addPatientTreatmentBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Add Treatment
+                            </button>
+                        </div>
+                    </div>
 
-                        <!-- Add New Treatment -->
-                        <div class="card-enhanced rounded-lg p-4 mb-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-semibold heading-enhanced text-sm">Add New Treatment</h4>
-                                <button onclick="toggleTreatmentForm()" class="text-primary hover:text-secondary transition-colors">
-                                    <i class="fas fa-plus-circle"></i>
-                                </button>
-                            </div>
-                            
-                            <div id="newTreatmentForm" class="hidden space-y-3 animate-fade-in">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <select id="treatmentType" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm enhanced-input focus-enhanced">
-                                        <option value="">Select Treatment Type</option>
-                                        <option value="Manual Therapy">Manual Therapy</option>
-                                        <option value="Exercise Therapy">Exercise Therapy</option>
-                                        <option value="Electrotherapy">Electrotherapy</option>
-                                        <option value="Massage Therapy">Massage Therapy</option>
-                                        <option value="Heat/Cold Therapy">Heat/Cold Therapy</option>
-                                        <option value="Ultrasound">Ultrasound</option>
-                                        <option value="TENS">TENS</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                    
-                                    <input type="number" id="treatmentDuration" placeholder="Duration (minutes)" min="15" max="180" value="60"
-                                           class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm enhanced-input focus-enhanced">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Patient Information Card -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <h3 class="text-xl font-semibold mb-4">Patient Information</h3>
+                                
+                                <div class="space-y-4">
+                                    <div class="flex items-center">
+                                        <div class="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white font-bold text-2xl mr-4" id="patientAvatar">
+                                            JD
+                                        </div>
+                                        <div>
+                                            <h4 class="text-lg font-semibold" id="patientFullName">John Doe</h4>
+                                            <p class="text-gray-600 dark:text-gray-400" id="patientAge">32 years old</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-envelope w-5 mr-3 text-gray-400"></i>
+                                            <span id="patientContactEmail">john.doe@email.com</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-phone w-5 mr-3 text-gray-400"></i>
+                                            <span id="patientPhone">+1 (555) 123-4567</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-birthday-cake w-5 mr-3 text-gray-400"></i>
+                                            <span id="patientBirthdate">January 15, 1992</span>
+                                        </div>
+                                        <div class="flex items-start">
+                                            <i class="fas fa-map-marker-alt w-5 mr-3 mt-1 text-gray-400"></i>
+                                            <span id="patientAddress">123 Main Street, City, State 12345</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <h5 class="font-semibold mb-2">Medical History</h5>
+                                        <p class="text-gray-600 dark:text-gray-400 text-sm" id="patientMedicalHistory">
+                                            Lower back pain, previous injury from sports accident. No known allergies.
+                                        </p>
+                                    </div>
                                 </div>
-                                
-                                <textarea id="treatmentDescription" rows="3" placeholder="Treatment description and techniques used..."
-                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm enhanced-input focus-enhanced"></textarea>
-                                
-                                <textarea id="treatmentNotes" rows="2" placeholder="Additional notes and patient response..."
-                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm enhanced-input focus-enhanced"></textarea>
-                                
-                                <div class="flex gap-2">
-                                    <button onclick="saveTreatment()" class="btn-enhanced bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-300 text-sm">
-                                        <i class="fas fa-save mr-1"></i>Save
-                                    </button>
-                                    <button onclick="toggleTreatmentForm()" class="btn-enhanced bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-300 text-sm">
-                                        <i class="fas fa-times mr-1"></i>Cancel
-                                    </button>
+                            </div>
+
+                            <!-- Quick Stats Card -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-6">
+                                <h3 class="text-xl font-semibold mb-4">Quick Stats</h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-primary" id="totalAppointments">12</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">Appointments</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-green-600" id="totalTreatments">8</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">Treatments</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-blue-600" id="lastVisit">Nov 15</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">Last Visit</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-orange-600" id="nextAppointment">Nov 22</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">Next Visit</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Treatment History -->
-                        <div class="card-enhanced rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-semibold heading-enhanced text-sm">Treatment History</h4>
-                                <button onclick="exportTreatmentHistory()" class="text-primary hover:text-secondary transition-colors text-sm">
-                                    <i class="fas fa-download mr-1"></i>Export
-                                </button>
+                        <div class="lg:col-span-2">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-xl font-semibold">Treatment History</h3>
+                                    <button onclick="showTreatmentModal()" class="text-primary hover:text-secondary">
+                                        <i class="fas fa-plus mr-1"></i>Add Treatment
+                                    </button>
+                                </div>
+
+                                <div class="space-y-4" id="patientTreatmentHistory">
+                                    <!-- Sample Treatment Record -->
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                                        <i class="fas fa-hands text-green-600"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-semibold">Manual Therapy Session</h4>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-400">Dr. Sarah Johnson</p>
+                                                    </div>
+                                                </div>
+                                                <p class="text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                                    Spinal manipulation and mobilization techniques applied to L4-L5 region. Patient showed improved range of motion.
+                                                </p>
+                                                <div class="flex items-center text-xs text-gray-500 space-x-4">
+                                                    <span><i class="fas fa-calendar mr-1"></i>November 15, 2024</span>
+                                                    <span><i class="fas fa-clock mr-1"></i>45 minutes</span>
+                                                    <span><i class="fas fa-dollar-sign mr-1"></i>$120</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">Completed</span>
+                                                <button class="text-gray-400 hover:text-gray-600 p-1">
+                                                    <i class="fas fa-edit text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                        <i class="fas fa-dumbbell text-blue-600"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-semibold">Exercise Therapy</h4>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-400">Dr. Sarah Johnson</p>
+                                                    </div>
+                                                </div>
+                                                <p class="text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                                    Prescribed strengthening exercises for core muscles. Patient completed 3 sets of 15 reps each exercise.
+                                                </p>
+                                                <div class="flex items-center text-xs text-gray-500 space-x-4">
+                                                    <span><i class="fas fa-calendar mr-1"></i>November 10, 2024</span>
+                                                    <span><i class="fas fa-clock mr-1"></i>60 minutes</span>
+                                                    <span><i class="fas fa-dollar-sign mr-1"></i>$100</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">Completed</span>
+                                                <button class="text-gray-400 hover:text-gray-600 p-1">
+                                                    <i class="fas fa-edit text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                                        <i class="fas fa-bolt text-purple-600"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-semibold">Electrotherapy</h4>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-400">Dr. Mark Wilson</p>
+                                                    </div>
+                                                </div>
+                                                <p class="text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                                    TENS therapy applied to reduce pain and inflammation in the affected area.
+                                                </p>
+                                                <div class="flex items-center text-xs text-gray-500 space-x-4">
+                                                    <span><i class="fas fa-calendar mr-1"></i>November 5, 2024</span>
+                                                    <span><i class="fas fa-clock mr-1"></i>30 minutes</span>
+                                                    <span><i class="fas fa-dollar-sign mr-1"></i>$80</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">Completed</span>
+                                                <button class="text-gray-400 hover:text-gray-600 p-1">
+                                                    <i class="fas fa-edit text-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Empty State -->
+                                    <div id="noTreatmentsMessage" class="text-center py-8 text-gray-500 dark:text-gray-400 hidden">
+                                        <i class="fas fa-notes-medical text-4xl mb-4"></i>
+                                        <p>No treatments recorded yet</p>
+                                        <button onclick="showTreatmentModal()" class="mt-2 text-primary hover:text-secondary">
+                                            <i class="fas fa-plus mr-1"></i>Add first treatment
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div id="modalTreatmentHistory" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
-                                <!-- Treatment history will be loaded here -->
-                                <div class="text-center py-6 text-gray-500">
-                                    <i class="fas fa-notes-medical text-2xl mb-2"></i>
-                                    <p class="text-sm">No treatments recorded yet</p>
+
+                            <!-- Appointments for this patient -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-6">
+                                <h3 class="text-xl font-semibold mb-4">Upcoming Appointments</h3>
+                                <div class="space-y-3" id="patientUpcomingAppointments">
+                                    <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                        <div class="flex items-center">
+                                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                                            <div>
+                                                <p class="font-medium">Nov 22, 2024 - 10:00 AM</p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">Follow-up session with Dr. Sarah Johnson</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded text-xs">Scheduled</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
             <!-- Appointments View -->
             <div id="appointments" class="view hidden">
@@ -4614,6 +4199,147 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                         return;
                     }
                 }
+                // Enhanced Appointment Assignment System - Add this to your existing code
+function enhanceExistingAppointmentForm() {
+    const appointmentForm = document.getElementById('appointmentForm');
+    if (!appointmentForm) return false;
+
+    // Remove existing event listeners and add enhanced one
+    const newForm = appointmentForm.cloneNode(true);
+    appointmentForm.parentNode.replaceChild(newForm, appointmentForm);
+
+    newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!supabase) {
+            showNotification('Please connect to Supabase first', 'error');
+            return;
+        }
+
+        const date = document.getElementById('appointmentDate').value;
+        const time = document.getElementById('appointmentTime').value;
+        const patientId = document.getElementById('appointmentPatient').value;
+        const physiotherapistId = document.getElementById('appointmentPhysiotherapist').value;
+
+        // Enhanced validation with your existing design
+        if (!patientId) {
+            showNotification('❌ Please select a patient from the dropdown', 'error');
+            return;
+        }
+        if (!physiotherapistId) {
+            showNotification('❌ Please select a physiotherapist from the dropdown', 'error');
+            return;
+        }
+        if (!date || !time) {
+            showNotification('❌ Please select both appointment date and time', 'error');
+            return;
+        }
+
+        const appointmentDateTime = new Date(`${date}T${time}`);
+        const formData = {
+            patient_id: patientId,
+            physiotherapist_id: physiotherapistId,
+            appointment_date: appointmentDateTime.toISOString(),
+            duration: parseInt(document.getElementById('appointmentDuration').value) || 60,
+            status: document.getElementById('appointmentStatus').value || 'scheduled',
+            notes: document.getElementById('appointmentNotes').value || ''
+        };
+
+        try {
+            showLoading();
+            
+            if (currentAppointmentId) {
+                // Update existing appointment (keep your original logic)
+                const { error } = await supabase
+                    .from('appointments')
+                    .update(formData)
+                    .eq('id', currentAppointmentId);
+                
+                if (error) throw error;
+                showNotification('✅ Appointment updated successfully!');
+            } else {
+                // Enhanced appointment creation
+                await createEnhancedAppointment(formData);
+            }
+            
+            // Keep your existing modal closing logic
+            document.getElementById('appointmentModal').classList.add('hidden');
+            document.getElementById('appointmentForm').reset();
+            currentAppointmentId = null;
+            document.getElementById('appointmentModalTitle').textContent = 'Add Appointment';
+            
+            // Keep your existing reload function
+            await loadAppointments();
+
+        } catch (error) {
+            console.error('Error saving appointment:', error);
+            showNotification('❌ Error saving appointment: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+
+    return true;
+}
+
+// Enhanced appointment creation function
+async function createEnhancedAppointment(formData) {
+    try {
+        // Get patient and physiotherapist details for enhanced notification
+        const [patientResult, physiotherapistResult] = await Promise.all([
+            supabase.from('patients').select('first_name, last_name').eq('id', formData.patient_id).single(),
+            supabase.from('physiotherapists').select('first_name, last_name, email').eq('id', formData.physiotherapist_id).single()
+        ]);
+
+        const patient = patientResult.data;
+        const physiotherapist = physiotherapistResult.data;
+
+        // Enhanced appointment data with assignment tracking
+        const appointmentToInsert = {
+            patient_id: formData.patient_id,
+            physiotherapist_id: formData.physiotherapist_id,
+            appointment_date: formData.appointment_date,
+            duration: formData.duration || 60,
+            status: formData.status || 'scheduled',
+            notes: formData.notes ? 
+                `🎯 ASSIGNED: ${formData.notes}` : 
+                `🎯 ASSIGNED: This patient has been assigned to you by the administrator.`
+        };
+
+        const { error: insertError } = await supabase
+            .from('appointments')
+            .insert([appointmentToInsert]);
+
+        if (insertError) throw insertError;
+
+        // Enhanced success notification (keeping your notification style)
+        const patientName = patient ? `${patient.first_name} ${patient.last_name}` : 'Patient';
+        const physioName = physiotherapist ? `Dr. ${physiotherapist.first_name} ${physiotherapist.last_name}` : 'Physiotherapist';
+        const appointmentDate = new Date(formData.appointment_date);
+        
+        showNotification(
+            `✅ SUCCESS! ${patientName} assigned to ${physioName} on ${appointmentDate.toLocaleDateString()} at ${appointmentDate.toLocaleTimeString()}. The physiotherapist will see this appointment!`, 
+            'success'
+        );
+
+        // If physiotherapist is currently logged in, refresh their view
+        if (currentUser && currentUser.role === 'physiotherapist' && 
+            currentUser.physioId === formData.physiotherapist_id) {
+            
+            setTimeout(() => {
+                if (typeof loadPhysiotherapistAppointments === 'function') {
+                    loadPhysiotherapistAppointments();
+                }
+            }, 1000);
+        }
+
+        return { success: true, patient, physiotherapist };
+
+    } catch (error) {
+        console.error('Error creating appointment:', error);
+        throw error;
+    }
+}
 
                 // Check user role to determine edit permissions
                 const isPhysiotherapist = currentUser && currentUser.role === 'physiotherapist';
@@ -4642,7 +4368,272 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 showNotification('Error loading patient: ' + error.message, 'error');
             }
         }
+// Enhanced physiotherapist appointment loading - Add this to improve existing function
+async function loadPhysiotherapistAppointmentsEnhanced() {
+    if (!currentUser || currentUser.role !== 'physiotherapist') {
+        console.log('Not a physiotherapist user');
+        return;
+    }
 
+    try {
+        const appointmentsList = document.getElementById('physioAppointmentsList');
+        if (!appointmentsList) {
+            console.error('Appointments list element not found');
+            return;
+        }
+        
+        // Keep your existing loading state styling
+        appointmentsList.innerHTML = `
+            <div class="p-6 text-center text-gray-500">
+                <i class="fas fa-spinner fa-spin text-2xl mb-4"></i>
+                <p>Loading your appointments...</p>
+            </div>
+        `;
+
+        let appointments = [];
+        let physiotherapistId = currentUser.physioId;
+
+        if (supabase) {
+            // Enhanced ID resolution for better assignment tracking
+            if (!physiotherapistId) {
+                console.log('Looking up physiotherapist ID...');
+                
+                try {
+                    const { data: physioData } = await supabase
+                        .from('physiotherapists')
+                        .select('id, first_name, last_name, email')
+                        .eq('email', currentUser.email)
+                        .single();
+                    
+                    if (physioData) {
+                        physiotherapistId = physioData.id;
+                        currentUser.physioId = physiotherapistId;
+                        console.log('Found physiotherapist ID:', physiotherapistId);
+                    }
+                } catch (emailError) {
+                    console.log('Email lookup failed, trying name-based...');
+                }
+                
+                // Special handling for Mariam or name-based lookup
+                if (!physiotherapistId && currentUser.name === 'Mariam Abdulatheem Ali') {
+                    try {
+                        const { data: physioByName } = await supabase
+                            .from('physiotherapists')
+                            .select('id, first_name, last_name, email')
+                            .or('first_name.ilike.%Mariam%,last_name.ilike.%Abdulatheem%,email.ilike.%Mariam%');
+                        
+                        if (physioByName && physioByName.length > 0) {
+                            physiotherapistId = physioByName[0].id;
+                            currentUser.physioId = physiotherapistId;
+                            console.log('Found physiotherapist by name:', physiotherapistId);
+                        }
+                    } catch (nameError) {
+                        console.log('Name lookup failed:', nameError);
+                    }
+                }
+            }
+
+            if (physiotherapistId) {
+                console.log(`Loading appointments for physiotherapist ID: ${physiotherapistId}`);
+                
+                // Enhanced query to get assigned appointments
+                const { data: appointmentData, error } = await supabase
+                    .from('appointments')
+                    .select(`
+                        *,
+                        patients (first_name, last_name, email, phone, cpr_number),
+                        physiotherapists (first_name, last_name, email)
+                    `)
+                    .eq('physiotherapist_id', physiotherapistId)
+                    .order('appointment_date', { ascending: true });
+
+                if (error) {
+                    console.error('Database error:', error);
+                    throw error;
+                }
+
+                appointments = appointmentData || [];
+                console.log(`Found ${appointments.length} appointments for physiotherapist`);
+                
+            } else {
+                console.log('Could not determine physiotherapist ID');
+                appointments = [];
+            }
+        } else {
+            // Keep your existing demo data structure
+            appointments = [
+                {
+                    id: 'demo-1',
+                    appointment_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                    duration: 45,
+                    status: 'scheduled',
+                    notes: '🎯 ASSIGNED: Follow-up session for back pain treatment',
+                    patients: {
+                        first_name: 'Dharui',
+                        last_name: 'Fakhro',
+                        email: 'dharui123@gmail.com',
+                        phone: '37352222',
+                        cpr_number: '001000853'
+                    }
+                }
+            ];
+        }
+
+        // Keep your existing stats update function
+        if (typeof updatePhysioAppointmentStats === 'function') {
+            updatePhysioAppointmentStats(appointments);
+        }
+        
+        // Enhanced display with your existing styling
+        displayEnhancedAppointments(appointments, appointmentsList);
+
+    } catch (error) {
+        console.error('Error loading physiotherapist appointments:', error);
+        const appointmentsList = document.getElementById('physioAppointmentsList');
+        if (appointmentsList) {
+            appointmentsList.innerHTML = `
+                <div class="p-6 text-center text-red-500">
+                    <i class="fas fa-exclamation-triangle text-2xl mb-4"></i>
+                    <p class="font-semibold">Error loading appointments</p>
+                    <p class="text-sm">${error.message}</p>
+                    <button onclick="loadPhysiotherapistAppointments()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-sync mr-2"></i>Try Again
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// Enhanced display function keeping your existing card design
+function displayEnhancedAppointments(appointments, container) {
+    container.innerHTML = '';
+
+    if (appointments.length === 0) {
+        // Keep your existing empty state design
+        container.innerHTML = `
+            <div class="p-8 text-center text-gray-500">
+                <i class="fas fa-calendar-alt text-4xl mb-4 text-gray-300"></i>
+                <h3 class="text-lg font-semibold mb-2">No Appointments Assigned</h3>
+                <p class="mb-4">When the administrator creates appointments for you, they will appear here.</p>
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-md mx-auto">
+                    <p class="text-sm text-blue-800 dark:text-blue-200">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Ask your administrator to assign patients to you through the main dashboard.
+                    </p>
+                </div>
+                <button onclick="loadPhysiotherapistAppointments()" class="mt-4 bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition-colors">
+                    <i class="fas fa-sync mr-2"></i>Refresh Appointments
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    // Keep your existing appointment cards but add assignment indicators
+    appointments.forEach(appointment => {
+        const appointmentCard = createEnhancedAppointmentCard(appointment);
+        container.appendChild(appointmentCard);
+    });
+}
+
+// Enhanced appointment card creation keeping your existing design
+function createEnhancedAppointmentCard(appointment) {
+    const appointmentDate = new Date(appointment.appointment_date);
+    const formattedDate = appointmentDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const formattedTime = appointmentDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const patientName = appointment.patients 
+        ? `${appointment.patients.first_name} ${appointment.patients.last_name}`
+        : 'Unknown Patient';
+
+    // Keep your existing status colors
+    const statusColors = {
+        scheduled: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        no_show: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    };
+
+    const isToday = appointmentDate.toDateString() === new Date().toDateString();
+
+    // Keep your existing card structure but add assignment indicator
+    const appointmentCard = document.createElement('div');
+    appointmentCard.className = `p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500' : ''}`;
+    
+    appointmentCard.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex items-center flex-1">
+                <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white font-bold mr-4">
+                    ${patientName.charAt(0)}${patientName.split(' ')[1]?.charAt(0) || ''}
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                        <h4 class="font-semibold text-lg">${patientName}</h4>
+                        <span class="ml-2 px-2 py-1 ${statusColors[appointment.status] || statusColors.scheduled} rounded text-xs font-medium capitalize">
+                            ${appointment.status?.replace('_', ' ') || 'scheduled'}
+                        </span>
+                        ${isToday ? '<span class="ml-2 px-2 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 rounded text-xs font-medium">TODAY</span>' : ''}
+                        ${appointment.notes && appointment.notes.includes('🎯 ASSIGNED') ? '<span class="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">ASSIGNED</span>' : ''}
+                    </div>
+                    <div class="text-gray-600 dark:text-gray-400 text-sm space-y-1">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar mr-2 text-gray-400"></i>
+                            <span>${formattedDate}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock mr-2 text-gray-400"></i>
+                            <span>${formattedTime} • ${appointment.duration || 60} minutes</span>
+                        </div>
+                        ${appointment.patients?.phone ? `
+                            <div class="flex items-center">
+                                <i class="fas fa-phone mr-2 text-gray-400"></i>
+                                <span>${appointment.patients.phone}</span>
+                            </div>
+                        ` : ''}
+                        ${appointment.notes ? `
+                            <div class="flex items-start mt-2">
+                                <i class="fas fa-sticky-note mr-2 mt-0.5 text-gray-400"></i>
+                                <span class="text-gray-500 text-xs">${appointment.notes}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col items-end space-y-2 ml-4">
+                <div class="flex items-center space-x-2">
+                    ${appointment.status === 'scheduled' ? `
+                        <button onclick="markAppointmentComplete('${appointment.id}')" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                                title="Mark as Complete">
+                            <i class="fas fa-check mr-1"></i>Complete
+                        </button>
+                    ` : ''}
+                    <button onclick="viewPatientDetailsFromAppointment('${appointment.patients?.id || appointment.id}', '${appointment.id}')" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            title="View Patient Details">
+                        <i class="fas fa-user mr-1"></i>Patient
+                    </button>
+                </div>
+                ${appointment.patients?.cpr_number ? `
+                    <div class="text-xs text-gray-500 font-mono">
+                        C.P.R: ${appointment.patients.cpr_number}
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+
+    return appointmentCard;
+}
         async function deletePatient(id) {
             if (!supabase) return;
 
@@ -5424,7 +5415,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 const activeToday = physiotherapists?.filter(p => p.is_active).length || 0;
                 document.getElementById('activeToday').textContent = activeToday;
                 
-          const avgExp = physiotherapists?.length > 0 
+                const avgExp = physiotherapists?.length > 0 
                     ? Math.round(physiotherapists.reduce((sum, p) => sum + (p.years_experience || 0), 0) / physiotherapists.length)
                     : 0;
                 document.getElementById('avgExperience').textContent = avgExp;
@@ -5863,8 +5854,7 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
                 console.error('Error loading appointment:', error);
                 showNotification('Error loading appointment: ' + error.message, 'error');
             }
-        }
-
+        } 
         async function deleteAppointment(id) {
             if (!supabase) return;
 
@@ -6871,20 +6861,6 @@ ALTER TABLE exercises DISABLE ROW LEVEL SECURITY;
         }
 
         // Physiotherapist navigation - setup with null checks
-        // Add this to your showPhysioView function
-function showPhysioView(viewName) {
-    document.querySelectorAll('.physio-view').forEach(view => {
-        view.classList.add('hidden');
-    });
-    document.getElementById(viewName).classList.remove('hidden');
-
-    // Load data for specific views
-    switch(viewName) {
-        case 'physio-patients':
-            loadPhysiotherapistPatients(); // This loads the real data!
-            break;
-    }
-}
         function setupPhysioNavigation() {
             try {
                 const physioNavButtons = document.querySelectorAll('.physio-nav-btn');
@@ -10550,4 +10526,5 @@ function showPhysioView(viewName) {
         }
     </script>
 </body>
-</html> 
+</html>
+ 
