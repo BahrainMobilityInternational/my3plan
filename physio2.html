@@ -4485,6 +4485,26 @@
             document.getElementById('supabaseConnectionForm').addEventListener('submit', handleSupabaseConnection);
         }
 
+        // 🔒 ENHANCED Security Configuration for Supabase
+        const SECURITY_ENHANCED_CONFIG = {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: false,
+                detectSessionInUrl: false,
+                storage: null, // Disable for security
+                flowType: 'pkce' // Enhanced security flow
+            },
+            db: {
+                schema: 'public'
+            },
+            global: {
+                headers: {
+                    'x-client-info': 'PhysioTech-v2.1.0',
+                    'x-application-name': 'BahrainMobilityPhysioTech'
+                }
+            }
+        };
+
         // 🚀 STREAMLINED Supabase Connection Handler - WORKING VERSION
         async function handleSupabaseConnection(e) {
             try {
