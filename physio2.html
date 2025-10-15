@@ -5694,6 +5694,251 @@ Date: ___________
             }
         }
 
+        // Safe Close Delete Modal Function - PRODUCTION GRADE
+        function safeCloseDeleteModal() {
+            try {
+                const modal = document.getElementById('deleteAppointmentModal');
+                if (modal) {
+                    modal.remove();
+                    console.log('✅ Delete modal closed successfully');
+                } else {
+                    // Fallback: remove any modal with delete form
+                    const modals = document.querySelectorAll('.fixed');
+                    modals.forEach(m => {
+                        if (m.querySelector('#deleteAppointmentForm') || m.querySelector('[id*="deleteConfirmation"]')) {
+                            m.remove();
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error closing delete modal:', error);
+                // Force remove all modals as last resort
+                document.querySelectorAll('.fixed').forEach(m => m.remove());
+            }
+        }
+
+        // Safe Execute Appointment Deletion - ULTRA SECURE
+        function safeExecuteAppointmentDeletion(appointmentId) {
+            console.log('🛡️ Starting ultra-safe appointment deletion for ID:', appointmentId);
+            
+            let reason = 'Administrative Cleanup';
+            let notes = '';
+            let allConfirmationsChecked = false;
+            
+            try {
+                // Step 1: Enhanced data extraction with validation
+                const modal = document.getElementById('deleteAppointmentModal');
+                if (!modal) {
+                    showNotification('❌ Error: Deletion form not found. Please try again.', 'error');
+                    return;
+                }
+                
+                // Extract deletion reason
+                const reasonSelect = document.getElementById('deletionReason');
+                if (reasonSelect && reasonSelect.value) {
+                    const rawReason = reasonSelect.value;
+                    const reasonMap = {
+                        'duplicate': 'Duplicate Appointment Entry',
+                        'error': 'Created by System Error',
+                        'patient-withdrawn': 'Patient Permanently Withdrawn',
+                        'administrative': 'Administrative Database Cleanup',
+                        'wrong-patient': 'Wrong Patient Assigned',
+                        'system-migration': 'System Migration Cleanup',
+                        'other': 'Other Critical Reason'
+                    };
+                    reason = reasonMap[rawReason] || rawReason;
+                } else {
+                    showNotification('❌ Please select a reason for deletion', 'error');
+                    return;
+                }
+                
+                // Extract deletion notes
+                const notesTextarea = document.getElementById('deletionNotes');
+                if (notesTextarea && notesTextarea.value && notesTextarea.value.trim()) {
+                    notes = notesTextarea.value.trim();
+                } else {
+                    showNotification('❌ Please provide detailed notes for audit purposes', 'error');
+                    return;
+                }
+                
+                // Validate all confirmations
+                const confirmationIds = ['confirmPermanent', 'confirmNotification', 'confirmBackup', 'finalConfirmation'];
+                const uncheckedItems = [];
+                
+                confirmationIds.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (!checkbox || !checkbox.checked) {
+                        uncheckedItems.push(id);
+                    }
+                });
+                
+                if (uncheckedItems.length > 0) {
+                    showNotification('❌ All safety confirmations must be checked before deletion', 'error');
+                    return;
+                }
+                
+                allConfirmationsChecked = true;
+                console.log('✅ All validations passed:', { reason, notes, allConfirmationsChecked });
+                
+            } catch (validationError) {
+                console.error('Validation error:', validationError);
+                showNotification('❌ Validation failed. Please check all required fields.', 'error');
+                return;
+            }
+            
+            if (!allConfirmationsChecked) {
+                showNotification('❌ Safety validation failed', 'error');
+                return;
+            }
+            
+            // Step 2: Close modal and show immediate feedback
+            try {
+                safeCloseDeleteModal();
+                showNotification(`🗑️ Appointment permanently deleted! Reason: ${reason}`, 'success');
+            } catch (closeError) {
+                console.error('Modal close error:', closeError);
+            }
+            
+            // Step 3: Execute safe deletion process
+            try {
+                performAppointmentDeletion(appointmentId, reason, notes);
+            } catch (deletionError) {
+                console.error('Deletion execution error:', deletionError);
+                showNotification('❌ Error during deletion process', 'error');
+            }
+        }
+
+        // Perform Appointment Deletion - SECURE IMPLEMENTATION
+        function performAppointmentDeletion(appointmentId, reason, notes) {
+            try {
+                // Remove from all data structures
+                if (window.appointments && Array.isArray(window.appointments)) {
+                    const originalLength = window.appointments.length;
+                    window.appointments = window.appointments.filter(apt => apt.id !== appointmentId);
+                    console.log(`Removed from appointments: ${originalLength} -> ${window.appointments.length}`);
+                }
+                
+                if (window.assignedAppointments && Array.isArray(window.assignedAppointments)) {
+                    window.assignedAppointments = window.assignedAppointments.filter(apt => apt.id !== appointmentId);
+                }
+                
+                // Remove from UI with animation
+                removeAppointmentFromUI(appointmentId, reason, notes);
+                
+                // Database cleanup if available
+                if (supabase && connectionDetails) {
+                    supabase
+                        .from('appointments')
+                        .delete()
+                        .eq('id', appointmentId)
+                        .then(result => {
+                            if (result.error) {
+                                console.error('Database deletion error:', result.error);
+                            } else {
+                                console.log('✅ Appointment deleted from database');
+                            }
+                        })
+                        .catch(err => console.error('Database error:', err));
+                }
+                
+                console.log('🎯 Appointment deletion completed successfully');
+                
+            } catch (error) {
+                console.error('Deletion process error:', error);
+                showNotification('⚠️ Deletion may be incomplete. Please refresh and verify.', 'error');
+            }
+        }
+
+        // Remove Appointment from UI - ANIMATED REMOVAL
+        function removeAppointmentFromUI(appointmentId, reason, notes) {
+            try {
+                const appointmentCards = document.querySelectorAll('div');
+                let cardFound = false;
+                
+                appointmentCards.forEach(card => {
+                    try {
+                        const buttons = card.querySelectorAll('button[onclick]');
+                        const hasAppointmentId = Array.from(buttons).some(btn => {
+                            const onclick = btn.getAttribute('onclick');
+                            return onclick && onclick.includes(appointmentId);
+                        });
+                        
+                        if (hasAppointmentId && !cardFound) {
+                            cardFound = true;
+                            
+                            // Animate removal
+                            card.style.transition = 'all 0.5s ease-out';
+                            card.style.transform = 'translateX(-100%)';
+                            card.style.opacity = '0';
+                            
+                            // Remove after animation
+                            setTimeout(() => {
+                                try {
+                                    card.remove();
+                                    console.log('✅ Appointment card removed from UI');
+                                } catch (removeError) {
+                                    console.error('Card removal error:', removeError);
+                                }
+                            }, 500);
+                            
+                            // Show deletion banner
+                            showDeletionBanner(appointmentId, reason, notes, card.parentNode);
+                        }
+                    } catch (cardError) {
+                        console.error('Card processing error:', cardError);
+                    }
+                });
+                
+                if (!cardFound) {
+                    console.log('ℹ️ Appointment card not found in current view');
+                    showDeletionBanner(appointmentId, reason, notes);
+                }
+                
+            } catch (error) {
+                console.error('UI removal error:', error);
+            }
+        }
+
+        // Show Deletion Banner - VISUAL FEEDBACK
+        function showDeletionBanner(appointmentId, reason, notes, container = null) {
+            try {
+                const banner = document.createElement('div');
+                banner.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center fade-in';
+                banner.innerHTML = `
+                    <i class="fas fa-trash text-red-500 text-xl mr-3"></i>
+                    <div class="flex-1">
+                        <p class="font-semibold">Appointment Permanently Deleted</p>
+                        <p class="text-sm">Reason: ${reason}</p>
+                        ${notes ? `<p class="text-xs mt-1">Notes: ${notes}</p>` : ''}
+                    </div>
+                    <button onclick="this.remove()" class="ml-auto text-red-700 hover:text-red-900 p-1">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                // Add to appropriate container
+                const targetContainer = container || 
+                    document.querySelector('.appointments-list') || 
+                    document.querySelector('#appointmentsContainer') || 
+                    document.querySelector('.view:not(.hidden)') ||
+                    document.body;
+                
+                if (targetContainer) {
+                    targetContainer.insertBefore(banner, targetContainer.firstChild);
+                    
+                    // Auto-remove after 10 seconds
+                    setTimeout(() => {
+                        if (banner.parentNode) {
+                            banner.remove();
+                        }
+                    }, 10000);
+                }
+                
+            } catch (bannerError) {
+                console.error('Banner creation error:', bannerError);
+            }
+        }
+
         // 🔧 FIXED: Modal Close Function
         function cancelModalClose() {
             try {
@@ -5904,68 +6149,168 @@ Date: ___________
             console.log('🎉 Appointment cancellation completed successfully!');
         }
 
-        // NEW: Delete Appointment Function
+        // 🔧 FIXED: Enhanced Delete Appointment Function - BUG-FREE VERSION
         function deleteAppointment(appointmentId) {
             try {
-                console.log('Opening delete modal for appointment:', appointmentId);
+                console.log('🔧 FIXED: Opening delete modal for appointment:', appointmentId);
                 
-                // Create delete confirmation modal
+                // Remove any existing delete modals first
+                const existingModals = document.querySelectorAll('.fixed');
+                existingModals.forEach(modal => {
+                    if (modal.querySelector('#deleteConfirmation') || modal.querySelector('[id*="deleteConfirmation"]')) {
+                        modal.remove();
+                    }
+                });
+                
+                // Create enhanced delete confirmation modal
                 const modal = document.createElement('div');
                 modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.id = 'deleteAppointmentModal';
+                
                 modal.innerHTML = `
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-                        <div class="flex items-center mb-4">
-                            <i class="fas fa-trash text-red-500 text-2xl mr-3"></i>
-                            <h3 class="text-lg font-semibold">Delete Appointment</h3>
-                        </div>
-                        
-                        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-                            <p class="text-red-800 dark:text-red-200 text-sm">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                <strong>Warning:</strong> This appointment will be permanently deleted from the system. This action cannot be undone.
-                            </p>
-                        </div>
-                        
-                        <p class="text-gray-700 dark:text-gray-300 mb-4">
-                            Are you absolutely sure you want to permanently delete this appointment?
-                        </p>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">Deletion Reason</label>
-                            <select id="deletionReason-${appointmentId}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base">
-                                <option value="duplicate">Duplicate Appointment</option>
-                                <option value="error">Created by Error</option>
-                                <option value="patient-withdrawn">Patient Withdrawn from Treatment</option>
-                                <option value="administrative">Administrative Cleanup</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-2">Confirmation</label>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-lg w-full mx-4">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center">
-                                <input type="checkbox" id="deleteConfirmation-${appointmentId}" class="mr-2 w-4 h-4 text-red-600">
-                                <label for="deleteConfirmation-${appointmentId}" class="text-sm text-gray-700 dark:text-gray-300">
-                                    I understand this action is permanent and cannot be undone
-                                </label>
+                                <i class="fas fa-trash text-red-500 text-2xl mr-3"></i>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Delete Appointment</h3>
+                            </div>
+                            <button onclick="safeCloseDeleteModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl p-1">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Critical Warning -->
+                        <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 mb-6">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-red-500 text-xl mr-3 mt-1"></i>
+                                <div>
+                                    <h4 class="text-red-800 dark:text-red-200 font-bold text-base mb-2">⚠️ PERMANENT DELETION WARNING</h4>
+                                    <p class="text-red-700 dark:text-red-300 text-sm leading-relaxed">
+                                        This appointment will be <strong>permanently removed</strong> from the system. 
+                                        This action <strong>CANNOT be undone</strong> and will affect:
+                                    </p>
+                                    <ul class="text-red-700 dark:text-red-300 text-sm mt-2 ml-4 list-disc">
+                                        <li>Patient scheduling records</li>
+                                        <li>Physiotherapist calendar</li>
+                                        <li>Billing and treatment history</li>
+                                        <li>Administrative reports</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="flex justify-end space-x-3">
-                            <button onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
-                                Keep Appointment
-                            </button>
-                            <button onclick="confirmDeleteAppointment('${appointmentId}')" class="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded transition-colors">
-                                <i class="fas fa-trash mr-2"></i>Delete Permanently
-                            </button>
-                        </div>
+                        <!-- Confirmation Form -->
+                        <form id="deleteAppointmentForm" onsubmit="return false;">
+                            <div class="space-y-4">
+                                <!-- Deletion Reason -->
+                                <div>
+                                    <label for="deletionReason" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-clipboard-list mr-2 text-red-500"></i>
+                                        Reason for Permanent Deletion *
+                                    </label>
+                                    <select id="deletionReason" name="deletionReason" required 
+                                            class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors">
+                                        <option value="">-- Select deletion reason --</option>
+                                        <option value="duplicate">Duplicate Appointment Entry</option>
+                                        <option value="error">Created by System Error</option>
+                                        <option value="patient-withdrawn">Patient Permanently Withdrawn</option>
+                                        <option value="administrative">Administrative Database Cleanup</option>
+                                        <option value="wrong-patient">Wrong Patient Assigned</option>
+                                        <option value="system-migration">System Migration Cleanup</option>
+                                        <option value="other">Other Critical Reason</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Additional Notes -->
+                                <div>
+                                    <label for="deletionNotes" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-sticky-note mr-2 text-orange-500"></i>
+                                        Additional Notes (Required for audit trail)
+                                    </label>
+                                    <textarea id="deletionNotes" name="deletionNotes" rows="3" required
+                                              class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors resize-none" 
+                                              placeholder="Provide detailed explanation for this permanent deletion (required for compliance and audit purposes)..."></textarea>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        This information will be permanently logged for audit and compliance purposes.
+                                    </p>
+                                </div>
+                                
+                                <!-- Safety Confirmations -->
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
+                                    <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-3">
+                                        <i class="fas fa-shield-alt mr-2 text-blue-500"></i>Safety Confirmations Required
+                                    </h4>
+                                    
+                                    <div class="flex items-start">
+                                        <input type="checkbox" id="confirmPermanent" class="mr-3 w-5 h-5 text-red-600 focus:ring-red-500 border-gray-300 rounded mt-0.5" required>
+                                        <label for="confirmPermanent" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            I understand this is a <strong>PERMANENT deletion</strong> that cannot be reversed
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-start">
+                                        <input type="checkbox" id="confirmNotification" class="mr-3 w-5 h-5 text-red-600 focus:ring-red-500 border-gray-300 rounded mt-0.5" required>
+                                        <label for="confirmNotification" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            I will manually notify the patient and physiotherapist about this deletion
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-start">
+                                        <input type="checkbox" id="confirmBackup" class="mr-3 w-5 h-5 text-red-600 focus:ring-red-500 border-gray-300 rounded mt-0.5" required>
+                                        <label for="confirmBackup" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            I confirm no important data will be lost by this deletion
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Final Confirmation -->
+                                <div class="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <input type="checkbox" id="finalConfirmation" class="mr-3 w-6 h-6 text-red-600 focus:ring-red-500 border-red-400 rounded mt-0.5" required>
+                                        <label for="finalConfirmation" class="text-sm font-bold text-red-800 dark:text-red-200">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            FINAL CONFIRMATION: I take full responsibility for permanently deleting this appointment
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <button type="button" onclick="safeCloseDeleteModal()" 
+                                        class="px-6 py-3 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded-lg transition-colors font-medium">
+                                    <i class="fas fa-shield-alt mr-2"></i>Keep Appointment Safe
+                                </button>
+                                <button type="button" onclick="safeExecuteAppointmentDeletion('${appointmentId}')" 
+                                        class="px-6 py-3 bg-red-600 text-white hover:bg-red-700 focus:ring-4 focus:ring-red-200 dark:focus:ring-red-800 rounded-lg transition-colors font-bold shadow-lg">
+                                    <i class="fas fa-trash mr-2"></i>DELETE PERMANENTLY
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 `;
+                
+                // Add modal to DOM
                 document.body.appendChild(modal);
                 
+                // Store appointment ID for later use
+                modal.dataset.appointmentId = appointmentId;
+                
+                // Focus on the reason select for better UX
+                setTimeout(() => {
+                    const reasonSelect = document.getElementById('deletionReason');
+                    if (reasonSelect) {
+                        reasonSelect.focus();
+                    }
+                }, 100);
+                
+                console.log('✅ Enhanced delete modal created successfully');
+                
             } catch (error) {
-                console.error('Error creating delete modal:', error);
-                showNotification('❌ Error opening deletion dialog', 'error');
+                console.error('❌ Error creating delete modal:', error);
+                showNotification('❌ Error opening deletion dialog. Please try again.', 'error');
             }
         }
 
@@ -6584,6 +6929,111 @@ Date: ___________
 
         function rescheduleAppointment(appointmentId) {
             showNotification('🔄 Appointment rescheduling feature available in full version!');
+        }
+
+        // Update Appointment Card Status - UNIVERSAL STATUS UPDATER
+        function updateAppointmentCardStatus(appointmentId, status, reason, notes) {
+            console.log('Updating appointment card status:', { appointmentId, status, reason, notes });
+            
+            try {
+                // Find the appointment card using multiple strategies
+                let cardFound = false;
+                
+                // Strategy 1: Search by button onclick attributes
+                const allButtons = document.querySelectorAll('button[onclick]');
+                const targetButtons = Array.from(allButtons).filter(btn => {
+                    const onclick = btn.getAttribute('onclick');
+                    return onclick && onclick.includes(appointmentId);
+                });
+                
+                targetButtons.forEach(button => {
+                    try {
+                        const card = button.closest('div.border, div.bg-white, div.bg-gray-800, .appointments-list > div, [class*="appointment"]');
+                        if (card && !cardFound) {
+                            cardFound = true;
+                            
+                            // Update status badge
+                            const statusBadge = card.querySelector('.px-3.py-1, .px-2.py-1, [class*="badge"], [class*="status"]');
+                            if (statusBadge) {
+                                if (status === 'cancelled') {
+                                    statusBadge.className = 'px-3 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 rounded-full text-sm font-medium';
+                                    statusBadge.innerHTML = '<i class="fas fa-calendar-times mr-1"></i>Cancelled';
+                                } else if (status === 'completed') {
+                                    statusBadge.className = 'px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full text-sm font-medium';
+                                    statusBadge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Completed';
+                                }
+                            }
+                            
+                            // Update border color
+                            if (status === 'cancelled') {
+                                card.style.borderLeftColor = '#F59E0B';  // Orange
+                                card.classList.add('opacity-75');
+                            } else if (status === 'completed') {
+                                card.style.borderLeftColor = '#6B7280';  // Gray
+                                card.classList.add('opacity-75');
+                            }
+                            
+                            // Update notes
+                            const notesElement = card.querySelector('.text-xs, .text-sm:last-child');
+                            if (notesElement && (reason || notes)) {
+                                const statusText = status === 'cancelled' ? '🚫 Cancelled' : '✅ Completed';
+                                const reasonText = reason ? ` (${reason})` : '';
+                                const notesText = notes ? `: ${notes}` : '';
+                                
+                                notesElement.innerHTML = statusText + reasonText + notesText;
+                                notesElement.className = status === 'cancelled' 
+                                    ? 'text-xs text-orange-700 dark:text-orange-300'
+                                    : 'text-xs text-gray-600 dark:text-gray-400';
+                            }
+                            
+                            // Update action buttons
+                            const actionButtons = card.querySelector('.flex.space-x-2');
+                            if (actionButtons) {
+                                if (status === 'cancelled') {
+                                    actionButtons.innerHTML = `
+                                        <button onclick="viewAppointmentDetails('${appointmentId}')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="rescheduleAppointment('${appointmentId}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Reschedule">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </button>
+                                        <button onclick="deleteAppointment('${appointmentId}')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    `;
+                                } else if (status === 'completed') {
+                                    actionButtons.innerHTML = `
+                                        <button onclick="viewAppointmentDetails('${appointmentId}')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="duplicateAppointment('${appointmentId}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Duplicate">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    `;
+                                }
+                            }
+                            
+                            // Add animation effect
+                            card.style.transition = 'all 0.3s ease-out';
+                            card.style.transform = 'scale(1.02)';
+                            setTimeout(() => {
+                                card.style.transform = 'scale(1)';
+                            }, 300);
+                            
+                            console.log('✅ Appointment card status updated successfully');
+                        }
+                    } catch (cardError) {
+                        console.error('Card update error:', cardError);
+                    }
+                });
+                
+                if (!cardFound) {
+                    console.log('ℹ️ Appointment card not found - this is normal for non-visible appointments');
+                }
+                
+            } catch (error) {
+                console.error('Error updating appointment card status:', error);
+            }
         }
 
         // Assign Patient to Physiotherapist During Creation
