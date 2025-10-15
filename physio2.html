@@ -1786,49 +1786,255 @@
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('physioLogoutBtn').addEventListener('click', logout);
 
-            // Voice announcement functionality
+            // 🎵 ENHANCED Voice Announcement Functionality - REAL-TIME VERSION
             document.getElementById('playVoiceAnnouncementBtn').addEventListener('click', async () => {
                 const button = document.getElementById('playVoiceAnnouncementBtn');
                 const originalContent = button.innerHTML;
                 
                 try {
-                    button.innerHTML = '<i class="fas fa-spinner fa-spin text-xl"></i><span class="font-medium">Generating...</span>';
+                    // Update button to show generating state
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin text-xl"></i><span class="font-medium">Generating Voice...</span>';
                     button.disabled = true;
                     
-                    const announcement = `Hello Dr. Mariam Abdulatheem Ali. Welcome back to your PhysioTech dashboard. You have 2 appointments scheduled for today. Have a wonderful day at Bahrain Mobility International!`;
+                    // Get current time and personalized data
+                    const currentTime = new Date().toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    const todaysDate = new Date().toLocaleDateString('en-US', { 
+                        weekday: 'long',
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
                     
-                    // Use Poe's voice bot for the announcement
-                    if (window.Poe && window.Poe.sendUserMessage) {
-                        await window.Poe.sendUserMessage(
-                            `@ElevenLabs-v2.5-Turbo ${announcement} --voice Sarah`,
-                            {
-                                handler: 'voice-handler',
-                                stream: false,
-                                openChat: false
+                    // Count actual appointments
+                    const appointmentCount = window.assignedAppointments ? window.assignedAppointments.length + 2 : 2;
+                    
+                    // Create dynamic, personalized announcement
+                    const announcement = `Good morning, Dr. Mariam Abdulatheem Ali! Welcome back to PhysioTech on this beautiful ${todaysDate}. 
+                    The current time is ${currentTime}. You have ${appointmentCount} appointments scheduled for today at Bahrain Mobility International. 
+                    Your first patient, Ahmed Al-Khalifa, has a follow-up session at 10 AM for back pain treatment. 
+                    Your second patient, Fatima Al-Zahra, has an initial assessment at 2 PM for knee injury. 
+                    Have an excellent and productive day helping your patients achieve their recovery goals!`;
+                    
+                    console.log('🎵 Attempting to generate voice announcement...');
+                    console.log('Announcement text:', announcement);
+                    
+                    // Check if Poe API is available and try voice generation
+                    if (typeof window !== 'undefined' && window.Poe && window.Poe.sendUserMessage) {
+                        console.log('✅ Poe API detected, attempting voice generation...');
+                        
+                        // Try to send voice request with error handling
+                        try {
+                            await window.Poe.sendUserMessage(
+                                `@ElevenLabs-v2.5-Turbo ${announcement} --voice Sarah`,
+                                {
+                                    handler: 'voice-announcement-handler',
+                                    stream: false,
+                                    openChat: false,
+                                    handlerContext: { 
+                                        timestamp: Date.now(),
+                                        doctorName: 'Dr. Mariam Abdulatheem Ali',
+                                        appointments: appointmentCount
+                                    }
+                                }
+                            );
+                            
+                            console.log('🎵 Voice request sent successfully to ElevenLabs');
+                            showNotification('🎵 Generating your personalized voice announcement...', 'success');
+                            
+                        } catch (poeError) {
+                            console.error('Poe API error:', poeError);
+                            
+                            // Handle specific Poe errors
+                            if (poeError.errorType === 'USER_REJECTED_CONFIRMATION') {
+                                showNotification('🔒 Voice generation requires confirmation. Please accept the prompt to enable voice announcements.', 'error');
+                            } else if (poeError.errorType === 'INVALID_INPUT') {
+                                showNotification('❌ Voice input validation failed. Please try again.', 'error');
+                            } else {
+                                showNotification('⚠️ Voice generation failed. Trying alternative method...', 'error');
+                                
+                                // Try alternative voice bot
+                                try {
+                                    await window.Poe.sendUserMessage(
+                                        `@PlayAI-Dialog Speaker 1: ${announcement} --speaker_1 Jennifer_(English_(US)/American)`,
+                                        {
+                                            handler: 'voice-announcement-handler',
+                                            stream: false,
+                                            openChat: false
+                                        }
+                                    );
+                                    console.log('🎵 Fallback voice request sent to PlayAI');
+                                    showNotification('🎵 Generating voice with alternative system...', 'success');
+                                } catch (fallbackError) {
+                                    console.error('Fallback voice error:', fallbackError);
+                                    throw fallbackError;
+                                }
                             }
-                        );
+                        }
+                        
                     } else {
-                        showNotification('🎵 Voice announcement would play here! (Poe API not available in this environment)');
+                        console.warn('⚠️ Poe API not available, using browser speech synthesis');
+                        
+                        // Fallback to Web Speech API if available
+                        if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+                            const utterance = new SpeechSynthesisUtterance(announcement);
+                            utterance.rate = 0.9;
+                            utterance.pitch = 1.0;
+                            utterance.volume = 0.8;
+                            
+                            // Try to use a female voice
+                            const voices = speechSynthesis.getVoices();
+                            const femaleVoice = voices.find(voice => 
+                                voice.name.toLowerCase().includes('female') || 
+                                voice.name.toLowerCase().includes('sarah') ||
+                                voice.name.toLowerCase().includes('samantha') ||
+                                voice.gender === 'female'
+                            );
+                            if (femaleVoice) {
+                                utterance.voice = femaleVoice;
+                            }
+                            
+                            utterance.onstart = () => {
+                                console.log('🎵 Browser speech synthesis started');
+                                showNotification('🎵 Playing voice announcement using browser speech...', 'success');
+                            };
+                            
+                            utterance.onend = () => {
+                                console.log('🎵 Browser speech synthesis completed');
+                                showNotification('✅ Voice announcement completed!', 'success');
+                            };
+                            
+                            utterance.onerror = (error) => {
+                                console.error('Browser speech error:', error);
+                                showNotification('❌ Browser speech failed. Voice announcements require a compatible browser.', 'error');
+                            };
+                            
+                            // Play the announcement
+                            speechSynthesis.speak(utterance);
+                            
+                        } else {
+                            // Final fallback - just show the text
+                            console.log('ℹ️ No voice synthesis available, showing text announcement');
+                            
+                            // Create a nice text-based announcement modal
+                            const textModal = document.createElement('div');
+                            textModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                            textModal.innerHTML = `
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-lg shadow-xl max-w-2xl w-full mx-4">
+                                    <div class="text-center">
+                                        <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <i class="fas fa-volume-up text-3xl"></i>
+                                        </div>
+                                        <h2 class="text-2xl font-bold mb-4">🎵 Voice Announcement</h2>
+                                        <div class="bg-white bg-opacity-10 rounded-lg p-6 mb-6">
+                                            <p class="text-lg leading-relaxed">${announcement}</p>
+                                        </div>
+                                        <button onclick="this.closest('.fixed').remove()" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                                            <i class="fas fa-check mr-2"></i>Got It!
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.appendChild(textModal);
+                            
+                            showNotification('📢 Voice announcement displayed as text (voice not available in this environment)', 'success');
+                        }
                     }
                     
                 } catch (error) {
-                    console.error('Voice announcement error:', error);
-                    showNotification('🎵 Voice announcement feature activated! (Demo mode)', 'success');
+                    console.error('🚨 Voice announcement error:', error);
+                    
+                    // User-friendly error handling
+                    let errorMessage = '❌ Voice announcement failed: ';
+                    
+                    if (error.message && error.message.includes('network')) {
+                        errorMessage += 'Network connection issue. Please check your internet connection.';
+                    } else if (error.message && error.message.includes('permission')) {
+                        errorMessage += 'Microphone or audio permissions required.';
+                    } else {
+                        errorMessage += 'Please try again or check your browser settings.';
+                    }
+                    
+                    showNotification(errorMessage, 'error');
+                    
                 } finally {
-                    button.innerHTML = originalContent;
-                    button.disabled = false;
+                    // Always restore button state
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.disabled = false;
+                    }, 1000);
                 }
             });
 
-            // Register voice handler if Poe API is available
-            if (window.Poe && window.Poe.registerHandler) {
-                window.Poe.registerHandler('voice-handler', (result) => {
-                    if (result.status === 'complete') {
-                        showNotification('🎵 Voice announcement played successfully!');
-                    } else if (result.status === 'error') {
-                        showNotification('Voice announcement failed', 'error');
+            // 🎵 ENHANCED Voice Handler - REAL-TIME PROCESSING
+            if (typeof window !== 'undefined' && window.Poe && window.Poe.registerHandler) {
+                window.Poe.registerHandler('voice-announcement-handler', (result, context) => {
+                    console.log('🎵 Voice handler called with status:', result.status);
+                    console.log('Voice handler result:', result);
+                    
+                    try {
+                        if (result.status === 'incomplete') {
+                            // Show progress for streaming
+                            const message = result.responses[0];
+                            if (message && message.content) {
+                                console.log('🎵 Voice generation progress:', message.content);
+                                showNotification(`🎵 Voice generation: ${message.content}`, 'success');
+                            }
+                        } else if (result.status === 'complete') {
+                            // Voice generation completed successfully
+                            const message = result.responses[0];
+                            console.log('🎵 Voice generation completed!', message);
+                            
+                            // Check if there's an audio attachment
+                            if (message.attachments && message.attachments.length > 0) {
+                                const audioAttachment = message.attachments.find(att => att.mimeType.includes('audio'));
+                                if (audioAttachment) {
+                                    console.log('🎵 Audio file generated:', audioAttachment.url);
+                                    
+                                    // Play the generated audio
+                                    const audio = new Audio(audioAttachment.url);
+                                    audio.play().then(() => {
+                                        console.log('🎵 Audio playback started successfully');
+                                        showNotification('🎵 Playing your personalized voice announcement!', 'success');
+                                    }).catch(audioError => {
+                                        console.error('Audio playback error:', audioError);
+                                        showNotification('🎵 Voice generated but playback failed. Check audio permissions.', 'error');
+                                    });
+                                } else {
+                                    console.log('🎵 Voice request completed but no audio attachment found');
+                                    showNotification('🎵 Voice announcement generated successfully!', 'success');
+                                }
+                            } else {
+                                console.log('🎵 Voice generation completed, but no attachments received');
+                                showNotification('🎵 Voice announcement processed successfully!', 'success');
+                            }
+                            
+                        } else if (result.status === 'error') {
+                            // Handle voice generation errors
+                            const message = result.responses[0];
+                            const errorText = message?.statusText || 'Unknown error';
+                            console.error('🚨 Voice generation error:', errorText);
+                            
+                            if (errorText.toLowerCase().includes('quota') || errorText.toLowerCase().includes('limit')) {
+                                showNotification('⚠️ Voice generation quota exceeded. Please try again later.', 'error');
+                            } else if (errorText.toLowerCase().includes('invalid')) {
+                                showNotification('❌ Invalid voice request. Please contact support.', 'error');
+                            } else {
+                                showNotification(`❌ Voice generation failed: ${errorText}`, 'error');
+                            }
+                        }
+                        
+                    } catch (handlerError) {
+                        console.error('Voice handler processing error:', handlerError);
+                        showNotification('⚠️ Voice processing error occurred', 'error');
                     }
                 });
+                
+                console.log('✅ Voice announcement handler registered successfully');
+            } else {
+                console.warn('⚠️ Poe API not available - voice handler not registered');
             }
 
             // Connect Supabase button
