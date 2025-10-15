@@ -4459,40 +4459,61 @@
                     console.error('Loading state error:', loadingError);
                 }
                 
-                // ULTRA SAFE Supabase client initialization
+                // ENHANCED Supabase client initialization with auto-retry
                 let supabaseClient = null;
                 
                 try {
                     console.log('🔧 Attempting Supabase client creation...');
                     
-                    // Check if Supabase is loaded at all
+                    // Check if window exists
                     if (typeof window === 'undefined') {
                         throw new Error('Window object not available');
                     }
                     
-                    // Multiple ultra-safe fallback methods
-                    if (window.supabase?.createClient) {
-                        console.log('Method 1: Using window.supabase.createClient');
+                    // Wait a moment for scripts to fully load
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Multiple ultra-safe fallback methods with better detection
+                    if (window.supabase && typeof window.supabase.createClient === 'function') {
+                        console.log('✅ Method 1: Using window.supabase.createClient');
                         supabaseClient = window.supabase.createClient(url, key, {
                             auth: {
                                 autoRefreshToken: false,
                                 persistSession: false
                             }
                         });
-                    } else if (typeof createClient !== 'undefined' && createClient) {
-                        console.log('Method 2: Using global createClient');
-                        supabaseClient = createClient(url, key);
-                    } else if (window.createClient) {
-                        console.log('Method 3: Using window.createClient');
+                    } else if (typeof window.createClient === 'function') {
+                        console.log('✅ Method 2: Using window.createClient');
                         supabaseClient = window.createClient(url, key);
+                    } else if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
+                        console.log('✅ Method 3: Using global createClient');
+                        supabaseClient = createClient(url, key);
+                    } else if (window.SupabaseClient) {
+                        console.log('✅ Method 4: Using SupabaseClient constructor');
+                        supabaseClient = new window.SupabaseClient(url, key);
                     } else {
-                        // Last resort - try to access Supabase from script tag
-                        console.log('Method 4: Checking for Supabase in global scope');
-                        if (typeof supabase !== 'undefined' && supabase?.createClient) {
-                            supabaseClient = supabase.createClient(url, key);
-                        } else {
-                            throw new Error('Supabase library is not loaded. Please refresh the page and ensure you have internet connectivity.');
+                        // Enhanced library detection
+                        const scripts = document.querySelectorAll('script[src*="supabase"]');
+                        console.log('🔍 Supabase scripts found:', scripts.length);
+                        
+                        // Try to reload Supabase library
+                        if (scripts.length === 0) {
+                            console.log('🔄 Loading Supabase library dynamically...');
+                            const script = document.createElement('script');
+                            script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+                            script.onload = () => {
+                                console.log('✅ Supabase library loaded dynamically');
+                                // Retry connection after load
+                                setTimeout(() => handleSupabaseConnection(null), 1000);
+                            };
+                            script.onerror = () => {
+                                throw new Error('Failed to load Supabase library dynamically');
+                            };
+                            document.head.appendChild(script);
+                            return; // Exit and retry after script loads
                         }
+                        
+                        throw new Error('Supabase library is not loaded properly. Please refresh the page or check your internet connection.');
                     }
                     
                     if (!supabaseClient) {
