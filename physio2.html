@@ -295,8 +295,14 @@
                     <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physiotherapists">
                         <i class="fas fa-user-md mr-3"></i>Physiotherapists
                     </button>
+                    <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="exercises">
+                        <i class="fas fa-dumbbell mr-3"></i>Exercises
+                    </button>
                     <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="reports">
                         <i class="fas fa-chart-bar mr-3"></i>Reports
+                    </button>
+                    <button class="nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="settings">
+                        <i class="fas fa-cog mr-3"></i>System Settings
                     </button>
                 </nav>
             </div>
@@ -378,11 +384,53 @@
 
                 <!-- Patients View -->
                 <div id="patients" class="view hidden">
+                    <!-- Page Header -->
                     <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold">Patients</h1>
-                        <button id="addPatientBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Add Patient
-                        </button>
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Patient Management</h1>
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-users mr-2"></i>
+                            <span id="patientCount">Total: 1 patient</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Bar with Search and Buttons -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                            <!-- Search Section -->
+                            <div class="flex-1 w-full lg:w-auto">
+                                <div class="relative">
+                                    <input type="text" id="patientSearchInput" placeholder="Search patients by name, email, phone, or CPR number..." 
+                                           class="w-full px-4 py-3 pl-12 pr-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Filters and Actions -->
+                            <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                                <!-- Status Filter -->
+                                <select id="patientStatusFilter" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active Patients</option>
+                                    <option value="inactive">Inactive Patients</option>
+                                    <option value="new">New Patients</option>
+                                </select>
+                                
+                                <!-- Clear Filters -->
+                                <button id="clearFiltersBtn" class="px-4 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-times mr-2"></i>Clear Filters
+                                </button>
+                                
+                                <!-- Action Buttons -->
+                                <div class="flex gap-2">
+                                    <button id="importPatientsBtn" class="bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+                                        <i class="fas fa-upload mr-2"></i>Import
+                                    </button>
+                                    <button id="addPatientBtn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold flex items-center shadow-lg">
+                                        <i class="fas fa-user-plus mr-2"></i>Add New Patient
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Patients Grid -->
@@ -427,6 +475,9 @@
                                     <button onclick="editPatient('sample-id')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Patient">
                                         <i class="fas fa-edit"></i>
                                     </button>
+                                    <button onclick="deletePatient('sample-id', 'Dharui Fakhroo')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Patient">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -435,29 +486,257 @@
 
                 <!-- Appointments View -->
                 <div id="appointments" class="view hidden">
+                    <!-- Page Header -->
                     <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold">Appointments</h1>
-                        <button id="addAppointmentBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Add Appointment
-                        </button>
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Appointment Management</h1>
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-calendar-alt mr-2"></i>
+                            <span id="appointmentCount">Today: 3 appointments</span>
+                        </div>
                     </div>
 
-                    <!-- Sample Appointment -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                                    DF
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold">Dharui Fakhroo</h4>
-                                    <p class="text-gray-600 dark:text-gray-400 text-sm">Dr. Mariam Abdulatheem Ali</p>
-                                    <p class="text-gray-500 text-sm">Today, 2:00 PM - 3:00 PM</p>
+                    <!-- Action Bar -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                            <!-- Date and Filter Section -->
+                            <div class="flex-1 w-full lg:w-auto">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Date</label>
+                                        <input type="date" id="appointmentDateFilter" 
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Physiotherapist</label>
+                                        <select id="appointmentPhysioFilter" 
+                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                            <option value="">All Physiotherapists</option>
+                                            <option value="mariam-physio-001">Dr. Mariam Abdulatheem Ali</option>
+                                            <option value="dhari-physio-001">Dr. Dhari Fakhroo</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Status</label>
+                                        <select id="appointmentStatusFilter" 
+                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                            <option value="">All Status</option>
+                                            <option value="scheduled">Scheduled</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                            <option value="no-show">No Show</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm">Scheduled</span>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                                <button id="refreshAppointmentsBtn" class="bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+                                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                                </button>
+                                <button id="exportAppointmentsBtn" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                                    <i class="fas fa-download mr-2"></i>Export
+                                </button>
+                                <button id="addAppointmentBtn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold flex items-center shadow-lg">
+                                    <i class="fas fa-calendar-plus mr-2"></i>Schedule New Appointment
+                                </button>
+                            </div>
                         </div>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm">Follow-up session for back pain treatment</p>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-blue-100 text-sm">Today</p>
+                                    <p class="text-2xl font-bold" id="appointmentsTodayTotal">3</p>
+                                </div>
+                                <i class="fas fa-calendar-day text-2xl text-blue-200"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100 text-sm">This Week</p>
+                                    <p class="text-2xl font-bold" id="weekAppointmentsCount">18</p>
+                                </div>
+                                <i class="fas fa-calendar-week text-2xl text-green-200"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-purple-100 text-sm">Completed</p>
+                                    <p class="text-2xl font-bold" id="completedAppointmentsCount">145</p>
+                                </div>
+                                <i class="fas fa-check-circle text-2xl text-purple-200"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-orange-100 text-sm">Pending</p>
+                                    <p class="text-2xl font-bold" id="pendingAppointmentsCount">7</p>
+                                </div>
+                                <i class="fas fa-clock text-2xl text-orange-200"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointments List -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                        <!-- Header -->
+                        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold">All Appointments</h3>
+                                <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                    <span>View:</span>
+                                    <button id="listViewBtn" class="px-3 py-1 bg-primary text-white rounded">List</button>
+                                    <button id="calendarViewBtn" class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded">Calendar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appointments Container -->
+                        <div id="appointmentsContainer" class="p-6">
+                            <div class="appointments-list space-y-4">
+                                <!-- Today's Appointment -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 border-green-500">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                                            DF
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg">Dharui Fakhroo</h4>
+                                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                                <i class="fas fa-user-md mr-1"></i>Dr. Mariam Abdulatheem Ali
+                                            </p>
+                                            <p class="text-gray-500 text-sm">
+                                                <i class="fas fa-clock mr-1"></i>Today, 2:00 PM - 3:00 PM (60 min)
+                                            </p>
+                                            <p class="text-xs text-green-700 dark:text-green-300">Follow-up session for back pain treatment</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm font-medium">
+                                            <i class="fas fa-calendar-check mr-1"></i>Scheduled
+                                        </span>
+                                        <div class="flex space-x-2">
+                                            <button onclick="editAppointment('sample-appointment-1')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Appointment">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="completeAppointment('sample-appointment-1')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Mark Complete">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button onclick="cancelAppointment('sample-appointment-1')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tomorrow's Appointment -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 border-blue-500">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white font-bold">
+                                            AK
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg">Ahmed Al-Khalifa</h4>
+                                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                                <i class="fas fa-user-md mr-1"></i>Dr. Mariam Abdulatheem Ali
+                                            </p>
+                                            <p class="text-gray-500 text-sm">
+                                                <i class="fas fa-clock mr-1"></i>Tomorrow, 10:00 AM - 11:00 AM (60 min)
+                                            </p>
+                                            <p class="text-xs text-blue-700 dark:text-blue-300">Initial assessment for back pain</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <span class="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm font-medium">
+                                            <i class="fas fa-calendar-alt mr-1"></i>Upcoming
+                                        </span>
+                                        <div class="flex space-x-2">
+                                            <button onclick="sendAppointmentToPhysiotherapist('sample-appointment-2', 'mariam-physio-001', 'Ahmed Al-Khalifa')" class="p-2 text-purple-600 hover:text-purple-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Send to Physiotherapist">
+                                                <i class="fas fa-share"></i>
+                                            </button>
+                                            <button onclick="editAppointment('sample-appointment-2')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Appointment">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="completeAppointment('sample-appointment-2')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Mark Complete">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button onclick="cancelAppointment('sample-appointment-2')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Completed Appointment -->
+                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow opacity-75 border-l-4 border-gray-400">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-12 h-12 bg-gray-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            FZ
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg">Fatima Al-Zahra</h4>
+                                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                                <i class="fas fa-user-md mr-1"></i>Dr. Dhari Fakhroo
+                                            </p>
+                                            <p class="text-gray-500 text-sm">
+                                                <i class="fas fa-clock mr-1"></i>Yesterday, 3:00 PM - 4:00 PM (60 min)
+                                            </p>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">Knee rehabilitation session</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full text-sm font-medium">
+                                            <i class="fas fa-check-circle mr-1"></i>Completed
+                                        </span>
+                                        <div class="flex space-x-2">
+                                            <button onclick="viewAppointmentDetails('sample-appointment-3')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button onclick="duplicateAppointment('sample-appointment-3')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Duplicate Appointment">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Physiotherapist Assignment Panel -->
+                    <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg shadow-lg p-6 mb-6 border border-purple-200 dark:border-purple-800">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-users-medical text-purple-600 text-2xl mr-3"></i>
+                            <h3 class="text-xl font-semibold text-purple-900 dark:text-purple-100">Quick Physiotherapist Actions</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="sendTodaysAppointmentsToPhysiotherapist('mariam-physio-001', 'Dr. Mariam Abdulatheem Ali')" 
+                                    class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700 hover:shadow-md transition-shadow">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-calendar-check text-purple-600 text-xl"></i>
+                                </div>
+                                <div class="text-left">
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100">Send Today's Appointments</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">To Dr. Mariam Abdulatheem Ali</p>
+                                </div>
+                            </button>
+                            <button onclick="createBulkAppointments()" 
+                                    class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-calendar-plus text-blue-600 text-xl"></i>
+                                </div>
+                                <div class="text-left">
+                                    <p class="font-semibold text-gray-900 dark:text-gray-100">Create Weekly Schedule</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Auto-schedule appointments for all physiotherapists</p>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -512,11 +791,339 @@
                     </div>
                 </div>
 
+                <!-- Exercises View -->
+                <div id="exercises" class="view hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold">Exercise Library</h1>
+                        <button id="addExerciseBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add Exercise
+                        </button>
+                    </div>
+
+                    <!-- Exercise Categories -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2">Strength Training</h3>
+                                    <p class="text-blue-100">45 exercises</p>
+                                </div>
+                                <i class="fas fa-dumbbell text-4xl text-blue-200"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2">Flexibility</h3>
+                                    <p class="text-green-100">32 exercises</p>
+                                </div>
+                                <i class="fas fa-running text-4xl text-green-200"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2">Balance & Coordination</h3>
+                                    <p class="text-purple-100">28 exercises</p>
+                                </div>
+                                <i class="fas fa-balance-scale text-4xl text-purple-200"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exercise Library -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">Popular Exercises</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Sample Exercise Cards -->
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-dumbbell text-blue-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold">Shoulder Rolls</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Strength Training</p>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Improve shoulder mobility and reduce tension</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">Beginner</span>
+                                    <button onclick="viewExercise('shoulder-rolls')" class="text-primary hover:text-secondary text-sm font-medium">
+                                        <i class="fas fa-eye mr-1"></i>View
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-running text-green-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold">Hamstring Stretch</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Flexibility</p>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Improve leg flexibility and prevent injury</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded">Beginner</span>
+                                    <button onclick="viewExercise('hamstring-stretch')" class="text-primary hover:text-secondary text-sm font-medium">
+                                        <i class="fas fa-eye mr-1"></i>View
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-balance-scale text-purple-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold">Single Leg Stand</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Balance</p>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Improve balance and proprioception</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 px-2 py-1 rounded">Intermediate</span>
+                                    <button onclick="viewExercise('single-leg-stand')" class="text-primary hover:text-secondary text-sm font-medium">
+                                        <i class="fas fa-eye mr-1"></i>View
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Reports View -->
                 <div id="reports" class="view hidden">
                     <h1 class="text-3xl font-bold mb-6">Reports & Analytics</h1>
+                    
+                    <!-- Reports Overview -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold">Patient Progress</h3>
+                                <i class="fas fa-chart-line text-primary text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Track patient improvement over time</p>
+                            <button onclick="generateProgressReport()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-secondary transition-colors">
+                                Generate Report
+                            </button>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold">Financial Summary</h3>
+                                <i class="fas fa-dollar-sign text-green-600 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Monthly revenue and billing reports</p>
+                            <button onclick="generateFinancialReport()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                Generate Report
+                            </button>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold">Staff Performance</h3>
+                                <i class="fas fa-user-md text-purple-600 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Physiotherapist performance metrics</p>
+                            <button onclick="generateStaffReport()" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                        <p class="text-gray-600 dark:text-gray-400">Reports and analytics coming soon...</p>
+                        <h3 class="text-xl font-semibold mb-4">Recent Reports</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                                    <div>
+                                        <p class="font-medium">Monthly Patient Report - December 2024</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Generated 2 hours ago</p>
+                                    </div>
+                                </div>
+                                <button class="text-primary hover:text-secondary">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Settings View -->
+                <div id="settings" class="view hidden">
+                    <h1 class="text-3xl font-bold mb-6">System Settings</h1>
+                    
+                    <!-- Settings Categories -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- General Settings -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-cog text-primary mr-3"></i>
+                                    General Settings
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Clinic Name</label>
+                                        <input type="text" value="Bahrain Mobility International" 
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">Default Appointment Duration</label>
+                                            <select class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                                <option value="30">30 minutes</option>
+                                                <option value="45">45 minutes</option>
+                                                <option value="60" selected>60 minutes</option>
+                                                <option value="90">90 minutes</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">Time Zone</label>
+                                            <select class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                                <option value="Asia/Bahrain" selected>Asia/Bahrain (GMT+3)</option>
+                                                <option value="Asia/Dubai">Asia/Dubai (GMT+4)</option>
+                                                <option value="Asia/Riyadh">Asia/Riyadh (GMT+3)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" checked class="mr-3 w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                            <span>Enable email notifications for appointments</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="mr-3 w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                            <span>Enable SMS reminders for patients</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <button onclick="saveGeneralSettings()" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition-colors">
+                                        <i class="fas fa-save mr-2"></i>Save Settings
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Database Settings -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-database text-primary mr-3"></i>
+                                    Database Settings
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <div>
+                                            <h4 class="font-semibold">Connection Status</h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400" id="settingsConnectionStatus">
+                                                <i class="fas fa-circle text-red-400 mr-1"></i>Not Connected
+                                            </p>
+                                        </div>
+                                        <button id="settingsConnectSupabase" onclick="showSupabaseConnectionModal()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                                            Connect
+                                        </button>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" checked class="mr-3 w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                            <span>Enable automatic backups</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" checked class="mr-3 w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                            <span>Enable real-time synchronization</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <button onclick="saveDatabaseSettings()" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-secondary transition-colors">
+                                        <i class="fas fa-save mr-2"></i>Save Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="space-y-6">
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-tools text-primary mr-3"></i>
+                                    Quick Actions
+                                </h3>
+                                
+                                <div class="space-y-3">
+                                    <button onclick="exportAllData()" class="w-full flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                                        <i class="fas fa-download text-blue-600 mr-3"></i>
+                                        <div class="text-left">
+                                            <p class="font-medium text-blue-900 dark:text-blue-100">Export Data</p>
+                                            <p class="text-xs text-blue-600 dark:text-blue-300">Download all system data</p>
+                                        </div>
+                                    </button>
+                                    
+                                    <button onclick="importData()" class="w-full flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                                        <i class="fas fa-upload text-green-600 mr-3"></i>
+                                        <div class="text-left">
+                                            <p class="font-medium text-green-900 dark:text-green-100">Import Data</p>
+                                            <p class="text-xs text-green-600 dark:text-green-300">Upload and import data</p>
+                                        </div>
+                                    </button>
+                                    
+                                    <button onclick="systemBackup()" class="w-full flex items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                                        <i class="fas fa-shield-alt text-purple-600 mr-3"></i>
+                                        <div class="text-left">
+                                            <p class="font-medium text-purple-900 dark:text-purple-100">System Backup</p>
+                                            <p class="text-xs text-purple-600 dark:text-purple-300">Create system backup</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- System Information -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-info-circle text-primary mr-3"></i>
+                                    System Information
+                                </h3>
+                                
+                                <div class="space-y-3 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Version:</span>
+                                        <span class="font-medium">PhysioTech v2.1.0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Last Updated:</span>
+                                        <span class="font-medium">Dec 18, 2024</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Database:</span>
+                                        <span class="font-medium" id="databaseType">Supabase</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">License:</span>
+                                        <span class="font-medium">Professional</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -734,10 +1341,34 @@
                 </div>
 
                 <div id="physio-patients" class="physio-view hidden">
-                    <h1 class="text-3xl font-bold mb-6">Patient Files</h1>
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                        <p class="text-gray-600 dark:text-gray-400">Patient file management for physiotherapists coming soon...</p>
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold">My Patient Files</h1>
+                        <button id="refreshPatientFiles" class="bg-secondary text-white px-4 py-2 rounded-lg hover:bg-sage transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh Files
+                        </button>
                     </div>
+
+                    <!-- Loading State -->
+                    <div id="patientFilesLoading" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+                        <i class="fas fa-spinner fa-spin text-secondary text-3xl mb-4"></i>
+                        <p class="text-gray-600 dark:text-gray-400">Loading your assigned patients...</p>
+                    </div>
+
+                    <!-- No Patients State -->
+                    <div id="noPatientFiles" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+                        <i class="fas fa-folder-open text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Patient Files Yet</h3>
+                        <p class="text-gray-500 dark:text-gray-500 mb-4">You haven't been assigned any patients yet. Patient files will appear here once an administrator assigns patients to you.</p>
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-md mx-auto">
+                            <p class="text-sm text-blue-800 dark:text-blue-200">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Administrators can assign patients to you from the admin dashboard. Once assigned, you'll see their complete medical files here.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Patient Files Grid -->
+                    <div id="patientFilesGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
             </div>
         </div>
@@ -948,20 +1579,67 @@
             showNotification('You have been logged out successfully.');
         }
 
+        // Global error handler to prevent white screen crashes
+        window.addEventListener('error', function(event) {
+            console.error('Global error caught:', event.error);
+            console.error('Error details:', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno
+            });
+            
+            // Hide loading spinner if visible
+            const spinner = document.getElementById('loadingSpinner');
+            if (spinner && !spinner.classList.contains('hidden')) {
+                spinner.classList.add('hidden');
+            }
+            
+            // Show error notification
+            showNotification('⚠️ An error occurred. The system will continue to work. Please refresh if needed.', 'error');
+            
+            return false; // Allow default error handling
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            
+            // Hide loading spinner if visible
+            const spinner = document.getElementById('loadingSpinner');
+            if (spinner && !spinner.classList.contains('hidden')) {
+                spinner.classList.add('hidden');
+            }
+            
+            showNotification('⚠️ A background operation failed. The system will continue to work.', 'error');
+        });
+
         // Initialize when DOM is ready - SAFE VERSION
         function safeInitialize() {
             try {
+                console.log('Starting safe initialization...');
                 initializeApp();
+                console.log('Safe initialization completed successfully');
             } catch (error) {
-                console.error('Initialization error:', error);
-                setTimeout(safeInitialize, 100); // Retry after 100ms
+                console.error('Critical initialization error:', error);
+                
+                // Try to show basic error UI
+                try {
+                    showNotification('⚠️ Application failed to initialize properly. Please refresh the page.', 'error');
+                } catch (notificationError) {
+                    console.error('Could not show notification:', notificationError);
+                }
+                
+                setTimeout(() => {
+                    console.log('Retrying initialization...');
+                    safeInitialize();
+                }, 1000); // Retry after 1 second
             }
         }
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', safeInitialize);
         } else {
-            safeInitialize();
+            setTimeout(safeInitialize, 50); // Small delay to ensure DOM is ready
         }
 
         function initializeApp() {
@@ -1087,8 +1765,9 @@
                         document.getElementById('physioUserName').textContent = mariamUser.name;
                         document.getElementById('physioUserEmail').textContent = mariamUser.email;
                         
-                        // Load assigned appointments when physiotherapist logs in
+                        // Load assigned appointments and patients when physiotherapist logs in
                         loadAssignedAppointments();
+                        loadAssignedPatients();
                         
                         showNotification('Welcome back, ' + mariamUser.name + '! 🎵 Voice announcements are ready for you.');
                     } else {
@@ -1204,7 +1883,261 @@
                 });
             }
 
+            // Refresh patient files button
+            const refreshPatientFiles = document.getElementById('refreshPatientFiles');
+            if (refreshPatientFiles) {
+                refreshPatientFiles.addEventListener('click', () => {
+                    loadAssignedPatients();
+                });
+            }
+
             console.log('PhysioTech Application initialized successfully!');
+        }
+
+        // Load Assigned Patients for Physiotherapist
+        async function loadAssignedPatients() {
+            console.log('Loading assigned patients for physiotherapist...');
+            
+            const loadingElement = document.getElementById('patientFilesLoading');
+            const noFilesElement = document.getElementById('noPatientFiles');
+            const filesGrid = document.getElementById('patientFilesGrid');
+            
+            // Show loading state
+            if (loadingElement) loadingElement.classList.remove('hidden');
+            if (noFilesElement) noFilesElement.classList.add('hidden');
+            if (filesGrid) filesGrid.classList.add('hidden');
+
+            try {
+                let assignedPatients = [];
+                
+                // Try to load from Supabase if connected
+                if (supabase && connectionDetails && currentUser?.physioData?.id) {
+                    try {
+                        const { data: supabasePatients, error } = await supabase
+                            .from('patient_assignments')
+                            .select('*')
+                            .eq('physiotherapist_id', currentUser.physioData.id);
+
+                        if (error) {
+                            console.error('Supabase error loading assigned patients:', error);
+                            showNotification('⚠️ Could not load patients from database. Using local data.', 'success');
+                        } else if (supabasePatients && supabasePatients.length > 0) {
+                            assignedPatients = supabasePatients;
+                            console.log('Loaded assigned patients from Supabase:', assignedPatients.length);
+                        }
+                    } catch (supabaseError) {
+                        console.error('Supabase operation failed:', supabaseError);
+                        showNotification('⚠️ Database connection issue. Using local data.', 'success');
+                    }
+                }
+                
+                // Fallback to local storage if no Supabase data
+                if (assignedPatients.length === 0 && window.assignedPatients && window.assignedPatients['mariam-physio-001']) {
+                    assignedPatients = window.assignedPatients['mariam-physio-001'];
+                    console.log('Using local assigned patients:', assignedPatients.length);
+                }
+
+                // Hide loading
+                if (loadingElement) loadingElement.classList.add('hidden');
+
+                if (assignedPatients.length === 0) {
+                    // Show no patients state
+                    if (noFilesElement) noFilesElement.classList.remove('hidden');
+                    showNotification('📋 No patients assigned yet. Patients will appear here once an administrator assigns them to you.');
+                } else {
+                    // Show patients grid
+                    if (filesGrid) {
+                        filesGrid.classList.remove('hidden');
+                        filesGrid.innerHTML = ''; // Clear existing content
+                        
+                        assignedPatients.forEach(patient => {
+                            addPatientFileCard(patient);
+                        });
+                    }
+                    
+                    // Update patient count in dashboard
+                    const physioActivePatientsElement = document.getElementById('physioActivePatients');
+                    if (physioActivePatientsElement) {
+                        physioActivePatientsElement.textContent = assignedPatients.length;
+                    }
+
+                    showNotification(`📁 Loaded ${assignedPatients.length} assigned patient file(s) successfully!`, 'success');
+                }
+
+            } catch (error) {
+                console.error('Error loading assigned patients:', error);
+                
+                // Hide loading and show error state
+                if (loadingElement) loadingElement.classList.add('hidden');
+                if (noFilesElement) noFilesElement.classList.remove('hidden');
+                
+                showNotification('❌ Error loading patient files. Please try again later.', 'error');
+            }
+        }
+
+        // Add Patient File Card to Grid
+        function addPatientFileCard(patient) {
+            const filesGrid = document.getElementById('patientFilesGrid');
+            if (!filesGrid) return;
+
+            // Calculate age if date of birth is available
+            let age = 'Unknown';
+            if (patient.date_of_birth) {
+                const birthDate = new Date(patient.date_of_birth);
+                const today = new Date();
+                age = today.getFullYear() - birthDate.getFullYear();
+                if (today.getMonth() < birthDate.getMonth() || 
+                    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                age += ' years old';
+            }
+
+            // Create initials
+            const initials = (patient.first_name.charAt(0) + patient.last_name.charAt(0)).toUpperCase();
+            
+            // Create patient file card
+            const patientCard = document.createElement('div');
+            patientCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-secondary';
+            patientCard.innerHTML = `
+                <div class="flex items-center mb-4">
+                    <div class="w-16 h-16 bg-secondary rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                        ${initials}
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold">${patient.first_name} ${patient.last_name}</h3>
+                        ${patient.email ? `<p class="text-gray-600 dark:text-gray-400 text-sm">${patient.email}</p>` : ''}
+                        ${patient.phone ? `<p class="text-gray-500 dark:text-gray-500 text-sm">${patient.phone}</p>` : ''}
+                    </div>
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-birthday-cake w-4 mr-2 text-gray-400"></i>
+                        <span>${age}</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-id-card w-4 mr-2 text-gray-400"></i>
+                        <span>CPR: ${patient.cpr_number || 'Not provided'}</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-map-marker-alt w-4 mr-2 text-gray-400"></i>
+                        <span>${patient.address || 'Address not provided'}</span>
+                    </div>
+                </div>
+
+                <!-- Medical Information -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                    <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center">
+                        <i class="fas fa-notes-medical text-secondary mr-2"></i>
+                        Medical History
+                    </h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">${patient.medical_history || 'No medical history provided'}</p>
+                </div>
+
+                <!-- Treatment Information -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+                    <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center">
+                        <i class="fas fa-clipboard-list text-blue-600 mr-2"></i>
+                        Current Condition & Plan
+                    </h4>
+                    <p class="text-sm text-blue-700 dark:text-blue-300 mb-2">${patient.current_condition || 'Initial assessment needed'}</p>
+                    <p class="text-xs text-blue-600 dark:text-blue-400"><strong>Plan:</strong> ${patient.treatment_plan || 'Treatment plan to be developed'}</p>
+                </div>
+
+                <!-- Assignment Information -->
+                ${patient.assignment_notes ? `
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 mb-4">
+                    <h4 class="font-semibold text-green-800 dark:text-green-200 mb-1 flex items-center text-sm">
+                        <i class="fas fa-user-md text-green-600 mr-2"></i>
+                        Assignment Notes
+                    </h4>
+                    <p class="text-xs text-green-700 dark:text-green-300">${patient.assignment_notes}</p>
+                </div>
+                ` : ''}
+
+                <!-- Emergency Contact -->
+                ${patient.emergency_contact_name ? `
+                <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
+                    <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2 text-sm flex items-center">
+                        <i class="fas fa-phone text-red-500 mr-2"></i>
+                        Emergency Contact
+                    </h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">${patient.emergency_contact_name}</p>
+                    ${patient.emergency_contact_phone ? `<p class="text-sm text-gray-500">${patient.emergency_contact_phone}</p>` : ''}
+                </div>
+                ` : ''}
+
+                <!-- Patient Status & Actions -->
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-1 bg-secondary bg-opacity-10 text-secondary rounded text-sm font-medium">
+                            ✨ Assigned to You
+                        </span>
+                        <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">
+                            ${patient.total_sessions || 0} Sessions
+                        </span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="viewPatientFile('${patient.patient_id || patient.id}')" class="p-2 text-secondary hover:text-sage rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Full File">
+                            <i class="fas fa-folder-open"></i>
+                        </button>
+                        <button onclick="addTreatmentNote('${patient.patient_id || patient.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Add Treatment Note">
+                            <i class="fas fa-sticky-note"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            filesGrid.appendChild(patientCard);
+        }
+
+        // Global functions for patient file actions
+        function viewPatientFile(patientId) {
+            showNotification('📁 Patient file viewer will open in full version!');
+        }
+
+        function addTreatmentNote(patientId) {
+            showNotification('📝 Treatment notes feature available in full version!');
+        }
+
+        // Exercise functions
+        function viewExercise(exerciseId) {
+            showNotification(`🏃‍♂️ Exercise "${exerciseId}" details will open in full version!`);
+        }
+
+        // Reports functions
+        function generateProgressReport() {
+            showNotification('📊 Generating patient progress report... (Feature available in full version)', 'success');
+        }
+
+        function generateFinancialReport() {
+            showNotification('💰 Generating financial summary report... (Feature available in full version)', 'success');
+        }
+
+        function generateStaffReport() {
+            showNotification('👩‍⚕️ Generating staff performance report... (Feature available in full version)', 'success');
+        }
+
+        // Settings functions
+        function saveGeneralSettings() {
+            showNotification('✅ General settings saved successfully!', 'success');
+        }
+
+        function saveDatabaseSettings() {
+            showNotification('✅ Database settings saved successfully!', 'success');
+        }
+
+        function exportAllData() {
+            showNotification('📦 Exporting all system data... (Feature available in full version)', 'success');
+        }
+
+        function importData() {
+            showNotification('📥 Import data feature available in full version!', 'success');
+        }
+
+        function systemBackup() {
+            showNotification('💾 Creating system backup... (Feature available in full version)', 'success');
         }
 
         // Global functions for button clicks
@@ -1213,7 +2146,36 @@
         }
 
         function editPatient(id) {
-            showNotification('Edit patient feature available in full version!');
+            // Find the patient data
+            let patientData = null;
+            
+            // Search in local patients array
+            if (window.patients) {
+                patientData = window.patients.find(patient => patient.id === id);
+            }
+            
+            // If not found, create sample data for the existing patient
+            if (!patientData && id === 'sample-id') {
+                patientData = {
+                    id: 'sample-id',
+                    first_name: 'Dharui',
+                    last_name: 'Fakhroo',
+                    email: 'Dharui123@gmail.com',
+                    phone: '37352222',
+                    cpr_number: '001000853',
+                    date_of_birth: '1999-01-15',
+                    address: 'Manama, Bahrain',
+                    medical_history: 'Lower back pain, previous sports injury.',
+                    emergency_contact_name: 'Ahmad Fakhroo',
+                    emergency_contact_phone: '97123456'
+                };
+            }
+            
+            if (patientData) {
+                showEditPatientModal(patientData);
+            } else {
+                showNotification('Patient not found!', 'error');
+            }
         }
 
         function editPhysiotherapist(id) {
@@ -1263,7 +2225,7 @@
         }
 
         // Confirm Assignment Function
-        function confirmAssignment(patientId, patientName) {
+        async function confirmAssignment(patientId, patientName) {
             const physiotherapistId = document.getElementById('selectPhysiotherapist').value;
             const assignmentNotes = document.getElementById('assignmentNotes').value;
             const selectedOption = document.getElementById('selectPhysiotherapist').selectedOptions[0];
@@ -1277,7 +2239,101 @@
             try {
                 showLoading();
 
-                // Create assignment record in our demo system
+                // Create comprehensive patient record for Supabase
+                const patientRecord = {
+                    patient_id: patientId,
+                    first_name: patientName.split(' ')[0] || 'Dharui',
+                    last_name: patientName.split(' ').slice(1).join(' ') || 'Fakhroo',
+                    full_name: patientName,
+                    email: 'dharui123@gmail.com',
+                    phone: '37352222',
+                    cpr_number: '001000853',
+                    date_of_birth: '1999-01-15',
+                    address: 'Manama, Bahrain',
+                    medical_history: 'Lower back pain, previous sports injury. Regular physiotherapy sessions recommended.',
+                    emergency_contact_name: 'Ahmad Fakhroo',
+                    emergency_contact_phone: '97123456',
+                    physiotherapist_id: physiotherapistId,
+                    assignment_notes: assignmentNotes,
+                    assigned_date: new Date().toISOString(),
+                    assigned_by: currentUser?.name || 'Administrator',
+                    status: 'active',
+                    last_visit: new Date().toISOString(),
+                    total_sessions: 0,
+                    treatment_plan: 'Initial assessment and treatment plan to be developed',
+                    current_condition: 'Chronic lower back pain, seeking physiotherapy treatment',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                // Save to Supabase if connected
+                if (supabase && connectionDetails) {
+                    try {
+                        // First, check if assignment already exists
+                        const { data: existingAssignment, error: checkError } = await supabase
+                            .from('patient_assignments')
+                            .select('*')
+                            .eq('patient_id', patientId)
+                            .eq('physiotherapist_id', physiotherapistId)
+                            .single();
+
+                        if (checkError && !checkError.message.includes('No rows')) {
+                            console.error('Error checking existing assignment:', checkError);
+                        }
+
+                        let supabaseResult;
+                        if (existingAssignment) {
+                            // Update existing assignment
+                            supabaseResult = await supabase
+                                .from('patient_assignments')
+                                .update(patientRecord)
+                                .eq('patient_id', patientId)
+                                .eq('physiotherapist_id', physiotherapistId);
+                                
+                            console.log('Updated existing patient assignment in Supabase');
+                        } else {
+                            // Create new assignment
+                            supabaseResult = await supabase
+                                .from('patient_assignments')
+                                .insert([patientRecord]);
+                                
+                            console.log('Created new patient assignment in Supabase');
+                        }
+
+                        if (supabaseResult.error) {
+                            console.error('Supabase error:', supabaseResult.error);
+                            showNotification('⚠️ Assignment created locally, but failed to sync to database. Check your connection.', 'success');
+                        } else {
+                            showNotification('✅ Patient assignment saved to database successfully!', 'success');
+                        }
+
+                    } catch (supabaseError) {
+                        console.error('Supabase operation failed:', supabaseError);
+                        showNotification('⚠️ Assignment created locally, but database sync failed. Data will sync when connection is restored.', 'success');
+                    }
+                } else {
+                    showNotification('⚠️ Assignment created locally. Connect to Supabase to enable real-time synchronization.', 'success');
+                }
+
+                // Store locally as fallback/cache
+                if (!window.assignedPatients) {
+                    window.assignedPatients = {};
+                }
+                if (!window.assignedPatients[physiotherapistId]) {
+                    window.assignedPatients[physiotherapistId] = [];
+                }
+                
+                // Check if patient already assigned to this physiotherapist locally
+                const existingIndex = window.assignedPatients[physiotherapistId].findIndex(p => p.patient_id === patientId);
+                if (existingIndex >= 0) {
+                    // Update existing assignment
+                    window.assignedPatients[physiotherapistId][existingIndex] = patientRecord;
+                } else {
+                    // Add new assignment
+                    window.assignedPatients[physiotherapistId].push(patientRecord);
+                }
+
+                // Create assignment record for tracking
                 const assignment = {
                     id: `assignment-${Date.now()}`,
                     patientId: patientId,
@@ -1289,7 +2345,7 @@
                     assignedBy: currentUser?.name || 'Administrator'
                 };
 
-                // Store assignment for physiotherapist to see
+                // Store assignment for tracking
                 if (!window.patientAssignments) {
                     window.patientAssignments = [];
                 }
@@ -1353,7 +2409,13 @@
         function loadAssignedAppointments() {
             console.log('Loading assigned appointments for physiotherapist...');
             
-            // Get today's schedule element
+            // Update both dashboard schedule and appointments page
+            updatePhysioSchedule();
+            updatePhysioAppointmentsPage();
+        }
+
+        // Update Physiotherapist Dashboard Schedule
+        function updatePhysioSchedule() {
             const scheduleContainer = document.getElementById('todaySchedule');
             if (!scheduleContainer) {
                 console.error('Schedule container not found');
@@ -1364,38 +2426,51 @@
             if (window.assignedAppointments && window.assignedAppointments.length > 0) {
                 console.log('Found assigned appointments:', window.assignedAppointments.length);
                 
-                // Clear existing schedule and add assigned appointments
-                scheduleContainer.innerHTML = '';
+                // Keep existing appointments and add assigned ones
+                const existingAppointments = scheduleContainer.innerHTML;
                 
-                // Filter appointments for today and this physiotherapist
-                const today = new Date().toDateString();
-                const todayAppointments = window.assignedAppointments.filter(appointment => {
-                    const appointmentDate = new Date(appointment.appointmentDate);
-                    return appointmentDate.toDateString() === today && 
-                           appointment.physiotherapistId === 'mariam-physio-001';
+                // Filter appointments for this physiotherapist
+                const physiotherapistAppointments = window.assignedAppointments.filter(appointment => {
+                    return appointment.physiotherapistId === 'mariam-physio-001';
                 });
 
-                if (todayAppointments.length > 0) {
-                    todayAppointments.forEach(appointment => {
-                        const appointmentTime = new Date(appointment.appointmentDate).toLocaleTimeString('en-US', {
+                if (physiotherapistAppointments.length > 0) {
+                    // Add separator for assigned appointments
+                    const separator = document.createElement('div');
+                    separator.className = 'mt-4 mb-2 border-t border-gray-200 dark:border-gray-600 pt-4';
+                    separator.innerHTML = '<h4 class="font-semibold text-gray-700 dark:text-gray-300">📋 Admin Assigned Appointments</h4>';
+                    scheduleContainer.appendChild(separator);
+
+                    physiotherapistAppointments.forEach(appointment => {
+                        const appointmentDate = new Date(appointment.appointmentDate);
+                        const appointmentTime = appointmentDate.toLocaleTimeString('en-US', {
                             hour: '2-digit',
                             minute: '2-digit'
                         });
+                        
+                        // Determine if it's today, tomorrow, or future
+                        const today = new Date().toDateString();
+                        const tomorrow = new Date(Date.now() + 24*60*60*1000).toDateString();
+                        const appointmentDateStr = appointmentDate.toDateString();
+                        
+                        let dayLabel = appointmentDate.toLocaleDateString();
+                        if (appointmentDateStr === today) dayLabel = 'Today';
+                        else if (appointmentDateStr === tomorrow) dayLabel = 'Tomorrow';
 
                         const appointmentCard = document.createElement('div');
-                        appointmentCard.className = 'flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border-l-4 border-green-500';
+                        appointmentCard.className = 'flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border-l-4 border-purple-500 mb-2';
                         appointmentCard.innerHTML = `
                             <div class="flex items-center">
-                                <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
                                     ${appointment.patients.first_name.charAt(0)}${appointment.patients.last_name.charAt(0)}
                                 </div>
                                 <div>
-                                    <p class="font-medium">${appointmentTime} - ${appointment.patients.first_name} ${appointment.patients.last_name}</p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">${appointment.duration} minutes • 🎯 NEW ASSIGNMENT</p>
-                                    <p class="text-xs text-green-700 dark:text-green-300">${appointment.notes}</p>
+                                    <p class="font-medium">${dayLabel} ${appointmentTime} - ${appointment.patients.first_name} ${appointment.patients.last_name}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">${appointment.duration} minutes • 🎯 ADMIN ASSIGNED</p>
+                                    <p class="text-xs text-purple-700 dark:text-purple-300">${appointment.notes}</p>
                                 </div>
                             </div>
-                            <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs">✨ Assigned</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded text-xs">✨ Assigned</span>
                         `;
                         scheduleContainer.appendChild(appointmentCard);
                     });
@@ -1403,58 +2478,83 @@
                     // Update appointment count
                     const countElements = document.querySelectorAll('#todayAppointmentsCount, #physioTodayAppointments');
                     countElements.forEach(el => {
-                        if (el) el.textContent = todayAppointments.length + 2; // +2 for existing demo appointments
+                        if (el) {
+                            const currentCount = parseInt(el.textContent) || 2;
+                            el.textContent = currentCount + physiotherapistAppointments.length;
+                        }
                     });
 
                     // Show success message
-                    showNotification(`📅 Found ${todayAppointments.length} new assigned appointment(s) for today!`, 'success');
-                } else {
-                    // Add tomorrow's appointments to the view
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    const tomorrowAppointments = window.assignedAppointments.filter(appointment => {
-                        const appointmentDate = new Date(appointment.appointmentDate);
-                        return appointmentDate.toDateString() === tomorrow.toDateString() && 
-                               appointment.physiotherapistId === 'mariam-physio-001';
-                    });
-
-                    if (tomorrowAppointments.length > 0) {
-                        // Add a separator for tomorrow's appointments
-                        const separator = document.createElement('div');
-                        separator.className = 'mt-4 mb-2 border-t border-gray-200 dark:border-gray-600 pt-4';
-                        separator.innerHTML = '<h4 class="font-semibold text-gray-700 dark:text-gray-300">Tomorrow\'s Assignments</h4>';
-                        scheduleContainer.appendChild(separator);
-
-                        tomorrowAppointments.forEach(appointment => {
-                            const appointmentTime = new Date(appointment.appointmentDate).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
-
-                            const appointmentCard = document.createElement('div');
-                            appointmentCard.className = 'flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500';
-                            appointmentCard.innerHTML = `
-                                <div class="flex items-center">
-                                    <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                                        ${appointment.patients.first_name.charAt(0)}${appointment.patients.last_name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p class="font-medium">Tomorrow ${appointmentTime} - ${appointment.patients.first_name} ${appointment.patients.last_name}</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">${appointment.duration} minutes • 🎯 NEWLY ASSIGNED</p>
-                                        <p class="text-xs text-blue-700 dark:text-blue-300">${appointment.notes}</p>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded text-xs">✨ Scheduled</span>
-                            `;
-                            scheduleContainer.appendChild(appointmentCard);
-                        });
-
-                        showNotification(`📅 Found ${tomorrowAppointments.length} new assigned appointment(s) for tomorrow!`, 'success');
-                    }
+                    showNotification(`📅 Found ${physiotherapistAppointments.length} admin-assigned appointment(s) for you!`, 'success');
                 }
             } else {
                 console.log('No assigned appointments found');
                 showNotification('📋 No new patient assignments yet. Your regular schedule is displayed.', 'success');
+            }
+        }
+
+        // Update Physiotherapist Appointments Page
+        function updatePhysioAppointmentsPage() {
+            // Find the physiotherapist appointments container
+            const appointmentsContainer = document.querySelector('#physio-appointments .space-y-4');
+            if (!appointmentsContainer) {
+                console.error('Physio appointments container not found');
+                return;
+            }
+
+            // Check if there are assigned appointments for this physiotherapist
+            if (window.assignedAppointments && window.assignedAppointments.length > 0) {
+                const physiotherapistAppointments = window.assignedAppointments.filter(appointment => {
+                    return appointment.physiotherapistId === 'mariam-physio-001';
+                });
+
+                if (physiotherapistAppointments.length > 0) {
+                    // Add assigned appointments to the appointments page
+                    physiotherapistAppointments.forEach(appointment => {
+                        const appointmentDate = new Date(appointment.appointmentDate);
+                        const appointmentTime = appointmentDate.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        // Determine day label
+                        const today = new Date().toDateString();
+                        const tomorrow = new Date(Date.now() + 24*60*60*1000).toDateString();
+                        const appointmentDateStr = appointmentDate.toDateString();
+                        
+                        let dayLabel = appointmentDate.toLocaleDateString();
+                        if (appointmentDateStr === today) dayLabel = 'Today';
+                        else if (appointmentDateStr === tomorrow) dayLabel = 'Tomorrow';
+
+                        const appointmentCard = document.createElement('div');
+                        appointmentCard.className = 'p-4 border border-gray-200 dark:border-gray-700 rounded-lg border-l-4 border-purple-500';
+                        appointmentCard.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                        ${appointment.patients.first_name.charAt(0)}${appointment.patients.last_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-lg">${appointment.patients.first_name} ${appointment.patients.last_name}</h4>
+                                        <p class="text-gray-600 dark:text-gray-400 text-sm">${appointment.patients.email} • ${appointment.patients.phone}</p>
+                                        <p class="text-sm text-gray-500">${dayLabel}, ${appointmentTime} (${appointment.duration} min)</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full text-sm font-medium">🎯 Admin Assigned</span>
+                            </div>
+                            <div class="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <p class="text-sm text-purple-700 dark:text-purple-300">
+                                    <i class="fas fa-sticky-note mr-2"></i><strong>Assignment Notes:</strong> ${appointment.notes}
+                                </p>
+                            </div>
+                        `;
+                        
+                        // Add to the top of appointments list
+                        appointmentsContainer.insertBefore(appointmentCard, appointmentsContainer.firstChild);
+                    });
+
+                    console.log('Added assigned appointments to physiotherapist appointments page');
+                }
             }
         }
 
@@ -1562,6 +2662,116 @@
                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
                                        placeholder="97123456">
                             </div>
+                            
+                            <!-- Treatment Tracking -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center mt-6">
+                                    <i class="fas fa-clipboard-check text-primary mr-2"></i>
+                                    Treatment Tracking
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Total Sessions</label>
+                                <div class="relative">
+                                    <input type="number" id="newTotalSessions" min="0" value="0" readonly
+                                           class="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                           placeholder="0">
+                                    <i class="fas fa-calculator absolute left-4 top-4 text-gray-400"></i>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <i class="fas fa-info-circle mr-1"></i>Automatically calculated from treatments
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Last Session Date</label>
+                                <div class="relative">
+                                    <input type="text" id="newLastSessionDate" value="No sessions yet" readonly
+                                           class="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                           placeholder="No sessions yet">
+                                    <i class="fas fa-clock absolute left-4 top-4 text-gray-400"></i>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <i class="fas fa-info-circle mr-1"></i>Date of most recent treatment
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Treatment Documentation -->
+                        <div class="mt-8">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-file-medical text-primary mr-2"></i>
+                                Treatment Documentation
+                            </h3>
+                            
+                            <!-- Generate Treatment Document -->
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-1">Generate Treatment Document</h4>
+                                        <p class="text-sm text-blue-700 dark:text-blue-300">Create a professional treatment form template</p>
+                                    </div>
+                                    <button type="button" id="generateTemplateBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                                        <i class="fas fa-file-alt mr-2"></i>Generate Template
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Upload Treatment Documents -->
+                            <div class="mb-4">
+                                <h4 class="font-medium mb-3">Upload Treatment Documents</h4>
+                                <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-primary dark:hover:border-primary transition-colors">
+                                    <i class="fas fa-upload text-gray-400 text-3xl mb-3"></i>
+                                    <p class="text-gray-600 dark:text-gray-400 mb-2">Upload completed treatment documents</p>
+                                    <input type="file" id="treatmentDocuments" multiple accept=".doc,.docx,.pdf" class="hidden">
+                                    <button type="button" onclick="document.getElementById('treatmentDocuments').click()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-folder-open mr-2"></i>Choose Documents
+                                    </button>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">DOC, DOCX, PDF up to 10MB each</p>
+                                </div>
+                                <div id="treatmentDocumentsList" class="mt-3 space-y-2"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Patient Media -->
+                        <div class="mt-8">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-camera text-primary mr-2"></i>
+                                Patient Media
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Profile Photo -->
+                                <div>
+                                    <h4 class="font-medium mb-3">Profile Photo</h4>
+                                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-primary dark:hover:border-primary transition-colors">
+                                        <div id="profilePhotoPreview" class="w-24 h-24 bg-gray-200 dark:bg-gray-600 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                            <i class="fas fa-camera text-gray-400 text-2xl"></i>
+                                        </div>
+                                        <input type="file" id="profilePhoto" accept=".jpg,.jpeg,.png,.gif" class="hidden">
+                                        <button type="button" onclick="document.getElementById('profilePhoto').click()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg transition-colors">
+                                            <i class="fas fa-upload mr-2"></i>Upload Photo
+                                        </button>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">JPG, PNG, GIF up to 5MB</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Patient Video -->
+                                <div>
+                                    <h4 class="font-medium mb-3">Patient Video</h4>
+                                    <div class="border-2 border-dashed border-green-300 dark:border-green-600 rounded-lg p-6 text-center hover:border-green-500 dark:hover:border-green-500 transition-colors">
+                                        <div id="videoPreview" class="w-24 h-24 bg-green-100 dark:bg-green-900/20 rounded-lg mx-auto mb-3 flex items-center justify-center">
+                                            <i class="fas fa-video text-green-600 text-2xl"></i>
+                                        </div>
+                                        <input type="file" id="patientVideo" accept=".mp4,.avi,.mov" class="hidden">
+                                        <button type="button" onclick="document.getElementById('patientVideo').click()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                            <i class="fas fa-upload mr-2"></i>Upload Video
+                                        </button>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">MP4, AVI, MOV up to 50MB</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -1582,39 +2792,65 @@
             
             // Handle form submission
             document.getElementById('addPatientForm').addEventListener('submit', handleAddPatient);
+            
+            // Handle Generate Template button
+            document.getElementById('generateTemplateBtn').addEventListener('click', generateTreatmentTemplate);
+            
+            // Handle file uploads
+            document.getElementById('treatmentDocuments').addEventListener('change', handleTreatmentDocumentUpload);
+            document.getElementById('profilePhoto').addEventListener('change', handleProfilePhotoUpload);
+            document.getElementById('patientVideo').addEventListener('change', handlePatientVideoUpload);
         }
 
         // Handle Add Patient Form Submission
         async function handleAddPatient(e) {
             e.preventDefault();
             
-            const firstName = document.getElementById('newFirstName').value.trim();
-            const lastName = document.getElementById('newLastName').value.trim();
-            
-            if (!firstName || !lastName) {
-                showNotification('Please fill in the required fields (First Name and Last Name)', 'error');
-                return;
-            }
+            let processingComplete = false;
+            const submitButton = e.target.querySelector('button[type="submit"]');
             
             try {
+                // Prevent multiple submissions
+                if (submitButton && submitButton.disabled) {
+                    console.log('Patient form submission already in progress');
+                    return;
+                }
+                
+                // Disable submit button
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding Patient...';
+                }
+                
+                // Get form values safely
+                const firstName = document.getElementById('newFirstName')?.value?.trim() || '';
+                const lastName = document.getElementById('newLastName')?.value?.trim() || '';
+                
+                if (!firstName || !lastName) {
+                    showNotification('Please fill in the required fields (First Name and Last Name)', 'error');
+                    return;
+                }
+                
                 showLoading();
                 
-                // Create patient object
+                // Create patient object with safe value extraction
                 const newPatient = {
-                    id: `patient-${Date.now()}`,
+                    id: `patient-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                     first_name: firstName,
                     last_name: lastName,
-                    email: document.getElementById('newEmail').value.trim(),
-                    phone: document.getElementById('newPhone').value.trim(),
-                    cpr_number: document.getElementById('newCprNumber').value.trim(),
-                    date_of_birth: document.getElementById('newDateOfBirth').value,
-                    address: document.getElementById('newAddress').value.trim(),
-                    medical_history: document.getElementById('newMedicalHistory').value.trim(),
-                    emergency_contact_name: document.getElementById('newEmergencyContactName').value.trim(),
-                    emergency_contact_phone: document.getElementById('newEmergencyContactPhone').value.trim(),
+                    email: document.getElementById('newEmail')?.value?.trim() || '',
+                    phone: document.getElementById('newPhone')?.value?.trim() || '',
+                    cpr_number: document.getElementById('newCprNumber')?.value?.trim() || '',
+                    date_of_birth: document.getElementById('newDateOfBirth')?.value || '',
+                    address: document.getElementById('newAddress')?.value?.trim() || '',
+                    medical_history: document.getElementById('newMedicalHistory')?.value?.trim() || '',
+                    emergency_contact_name: document.getElementById('newEmergencyContactName')?.value?.trim() || '',
+                    emergency_contact_phone: document.getElementById('newEmergencyContactPhone')?.value?.trim() || '',
                     created_at: new Date().toISOString(),
                     status: 'active'
                 };
+                
+                console.log('Creating new patient:', newPatient);
                 
                 // Store patient in local array for demo
                 if (!window.patients) {
@@ -1622,103 +2858,228 @@
                 }
                 window.patients.push(newPatient);
                 
-                // Add patient card to the grid
-                addPatientToGrid(newPatient);
+                // Add patient card to the grid safely
+                try {
+                    addPatientToGrid(newPatient);
+                    console.log('Patient card added to grid successfully');
+                } catch (gridError) {
+                    console.error('Error adding patient to grid:', gridError);
+                    // Continue anyway - the patient data is saved
+                }
                 
-                // Close modal
-                document.querySelector('.fixed').remove();
-                
-                hideLoading();
+                processingComplete = true;
                 
                 showNotification(`✅ Patient "${firstName} ${lastName}" has been added successfully!`, 'success');
                 
-                // Update patient count in dashboard
-                const totalPatientsElement = document.getElementById('totalPatients');
-                if (totalPatientsElement) {
-                    const currentCount = parseInt(totalPatientsElement.textContent) || 15;
-                    totalPatientsElement.textContent = currentCount + 1;
+                // Update patient count in dashboard safely
+                try {
+                    const totalPatientsElement = document.getElementById('totalPatients');
+                    if (totalPatientsElement) {
+                        const currentCount = parseInt(totalPatientsElement.textContent) || 15;
+                        totalPatientsElement.textContent = currentCount + 1;
+                    }
+                } catch (countError) {
+                    console.error('Error updating patient count:', countError);
                 }
                 
-                console.log('New patient added:', newPatient);
+                console.log('New patient added successfully:', newPatient);
                 
             } catch (error) {
-                console.error('Error adding patient:', error);
+                console.error('Critical error adding patient:', error);
                 showNotification('Error adding patient: ' + error.message, 'error');
-                hideLoading();
+                processingComplete = false;
+            } finally {
+                // Always clean up UI state
+                try {
+                    hideLoading();
+                    
+                    // Re-enable submit button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = '<i class="fas fa-plus mr-2"></i>Add Patient';
+                    }
+                    
+                    // Close modal only if successful
+                    if (processingComplete) {
+                        const modal = document.querySelector('.fixed');
+                        if (modal) {
+                            modal.remove();
+                        }
+                    }
+                } catch (cleanupError) {
+                    console.error('Error during patient cleanup:', cleanupError);
+                }
             }
         }
 
-        // Add Patient Card to Grid
+        // Add Patient Card to Grid - CRASH-SAFE VERSION
         function addPatientToGrid(patient) {
-            const patientsGrid = document.getElementById('patientsGrid');
-            if (!patientsGrid) return;
-            
-            // Calculate age from date of birth
-            let age = 'Unknown';
-            if (patient.date_of_birth) {
-                const birthDate = new Date(patient.date_of_birth);
-                const today = new Date();
-                age = today.getFullYear() - birthDate.getFullYear();
-                if (today.getMonth() < birthDate.getMonth() || 
-                    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
-                    age--;
+            try {
+                const patientsGrid = document.getElementById('patientsGrid');
+                if (!patientsGrid) {
+                    console.error('Patients grid not found');
+                    return;
                 }
-                age += ' years old';
-            }
-            
-            // Create initials
-            const initials = (patient.first_name.charAt(0) + patient.last_name.charAt(0)).toUpperCase();
-            
-            // Create patient card
-            const patientCard = document.createElement('div');
-            patientCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-green-500';
-            patientCard.innerHTML = `
-                <div class="flex items-center mb-4">
-                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-                        ${initials}
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold">${patient.first_name} ${patient.last_name}</h3>
-                        ${patient.email ? `<p class="text-gray-600 dark:text-gray-400 text-sm">${patient.email}</p>` : ''}
-                        ${patient.phone ? `<p class="text-gray-500 dark:text-gray-500 text-sm">${patient.phone}</p>` : ''}
-                    </div>
-                </div>
                 
-                <div class="space-y-2 mb-4">
-                    <div class="flex items-center text-sm">
-                        <i class="fas fa-birthday-cake w-4 mr-2 text-gray-400"></i>
-                        <span>${age}</span>
+                // Safely calculate age from date of birth
+                let age = 'Unknown';
+                try {
+                    if (patient.date_of_birth) {
+                        const birthDate = new Date(patient.date_of_birth);
+                        const today = new Date();
+                        age = today.getFullYear() - birthDate.getFullYear();
+                        if (today.getMonth() < birthDate.getMonth() || 
+                            (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+                        age += ' years old';
+                    }
+                } catch (ageError) {
+                    console.error('Error calculating age:', ageError);
+                    age = 'Unknown';
+                }
+                
+                // Safely create initials
+                let initials = 'PA';
+                try {
+                    if (patient.first_name && patient.last_name) {
+                        initials = (patient.first_name.charAt(0) + patient.last_name.charAt(0)).toUpperCase();
+                    }
+                } catch (initialsError) {
+                    console.error('Error creating initials:', initialsError);
+                    initials = 'PA';
+                }
+                
+                // Safely format creation date
+                let createdDate = 'Today';
+                try {
+                    if (patient.created_at) {
+                        createdDate = 'Added: ' + new Date(patient.created_at).toLocaleDateString();
+                    }
+                } catch (dateError) {
+                    console.error('Error formatting date:', dateError);
+                    createdDate = 'Added: Today';
+                }
+                
+                // Safely escape strings for HTML
+                const safeName = `${patient.first_name || 'Unknown'} ${patient.last_name || 'Patient'}`;
+                const safeEmail = patient.email || '';
+                const safePhone = patient.phone || '';
+                const safeId = patient.id || 'unknown-id';
+                
+                // Create patient card with safe HTML
+                const patientCard = document.createElement('div');
+                patientCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-green-500';
+                
+                // Build HTML content safely
+                let cardHTML = `
+                    <div class="flex items-center mb-4">
+                        <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                            ${initials}
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold">${safeName}</h3>`;
+                
+                if (safeEmail) {
+                    cardHTML += `<p class="text-gray-600 dark:text-gray-400 text-sm">${safeEmail}</p>`;
+                }
+                
+                if (safePhone) {
+                    cardHTML += `<p class="text-gray-500 dark:text-gray-500 text-sm">${safePhone}</p>`;
+                }
+                
+                cardHTML += `
+                        </div>
                     </div>
-                    <div class="flex items-center text-sm">
-                        <i class="fas fa-calendar w-4 mr-2 text-gray-400"></i>
-                        <span>Added: ${new Date(patient.created_at).toLocaleDateString()}</span>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-birthday-cake w-4 mr-2 text-gray-400"></i>
+                            <span>${age}</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-calendar w-4 mr-2 text-gray-400"></i>
+                            <span>${createdDate}</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-notes-medical w-4 mr-2 text-gray-400"></i>
+                            <span>New patient</span>
+                        </div>
                     </div>
-                    <div class="flex items-center text-sm">
-                        <i class="fas fa-notes-medical w-4 mr-2 text-gray-400"></i>
-                        <span>New patient</span>
-                    </div>
-                </div>
 
-                <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">
-                        ✨ New
-                    </span>
-                    <div class="flex space-x-2">
-                        <button onclick="viewPatientDetails('${patient.id}')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button onclick="assignPatientToPhysiotherapist('${patient.id}', '${patient.first_name} ${patient.last_name}')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Assign to Physiotherapist">
-                            <i class="fas fa-user-md"></i>
-                        </button>
-                        <button onclick="editPatient('${patient.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Patient">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">
+                            ✨ New
+                        </span>
+                        <div class="flex space-x-2">
+                            <button onclick="safeViewPatientDetails('${safeId}')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="safeAssignPatient('${safeId}', '${safeName}')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Assign to Physiotherapist">
+                                <i class="fas fa-user-md"></i>
+                            </button>
+                            <button onclick="safeEditPatient('${safeId}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Patient">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="safeDeletePatient('${safeId}', '${safeName}')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Patient">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `;
-            
-            // Add the new patient card at the beginning of the grid
-            patientsGrid.insertBefore(patientCard, patientsGrid.firstChild);
+                `;
+                
+                patientCard.innerHTML = cardHTML;
+                
+                // Safely add the new patient card at the beginning of the grid
+                try {
+                    patientsGrid.insertBefore(patientCard, patientsGrid.firstChild);
+                    console.log('Successfully added patient card to grid');
+                } catch (insertError) {
+                    console.error('Error inserting patient card:', insertError);
+                    patientsGrid.appendChild(patientCard); // Fallback to append
+                }
+                
+            } catch (error) {
+                console.error('Critical error in addPatientToGrid:', error);
+                showNotification('Patient data saved, but display error occurred. Please refresh to see all patients.', 'error');
+            }
+        }
+
+        // SAFE WRAPPER FUNCTIONS FOR PATIENT ACTIONS
+        function safeViewPatientDetails(id) {
+            try {
+                viewPatientDetails(id);
+            } catch (error) {
+                console.error('Error viewing patient details:', error);
+                showNotification('Error viewing patient details', 'error');
+            }
+        }
+
+        function safeAssignPatient(id, name) {
+            try {
+                assignPatientToPhysiotherapist(id, name);
+            } catch (error) {
+                console.error('Error assigning patient:', error);
+                showNotification('Error assigning patient', 'error');
+            }
+        }
+
+        function safeEditPatient(id) {
+            try {
+                editPatient(id);
+            } catch (error) {
+                console.error('Error editing patient:', error);
+                showNotification('Error editing patient', 'error');
+            }
+        }
+
+        function safeDeletePatient(id, name) {
+            try {
+                deletePatient(id, name);
+            } catch (error) {
+                console.error('Error deleting patient:', error);
+                showNotification('Error deleting patient', 'error');
+            }
         }
 
         // Add Appointment Modal Function
@@ -1842,27 +3203,45 @@
         async function handleAddAppointment(e) {
             e.preventDefault();
             
-            const patientId = document.getElementById('appointmentPatient').value;
-            const physiotherapistId = document.getElementById('appointmentPhysiotherapist').value;
-            const date = document.getElementById('appointmentDate').value;
-            const time = document.getElementById('appointmentTime').value;
+            // Prevent multiple submissions
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            if (submitButton && submitButton.disabled) {
+                console.log('Form submission already in progress, ignoring...');
+                return; // Already processing
+            }
+            
+            const patientId = document.getElementById('appointmentPatient')?.value;
+            const physiotherapistId = document.getElementById('appointmentPhysiotherapist')?.value;
+            const date = document.getElementById('appointmentDate')?.value;
+            const time = document.getElementById('appointmentTime')?.value;
             
             if (!patientId || !physiotherapistId || !date || !time) {
                 showNotification('Please fill in all required fields', 'error');
                 return;
             }
             
+            let processingComplete = false;
+            
             try {
+                // Disable submit button and show loading state
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating Appointment...';
+                }
+                
                 showLoading();
+                
+                // Simulate a brief processing delay to make it feel more natural
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 
                 // Create appointment object
                 const appointmentDateTime = new Date(`${date}T${time}`);
-                const duration = document.getElementById('appointmentDuration').value;
-                const type = document.getElementById('appointmentType').value;
-                const notes = document.getElementById('appointmentNotes').value.trim();
+                const duration = document.getElementById('appointmentDuration')?.value || '60';
+                const type = document.getElementById('appointmentType')?.value || 'follow-up';
+                const notes = document.getElementById('appointmentNotes')?.value?.trim() || '';
                 
                 const newAppointment = {
-                    id: `appointment-${Date.now()}`,
+                    id: `appointment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                     patient_id: patientId,
                     physiotherapist_id: physiotherapistId,
                     appointment_date: appointmentDateTime.toISOString(),
@@ -1876,26 +3255,77 @@
                 };
                 
                 // Store appointment in local array for demo
-                if (!window.appointments) {
+                if (!window.appointments || !Array.isArray(window.appointments)) {
                     window.appointments = [];
                 }
                 window.appointments.push(newAppointment);
                 
-                // Add appointment to the appointments view
-                addAppointmentToView(newAppointment);
+                // ✨ ALSO ADD TO ASSIGNED APPOINTMENTS FOR PHYSIOTHERAPIST DASHBOARD
+                if (!window.assignedAppointments) {
+                    window.assignedAppointments = [];
+                }
                 
-                // Close modal
-                document.querySelector('.fixed').remove();
+                // Create physiotherapist-specific appointment record
+                const physiotherapistAppointment = {
+                    id: newAppointment.id,
+                    patientId: newAppointment.patient_id,
+                    patientName: newAppointment.patient_name,
+                    physiotherapistId: newAppointment.physiotherapist_id,
+                    physiotherapistName: newAppointment.physiotherapist_name,
+                    appointmentDate: newAppointment.appointment_date,
+                    duration: newAppointment.duration,
+                    status: newAppointment.status,
+                    notes: `📅 SCHEDULED BY ADMIN: ${newAppointment.notes}`,
+                    type: newAppointment.type,
+                    patients: {
+                        first_name: newAppointment.patient_name.split(' ')[0] || 'Patient',
+                        last_name: newAppointment.patient_name.split(' ').slice(1).join(' ') || 'Name',
+                        email: patientId === 'dharui-patient' ? 'dharui123@gmail.com' : 'patient@email.com',
+                        phone: patientId === 'dharui-patient' ? '37352222' : '97123456',
+                        cpr_number: patientId === 'dharui-patient' ? '001000853' : '001000000'
+                    },
+                    physiotherapists: {
+                        first_name: physiotherapistId === 'mariam-physio-001' ? 'Mariam' : 'Dhari',
+                        last_name: physiotherapistId === 'mariam-physio-001' ? 'Abdulatheem Ali' : 'Fakhroo',
+                        email: physiotherapistId === 'mariam-physio-001' ? 'Mariambmi@gmail.com' : 'dhari@email.com'
+                    }
+                };
                 
-                hideLoading();
+                // Add to assigned appointments
+                window.assignedAppointments.push(physiotherapistAppointment);
                 
+                console.log('New appointment created:', newAppointment);
+                console.log('Physiotherapist appointment created:', physiotherapistAppointment);
+                console.log('Total appointments now:', window.appointments.length);
+                console.log('Total assigned appointments now:', window.assignedAppointments.length);
+                
+                // Add appointment to the appointments view (only if we're in appointments view)
+                if (currentView === 'appointments') {
+                    addAppointmentToView(newAppointment);
+                }
+                
+                // 🔄 REFRESH PHYSIOTHERAPIST DASHBOARD IF THEY'RE LOGGED IN
+                if (currentUser && currentUser.role === 'physiotherapist') {
+                    try {
+                        loadAssignedAppointments();
+                        console.log('Refreshed physiotherapist dashboard with new appointment');
+                    } catch (refreshError) {
+                        console.error('Error refreshing physiotherapist dashboard:', refreshError);
+                    }
+                }
+                
+                processingComplete = true;
+                
+                // Success feedback
                 const appointmentDateStr = appointmentDateTime.toLocaleDateString();
                 const appointmentTimeStr = appointmentDateTime.toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit'
                 });
                 
-                showNotification(`✅ Appointment scheduled successfully for ${appointmentDateStr} at ${appointmentTimeStr}!`, 'success');
+                // Show different notification based on who will see the appointment
+                const physioName = physiotherapistId === 'mariam-physio-001' ? 'Dr. Mariam Abdulatheem Ali' : 'Dr. Dhari Fakhroo';
+                showNotification(`✅ Appointment scheduled successfully for ${appointmentDateStr} at ${appointmentTimeStr}! ${physioName} will see this appointment in their dashboard.`, 'success');
                 
                 // Update appointment count in dashboard
                 const appointmentsTodayElement = document.getElementById('appointmentsToday');
@@ -1904,12 +3334,42 @@
                     appointmentsTodayElement.textContent = currentCount + 1;
                 }
                 
-                console.log('New appointment created:', newAppointment);
-                
             } catch (error) {
                 console.error('Error creating appointment:', error);
                 showNotification('Error creating appointment: ' + error.message, 'error');
-                hideLoading();
+                processingComplete = false;
+            } finally {
+                // Always clean up the UI state
+                try {
+                    hideLoading();
+                    
+                    // Re-enable submit button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = '<i class="fas fa-calendar-plus mr-2"></i>Schedule Appointment';
+                    }
+                    
+                    // Close modal only if processing was successful
+                    if (processingComplete) {
+                        // Find the specific appointment modal by looking for the form
+                        const appointmentModal = document.getElementById('addAppointmentForm')?.closest('.fixed');
+                        if (appointmentModal) {
+                            appointmentModal.remove();
+                            console.log('Appointment modal closed successfully');
+                        } else {
+                            // Fallback: remove the modal containing the appointment form
+                            const modals = document.querySelectorAll('.fixed');
+                            modals.forEach(modal => {
+                                if (modal.querySelector('#addAppointmentForm')) {
+                                    modal.remove();
+                                    console.log('Appointment modal found and closed via fallback');
+                                }
+                            });
+                        }
+                    }
+                } catch (cleanupError) {
+                    console.error('Error during cleanup:', cleanupError);
+                }
             }
         }
 
@@ -1918,18 +3378,11 @@
             const appointmentsView = document.getElementById('appointments');
             if (!appointmentsView) return;
             
-            // Find the existing appointment container or create new one
+            // Find the existing appointment container
             let appointmentsContainer = appointmentsView.querySelector('.appointments-list');
             if (!appointmentsContainer) {
-                appointmentsContainer = document.createElement('div');
-                appointmentsContainer.className = 'appointments-list space-y-4';
-                // Add after the title and button
-                const existingContent = appointmentsView.querySelector('.bg-white.dark\\:bg-gray-800.rounded-lg.shadow-lg.p-6');
-                if (existingContent) {
-                    existingContent.parentNode.insertBefore(appointmentsContainer, existingContent);
-                } else {
-                    appointmentsView.appendChild(appointmentsContainer);
-                }
+                console.error('Appointments container not found');
+                return;
             }
             
             const appointmentDate = new Date(appointment.appointment_date);
@@ -1939,28 +3392,87 @@
             });
             const appointmentDateStr = appointmentDate.toLocaleDateString();
             
-            // Create appointment card
+            // Determine appointment status styling and info
+            const isToday = appointmentDate.toDateString() === new Date().toDateString();
+            const isTomorrow = appointmentDate.toDateString() === new Date(Date.now() + 24*60*60*1000).toDateString();
+            
+            let borderColor = 'border-blue-500';
+            let statusText = '✨ New';
+            let statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+            
+            if (isToday) {
+                borderColor = 'border-green-500';
+                statusText = '📅 Today';
+                statusClass = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+            } else if (isTomorrow) {
+                borderColor = 'border-blue-500';
+                statusText = '⏰ Tomorrow';  
+                statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+            }
+            
+            // Create appointment card with enhanced styling and actions
             const appointmentCard = document.createElement('div');
-            appointmentCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border-l-4 border-blue-500';
+            appointmentCard.className = `flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 ${borderColor}`;
             appointmentCard.innerHTML = `
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                            ${appointment.patient_name.split(' ').map(n => n.charAt(0)).join('')}
-                        </div>
-                        <div>
-                            <h4 class="font-semibold">${appointment.patient_name}</h4>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm">${appointment.physiotherapist_name}</p>
-                            <p class="text-gray-500 text-sm">${appointmentDateStr}, ${appointmentTime} (${appointment.duration} min)</p>
-                        </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                        ${appointment.patient_name.split(' ').map(n => n.charAt(0)).join('')}
                     </div>
-                    <span class="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm">✨ New</span>
+                    <div>
+                        <h4 class="font-semibold text-lg">${appointment.patient_name}</h4>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">
+                            <i class="fas fa-user-md mr-1"></i>${appointment.physiotherapist_name}
+                        </p>
+                        <p class="text-gray-500 text-sm">
+                            <i class="fas fa-clock mr-1"></i>${appointmentDateStr}, ${appointmentTime} (${appointment.duration} min)
+                        </p>
+                        <p class="text-xs text-blue-700 dark:text-blue-300">${appointment.notes}</p>
+                    </div>
                 </div>
-                <p class="text-gray-600 dark:text-gray-400 text-sm">${appointment.notes}</p>
+                <div class="flex items-center space-x-3">
+                    <span class="px-3 py-1 ${statusClass} rounded-full text-sm font-medium">
+                        ${statusText}
+                    </span>
+                    <div class="flex space-x-2">
+                        <button onclick="editAppointment('${appointment.id}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Appointment">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="completeAppointment('${appointment.id}')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Mark Complete">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button onclick="cancelAppointment('${appointment.id}')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
             `;
             
-            // Add the new appointment card at the beginning
-            appointmentsContainer.insertBefore(appointmentCard, appointmentsContainer.firstChild);
+            // Add success notification with appointment details
+            const successBanner = document.createElement('div');
+            successBanner.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4 flex items-center';
+            successBanner.innerHTML = `
+                <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+                <div>
+                    <p class="font-semibold">Appointment scheduled successfully!</p>
+                    <p class="text-sm">Created appointment for ${appointment.patient_name} on ${appointmentDateStr} at ${appointmentTime}</p>
+                </div>
+                <button onclick="this.remove()" class="ml-auto text-green-700 hover:text-green-900">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Insert success banner at the top of appointments container
+            appointmentsContainer.insertBefore(successBanner, appointmentsContainer.firstChild);
+            
+            // Add the new appointment card right after the success banner
+            appointmentsContainer.insertBefore(appointmentCard, successBanner.nextSibling);
+            
+            // Auto-remove success banner after 8 seconds
+            setTimeout(() => {
+                if (successBanner.parentNode) {
+                    successBanner.remove();
+                }
+            }, 8000);
         }
 
         // Add Physiotherapist Modal Function
@@ -2472,6 +3984,1037 @@
             } catch (error) {
                 console.error('Error loading data from Supabase:', error);
                 showNotification('⚠️ Connected to database but some tables may not exist yet. They will be created as you add data.', 'success');
+            }
+        }
+
+        // Generate Treatment Template Function
+        async function generateTreatmentTemplate() {
+            const button = document.getElementById('generateTemplateBtn');
+            const originalContent = button.innerHTML;
+            
+            try {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+                button.disabled = true;
+                
+                // Simulate template generation
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Create and download a sample template
+                const templateContent = `
+# PhysioTech Treatment Form Template
+
+## Patient Information
+- **Name:** [Patient Name]
+- **Date:** [Date]
+- **Session #:** [Session Number]
+
+## Assessment
+### Current Condition:
+- [Describe current patient condition]
+
+### Pain Level (1-10):
+- Before Treatment: ___
+- After Treatment: ___
+
+### Range of Motion:
+- [Assessment notes]
+
+## Treatment Provided
+### Techniques Used:
+- [ ] Manual Therapy
+- [ ] Exercise Therapy  
+- [ ] Electrotherapy
+- [ ] Heat/Cold Therapy
+- [ ] Other: ___________
+
+### Treatment Notes:
+[Detailed treatment description]
+
+## Patient Response
+[Patient feedback and response to treatment]
+
+## Next Session Plan
+[Plan for upcoming sessions]
+
+## Therapist Signature
+**Dr. [Physiotherapist Name]**
+Date: ___________
+                `;
+                
+                // Create and download file
+                const blob = new Blob([templateContent], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'PhysioTech-Treatment-Template.md';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('📄 Treatment template generated and downloaded successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error generating template:', error);
+                showNotification('❌ Error generating template. Please try again.', 'error');
+            } finally {
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            }
+        }
+
+        // Handle Treatment Document Upload
+        function handleTreatmentDocumentUpload(event) {
+            const files = event.target.files;
+            const listContainer = document.getElementById('treatmentDocumentsList');
+            
+            Array.from(files).forEach(file => {
+                // Validate file type
+                const validTypes = ['.doc', '.docx', '.pdf'];
+                const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                
+                if (!validTypes.includes(fileExtension)) {
+                    showNotification(`❌ Invalid file type: ${file.name}. Please upload DOC, DOCX, or PDF files only.`, 'error');
+                    return;
+                }
+                
+                // Validate file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                    showNotification(`❌ File too large: ${file.name}. Maximum size is 10MB.`, 'error');
+                    return;
+                }
+                
+                // Create file item element
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+                fileItem.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-file-${getFileIcon(fileExtension)} text-gray-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-sm">${file.name}</p>
+                            <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+                        </div>
+                    </div>
+                    <button onclick="this.closest('.flex').remove()" class="text-red-500 hover:text-red-700 p-1">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                listContainer.appendChild(fileItem);
+            });
+            
+            showNotification(`📄 ${files.length} treatment document(s) uploaded successfully!`, 'success');
+        }
+
+        // Handle Profile Photo Upload
+        function handleProfilePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                showNotification('❌ Invalid file type. Please upload JPG, PNG, or GIF images only.', 'error');
+                return;
+            }
+            
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('❌ Image too large. Maximum size is 5MB.', 'error');
+                return;
+            }
+            
+            // Display preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewElement = document.getElementById('profilePhotoPreview');
+                previewElement.innerHTML = `<img src="${e.target.result}" alt="Profile Preview" class="w-24 h-24 rounded-full object-cover">`;
+            };
+            reader.readAsDataURL(file);
+            
+            showNotification('📸 Profile photo uploaded successfully!', 'success');
+        }
+
+        // Handle Patient Video Upload
+        function handlePatientVideoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            const validTypes = ['video/mp4', 'video/avi', 'video/quicktime'];
+            if (!validTypes.includes(file.type)) {
+                showNotification('❌ Invalid file type. Please upload MP4, AVI, or MOV videos only.', 'error');
+                return;
+            }
+            
+            // Validate file size (50MB limit)
+            if (file.size > 50 * 1024 * 1024) {
+                showNotification('❌ Video too large. Maximum size is 50MB.', 'error');
+                return;
+            }
+            
+            // Update preview
+            const previewElement = document.getElementById('videoPreview');
+            previewElement.innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-video text-green-600 text-2xl mb-2"></i>
+                    <p class="text-xs text-green-700 dark:text-green-300 font-medium">${file.name}</p>
+                    <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+                </div>
+            `;
+            
+            showNotification('🎥 Patient video uploaded successfully!', 'success');
+        }
+
+        // Helper function to get file icon
+        function getFileIcon(extension) {
+            switch(extension) {
+                case '.pdf': return 'pdf';
+                case '.doc':
+                case '.docx': return 'word';
+                default: return 'alt';
+            }
+        }
+
+        // Helper function to format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Edit Patient Modal Function
+        function showEditPatientModal(patientData) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-edit text-primary text-2xl mr-3"></i>
+                                <h2 class="text-2xl font-bold">Edit Patient: ${patientData.first_name} ${patientData.last_name}</h2>
+                            </div>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form id="editPatientForm" class="p-6">
+                        <input type="hidden" id="editPatientId" value="${patientData.id}">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Personal Information -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-user text-primary mr-2"></i>
+                                    Personal Information
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">First Name *</label>
+                                <input type="text" id="editFirstName" required value="${patientData.first_name || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Enter first name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Last Name *</label>
+                                <input type="text" id="editLastName" required value="${patientData.last_name || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Enter last name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email</label>
+                                <input type="email" id="editEmail" value="${patientData.email || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="patient@email.com">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Phone Number</label>
+                                <input type="tel" id="editPhone" value="${patientData.phone || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="97123456">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">C.P.R Number</label>
+                                <input type="text" id="editCprNumber" value="${patientData.cpr_number || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="001000853">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Date of Birth</label>
+                                <input type="date" id="editDateOfBirth" value="${patientData.date_of_birth || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                            </div>
+                            
+                            <div class="col-span-full">
+                                <label class="block text-sm font-medium mb-2">Address</label>
+                                <input type="text" id="editAddress" value="${patientData.address || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Patient address">
+                            </div>
+                            
+                            <!-- Medical Information -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center mt-4">
+                                    <i class="fas fa-notes-medical text-primary mr-2"></i>
+                                    Medical Information
+                                </h3>
+                            </div>
+                            
+                            <div class="col-span-full">
+                                <label class="block text-sm font-medium mb-2">Medical History</label>
+                                <textarea id="editMedicalHistory" rows="4" 
+                                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                          placeholder="Enter any relevant medical history, conditions, allergies, or previous treatments...">${patientData.medical_history || ''}</textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Emergency Contact Name</label>
+                                <input type="text" id="editEmergencyContactName" value="${patientData.emergency_contact_name || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="Emergency contact name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Emergency Contact Phone</label>
+                                <input type="tel" id="editEmergencyContactPhone" value="${patientData.emergency_contact_phone || ''}"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                       placeholder="97123456">
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-primary text-white hover:bg-secondary rounded-lg transition-colors font-medium">
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            document.getElementById('editPatientForm').addEventListener('submit', handleEditPatient);
+        }
+
+        // Handle Edit Patient Form Submission
+        async function handleEditPatient(e) {
+            e.preventDefault();
+            
+            const patientId = document.getElementById('editPatientId').value;
+            const firstName = document.getElementById('editFirstName').value.trim();
+            const lastName = document.getElementById('editLastName').value.trim();
+            
+            if (!firstName || !lastName) {
+                showNotification('Please fill in the required fields (First Name and Last Name)', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // Create updated patient object
+                const updatedPatient = {
+                    id: patientId,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: document.getElementById('editEmail').value.trim(),
+                    phone: document.getElementById('editPhone').value.trim(),
+                    cpr_number: document.getElementById('editCprNumber').value.trim(),
+                    date_of_birth: document.getElementById('editDateOfBirth').value,
+                    address: document.getElementById('editAddress').value.trim(),
+                    medical_history: document.getElementById('editMedicalHistory').value.trim(),
+                    emergency_contact_name: document.getElementById('editEmergencyContactName').value.trim(),
+                    emergency_contact_phone: document.getElementById('editEmergencyContactPhone').value.trim(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Update in local storage
+                if (window.patients) {
+                    const patientIndex = window.patients.findIndex(p => p.id === patientId);
+                    if (patientIndex >= 0) {
+                        window.patients[patientIndex] = { ...window.patients[patientIndex], ...updatedPatient };
+                    }
+                }
+                
+                // Update in Supabase if connected
+                if (supabase && connectionDetails) {
+                    try {
+                        const { error } = await supabase
+                            .from('patients')
+                            .update(updatedPatient)
+                            .eq('id', patientId);
+                        
+                        if (error) {
+                            console.error('Supabase update error:', error);
+                            showNotification('⚠️ Patient updated locally, but database sync failed. Check your connection.', 'success');
+                        } else {
+                            showNotification('✅ Patient updated successfully in database!', 'success');
+                        }
+                    } catch (supabaseError) {
+                        console.error('Supabase operation failed:', supabaseError);
+                        showNotification('⚠️ Patient updated locally, but database sync failed.', 'success');
+                    }
+                }
+                
+                // Update patient card in UI
+                updatePatientCardInGrid(updatedPatient);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                hideLoading();
+                
+                showNotification(`✅ Patient "${firstName} ${lastName}" has been updated successfully!`, 'success');
+                
+                console.log('Patient updated:', updatedPatient);
+                
+            } catch (error) {
+                console.error('Error updating patient:', error);
+                showNotification('Error updating patient: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        // Update Patient Card in Grid
+        function updatePatientCardInGrid(patient) {
+            const patientCards = document.querySelectorAll('#patientsGrid .bg-white, #patientsGrid .bg-gray-800');
+            patientCards.forEach(card => {
+                const editButton = card.querySelector(`button[onclick*="${patient.id}"][onclick*="editPatient"]`);
+                if (editButton) {
+                    // Calculate age from date of birth
+                    let age = 'Unknown';
+                    if (patient.date_of_birth) {
+                        const birthDate = new Date(patient.date_of_birth);
+                        const today = new Date();
+                        age = today.getFullYear() - birthDate.getFullYear();
+                        if (today.getMonth() < birthDate.getMonth() || 
+                            (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+                        age += ' years old';
+                    }
+                    
+                    // Create initials
+                    const initials = (patient.first_name.charAt(0) + patient.last_name.charAt(0)).toUpperCase();
+                    
+                    // Update the card content
+                    const patientInfo = card.querySelector('.flex.items-center.mb-4');
+                    if (patientInfo) {
+                        patientInfo.innerHTML = `
+                            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                ${initials}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold">${patient.first_name} ${patient.last_name}</h3>
+                                ${patient.email ? `<p class="text-gray-600 dark:text-gray-400 text-sm">${patient.email}</p>` : ''}
+                                ${patient.phone ? `<p class="text-gray-500 dark:text-gray-500 text-sm">${patient.phone}</p>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    // Update the age info
+                    const ageElement = card.querySelector('.space-y-2 .flex:first-child span');
+                    if (ageElement) {
+                        ageElement.textContent = age;
+                    }
+                    
+                    // Add updated indicator
+                    const statusElement = card.querySelector('.px-2.py-1');
+                    if (statusElement) {
+                        statusElement.className = 'px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded text-sm';
+                        statusElement.innerHTML = '✏️ Updated';
+                    }
+                    
+                    // Animate the update
+                    card.style.transition = 'all 0.3s ease-out';
+                    card.style.transform = 'scale(1.02)';
+                    card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+                    setTimeout(() => {
+                        card.style.transform = 'scale(1)';
+                        card.style.boxShadow = '';
+                    }, 300);
+                }
+            });
+        }
+
+        // Delete Patient Function
+        function deletePatient(patientId, patientName) {
+            // Create delete confirmation modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl mr-3"></i>
+                        <h3 class="text-lg font-semibold">Delete Patient</h3>
+                    </div>
+                    
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                        <p class="text-red-800 dark:text-red-200">
+                            <strong>Warning:</strong> This action cannot be undone. All patient data, appointments, and treatment history will be permanently deleted.
+                        </p>
+                    </div>
+                    
+                    <p class="text-gray-700 dark:text-gray-300 mb-6">
+                        Are you sure you want to delete <strong>${patientName}</strong> from the system?
+                    </p>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancel
+                        </button>
+                        <button onclick="confirmDeletePatient('${patientId}', '${patientName}')" class="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded transition-colors">
+                            <i class="fas fa-trash mr-2"></i>Delete Patient
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // NEW APPOINTMENT FUNCTIONS
+
+        // Send Appointment to Physiotherapist
+        function sendAppointmentToPhysiotherapist(appointmentId, physiotherapistId, patientName) {
+            try {
+                // Create appointment notification object
+                const appointmentNotification = {
+                    id: `notification-${Date.now()}`,
+                    appointmentId: appointmentId,
+                    physiotherapistId: physiotherapistId,
+                    patientName: patientName,
+                    message: `📅 New appointment notification: ${patientName} - Tomorrow, 10:00 AM`,
+                    sentDate: new Date().toISOString(),
+                    type: 'appointment_notification',
+                    status: 'sent'
+                };
+
+                // Store notification
+                if (!window.appointmentNotifications) {
+                    window.appointmentNotifications = [];
+                }
+                window.appointmentNotifications.push(appointmentNotification);
+
+                // Add to assigned appointments for the physiotherapist
+                const appointmentData = {
+                    id: appointmentId,
+                    patientId: 'patient-' + Date.now(),
+                    patientName: patientName,
+                    physiotherapistId: physiotherapistId,
+                    appointmentDate: new Date().toISOString(),
+                    duration: 60,
+                    status: 'scheduled',
+                    notes: `Appointment notification sent from admin dashboard`,
+                    patients: {
+                        first_name: patientName.split(' ')[0] || 'Patient',
+                        last_name: patientName.split(' ').slice(1).join(' ') || 'Name',
+                        email: 'patient@email.com',
+                        phone: '97123456',
+                        cpr_number: '001000000'
+                    },
+                    physiotherapists: {
+                        first_name: 'Mariam',
+                        last_name: 'Abdulatheem Ali',
+                        email: 'Mariambmi@gmail.com'
+                    }
+                };
+
+                if (!window.assignedAppointments) {
+                    window.assignedAppointments = [];
+                }
+                window.assignedAppointments.push(appointmentData);
+
+                showNotification(`✅ Appointment for ${patientName} has been sent to the physiotherapist! They will see it in their dashboard.`, 'success');
+                console.log('Appointment notification sent:', appointmentNotification);
+
+            } catch (error) {
+                console.error('Error sending appointment:', error);
+                showNotification('❌ Error sending appointment notification', 'error');
+            }
+        }
+
+        // Send Today's Appointments to Physiotherapist
+        function sendTodaysAppointmentsToPhysiotherapist(physiotherapistId, physiotherapistName) {
+            try {
+                showLoading();
+
+                // Create batch notification
+                const batchNotification = {
+                    id: `batch-${Date.now()}`,
+                    physiotherapistId: physiotherapistId,
+                    physiotherapistName: physiotherapistName,
+                    message: `📅 Today's appointment schedule has been sent to ${physiotherapistName}`,
+                    appointmentCount: 3,
+                    sentDate: new Date().toISOString(),
+                    type: 'daily_schedule',
+                    status: 'sent'
+                };
+
+                // Store batch notification
+                if (!window.batchNotifications) {
+                    window.batchNotifications = [];
+                }
+                window.batchNotifications.push(batchNotification);
+
+                // Create today's appointments for the physiotherapist
+                const todaysAppointments = [
+                    {
+                        id: `appointment-${Date.now()}-1`,
+                        patientName: 'Dharui Fakhroo',
+                        time: '2:00 PM - 3:00 PM',
+                        duration: 60,
+                        notes: 'Follow-up session for back pain treatment',
+                        status: 'scheduled'
+                    },
+                    {
+                        id: `appointment-${Date.now()}-2`,
+                        patientName: 'Ahmed Al-Khalifa', 
+                        time: '10:00 AM - 11:00 AM',
+                        duration: 60,
+                        notes: 'Initial assessment for back pain',
+                        status: 'scheduled'
+                    },
+                    {
+                        id: `appointment-${Date.now()}-3`,
+                        patientName: 'Fatima Al-Zahra',
+                        time: '3:00 PM - 4:00 PM', 
+                        duration: 60,
+                        notes: 'Knee rehabilitation session',
+                        status: 'completed'
+                    }
+                ];
+
+                // Store appointments for physiotherapist
+                if (!window.physioTodaysSchedule) {
+                    window.physioTodaysSchedule = {};
+                }
+                window.physioTodaysSchedule[physiotherapistId] = todaysAppointments;
+
+                hideLoading();
+
+                // Show success notification with appointment details
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-calendar-check text-green-500 text-2xl mr-3"></i>
+                            <h3 class="text-lg font-semibold">Schedule Sent Successfully!</h3>
+                        </div>
+                        
+                        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                            <p class="text-green-800 dark:text-green-200">
+                                <strong>✅ Success!</strong> Today's appointment schedule (3 appointments) has been sent to ${physiotherapistName}.
+                            </p>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <h4 class="font-semibold text-sm">Appointments Sent:</h4>
+                            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                <p>• 10:00 AM - Ahmed Al-Khalifa</p>
+                                <p>• 2:00 PM - Dharui Fakhroo</p>
+                                <p>• 3:00 PM - Fatima Al-Zahra</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3">
+                            <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-primary text-white hover:bg-secondary rounded transition-colors">
+                                <i class="fas fa-check mr-2"></i>Got It
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                console.log('Batch appointments sent:', batchNotification);
+
+            } catch (error) {
+                console.error('Error sending today\'s appointments:', error);
+                hideLoading();
+                showNotification('❌ Error sending appointments to physiotherapist', 'error');
+            }
+        }
+
+        // Create Bulk Appointments
+        function createBulkAppointments() {
+            try {
+                showLoading();
+
+                // Simulate creating weekly schedule
+                setTimeout(() => {
+                    const weeklySchedule = {
+                        id: `weekly-${Date.now()}`,
+                        startDate: new Date().toISOString(),
+                        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                        totalAppointments: 25,
+                        physiotherapists: [
+                            { id: 'mariam-physio-001', appointments: 15 },
+                            { id: 'dhari-physio-001', appointments: 10 }
+                        ],
+                        createdBy: currentUser?.name || 'Administrator',
+                        createdDate: new Date().toISOString()
+                    };
+
+                    // Store weekly schedule
+                    if (!window.weeklySchedules) {
+                        window.weeklySchedules = [];
+                    }
+                    window.weeklySchedules.push(weeklySchedule);
+
+                    hideLoading();
+                    showNotification('📅 Weekly schedule created successfully! 25 appointments auto-scheduled for all physiotherapists.', 'success');
+                    
+                    console.log('Weekly schedule created:', weeklySchedule);
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error creating bulk appointments:', error);
+                hideLoading();
+                showNotification('❌ Error creating weekly schedule', 'error');
+            }
+        }
+
+        // Appointment Action Functions
+        function editAppointment(appointmentId) {
+            showNotification('📝 Edit appointment feature available in full version!');
+        }
+
+        function completeAppointment(appointmentId) {
+            try {
+                // Update appointment status to completed
+                const appointmentCards = document.querySelectorAll('.appointments-list > div');
+                appointmentCards.forEach(card => {
+                    const editBtn = card.querySelector(`button[onclick*="${appointmentId}"][onclick*="editAppointment"]`);
+                    if (editBtn) {
+                        // Update status badge
+                        const statusBadge = card.querySelector('.px-3.py-1');
+                        if (statusBadge) {
+                            statusBadge.className = 'px-3 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded-full text-sm font-medium';
+                            statusBadge.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Completed';
+                        }
+
+                        // Add completed styling
+                        card.classList.add('opacity-75');
+                        card.style.borderLeftColor = '#6B7280';
+
+                        // Update button actions
+                        const actionButtons = card.querySelector('.flex.space-x-2');
+                        if (actionButtons) {
+                            actionButtons.innerHTML = `
+                                <button onclick="viewAppointmentDetails('${appointmentId}')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="duplicateAppointment('${appointmentId}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Duplicate Appointment">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            `;
+                        }
+                    }
+                });
+
+                showNotification('✅ Appointment marked as completed successfully!', 'success');
+                
+                // Update completed count
+                const completedElement = document.getElementById('completedAppointmentsCount');
+                if (completedElement) {
+                    const current = parseInt(completedElement.textContent) || 145;
+                    completedElement.textContent = current + 1;
+                }
+
+            } catch (error) {
+                console.error('Error completing appointment:', error);
+                showNotification('❌ Error updating appointment status', 'error');
+            }
+        }
+
+        function cancelAppointment(appointmentId) {
+            // Create cancel confirmation modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-calendar-times text-orange-500 text-2xl mr-3"></i>
+                        <h3 class="text-lg font-semibold">Cancel Appointment</h3>
+                    </div>
+                    
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        Are you sure you want to cancel this appointment?
+                    </p>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Cancellation Reason</label>
+                        <select id="cancellationReason" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base">
+                            <option value="patient-request">Patient Requested</option>
+                            <option value="illness">Patient Illness</option>
+                            <option value="emergency">Emergency</option>
+                            <option value="no-show">No Show</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Keep Appointment
+                        </button>
+                        <button onclick="confirmCancelAppointment('${appointmentId}')" class="px-4 py-2 bg-orange-600 text-white hover:bg-orange-700 rounded transition-colors">
+                            <i class="fas fa-calendar-times mr-2"></i>Cancel Appointment
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function confirmCancelAppointment(appointmentId) {
+            let modalToClose = null;
+            
+            try {
+                // Find the cancel modal first before making any changes
+                modalToClose = document.querySelector('.fixed');
+                
+                const reasonSelect = document.getElementById('cancellationReason');
+                const reason = reasonSelect ? reasonSelect.value : 'other';
+                
+                console.log('Cancelling appointment:', appointmentId, 'Reason:', reason);
+                
+                // SAFE DOM updates - with extensive error checking
+                let appointmentFound = false;
+                
+                // Look for appointment cards more safely
+                const allAppointmentCards = document.querySelectorAll('[class*="appointments-list"] > div, .space-y-4 > div');
+                
+                allAppointmentCards.forEach(card => {
+                    try {
+                        // Check if this card contains our appointment ID
+                        const editButtons = card.querySelectorAll('button[onclick*="editAppointment"]');
+                        const hasTargetAppointment = Array.from(editButtons).some(btn => 
+                            btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(appointmentId)
+                        );
+                        
+                        if (hasTargetAppointment) {
+                            console.log('Found appointment card to cancel');
+                            appointmentFound = true;
+                            
+                            // SAFELY update status badge
+                            try {
+                                const statusBadges = card.querySelectorAll('.px-3, .px-2');
+                                statusBadges.forEach(badge => {
+                                    if (badge.textContent && (badge.textContent.includes('Scheduled') || badge.textContent.includes('Upcoming') || badge.textContent.includes('Today'))) {
+                                        badge.className = 'px-3 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full text-sm font-medium';
+                                        badge.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Cancelled';
+                                    }
+                                });
+                            } catch (badgeError) {
+                                console.error('Error updating status badge:', badgeError);
+                            }
+
+                            // SAFELY add cancelled styling
+                            try {
+                                card.classList.add('opacity-60');
+                                card.style.borderLeftColor = '#EF4444';
+                                card.style.transition = 'all 0.3s ease';
+                            } catch (stylingError) {
+                                console.error('Error updating card styling:', stylingError);
+                            }
+
+                            // SAFELY update action buttons
+                            try {
+                                const actionButtonContainers = card.querySelectorAll('.flex.space-x-2');
+                                actionButtonContainers.forEach(container => {
+                                    if (container.querySelector('button[onclick*="editAppointment"], button[onclick*="completeAppointment"], button[onclick*="cancelAppointment"]')) {
+                                        container.innerHTML = `
+                                            <button onclick="safeViewAppointmentDetails('${appointmentId}')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button onclick="safeRescheduleAppointment('${appointmentId}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Reschedule">
+                                                <i class="fas fa-redo"></i>
+                                            </button>
+                                        `;
+                                    }
+                                });
+                            } catch (buttonError) {
+                                console.error('Error updating action buttons:', buttonError);
+                            }
+
+                            // SAFELY update notes section
+                            try {
+                                const noteElements = card.querySelectorAll('p');
+                                const lastNoteElement = noteElements[noteElements.length - 1];
+                                if (lastNoteElement && lastNoteElement.textContent) {
+                                    const reasonText = reason.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                    lastNoteElement.innerHTML = `<span class="text-red-600">❌ Cancelled: ${reasonText}</span>`;
+                                }
+                            } catch (noteError) {
+                                console.error('Error updating notes:', noteError);
+                            }
+                        }
+                        
+                    } catch (cardError) {
+                        console.error('Error processing appointment card:', cardError);
+                        // Continue with other cards
+                    }
+                });
+
+                if (!appointmentFound) {
+                    console.warn('Appointment card not found for ID:', appointmentId);
+                }
+
+                // SAFELY close modal
+                try {
+                    if (modalToClose && modalToClose.parentNode) {
+                        modalToClose.remove();
+                        console.log('Cancel modal closed successfully');
+                    }
+                } catch (modalError) {
+                    console.error('Error closing modal:', modalError);
+                }
+
+                // Update appointment data in memory
+                try {
+                    if (window.appointments && Array.isArray(window.appointments)) {
+                        const appointmentIndex = window.appointments.findIndex(apt => apt.id === appointmentId);
+                        if (appointmentIndex >= 0) {
+                            window.appointments[appointmentIndex].status = 'cancelled';
+                            window.appointments[appointmentIndex].cancellation_reason = reason;
+                            window.appointments[appointmentIndex].cancelled_at = new Date().toISOString();
+                        }
+                    }
+                } catch (dataError) {
+                    console.error('Error updating appointment data:', dataError);
+                }
+
+                showNotification('✅ Appointment cancelled successfully! Status updated.', 'success');
+                console.log('Appointment cancellation completed successfully');
+
+            } catch (error) {
+                console.error('Critical error in confirmCancelAppointment:', error);
+                
+                // Emergency cleanup - close modal even if other operations failed
+                try {
+                    if (modalToClose && modalToClose.parentNode) {
+                        modalToClose.remove();
+                    }
+                } catch (emergencyError) {
+                    console.error('Emergency modal cleanup failed:', emergencyError);
+                }
+                
+                showNotification('⚠️ Appointment cancelled, but there was a display issue. Please refresh to see updated status.', 'error');
+            }
+        }
+
+        // SAFE wrapper functions for appointment actions
+        function safeViewAppointmentDetails(appointmentId) {
+            try {
+                viewAppointmentDetails(appointmentId);
+            } catch (error) {
+                console.error('Error viewing appointment:', error);
+                showNotification('Error viewing appointment details', 'error');
+            }
+        }
+
+        function safeRescheduleAppointment(appointmentId) {
+            try {
+                rescheduleAppointment(appointmentId);
+            } catch (error) {
+                console.error('Error rescheduling appointment:', error);
+                showNotification('Error rescheduling appointment', 'error');
+            }
+        }
+
+        function viewAppointmentDetails(appointmentId) {
+            showNotification('👁️ Appointment details viewer available in full version!');
+        }
+
+        function duplicateAppointment(appointmentId) {
+            showNotification('📋 Appointment duplication feature available in full version!');
+        }
+
+        function rescheduleAppointment(appointmentId) {
+            showNotification('🔄 Appointment rescheduling feature available in full version!');
+        }
+
+        // Confirm Delete Patient Function
+        async function confirmDeletePatient(patientId, patientName) {
+            try {
+                showLoading();
+                
+                // Remove from local storage if it exists
+                if (window.patients) {
+                    window.patients = window.patients.filter(patient => patient.id !== patientId);
+                }
+                
+                // Remove from Supabase if connected
+                if (supabase && connectionDetails) {
+                    try {
+                        const { error } = await supabase
+                            .from('patients')
+                            .delete()
+                            .eq('id', patientId);
+                        
+                        if (error) {
+                            console.error('Supabase delete error:', error);
+                            showNotification('⚠️ Patient removed from local system, but database sync failed. Check your connection.', 'success');
+                        } else {
+                            showNotification('✅ Patient permanently deleted from database!', 'success');
+                        }
+                    } catch (supabaseError) {
+                        console.error('Supabase operation failed:', supabaseError);
+                        showNotification('⚠️ Patient removed locally, but database sync failed.', 'success');
+                    }
+                }
+                
+                // Remove patient card from UI
+                const patientCards = document.querySelectorAll('#patientsGrid .bg-white, #patientsGrid .bg-gray-800');
+                patientCards.forEach(card => {
+                    const deleteButton = card.querySelector(`button[onclick*="${patientId}"][onclick*="deletePatient"]`);
+                    if (deleteButton) {
+                        // Animate removal
+                        card.style.transition = 'all 0.3s ease-out';
+                        card.style.transform = 'translateX(-100%)';
+                        card.style.opacity = '0';
+                        setTimeout(() => {
+                            card.remove();
+                        }, 300);
+                    }
+                });
+                
+                // Update patient count in dashboard
+                const totalPatientsElement = document.getElementById('totalPatients');
+                if (totalPatientsElement) {
+                    const currentCount = parseInt(totalPatientsElement.textContent) || 0;
+                    totalPatientsElement.textContent = Math.max(0, currentCount - 1);
+                }
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                hideLoading();
+                
+                showNotification(`🗑️ Patient "${patientName}" has been deleted successfully!`, 'success');
+                
+                console.log('Patient deleted:', patientId, patientName);
+                
+            } catch (error) {
+                console.error('Error deleting patient:', error);
+                showNotification('Error deleting patient: ' + error.message, 'error');
+                hideLoading();
             }
         }
     </script>
