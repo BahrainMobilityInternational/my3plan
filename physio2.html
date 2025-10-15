@@ -436,7 +436,7 @@
                     <!-- Patients Grid -->
                     <div id="patientsGrid">
                         <!-- No Database Connection State -->
-                        <div id="noDatabaseConnection" class="text-center py-12">
+                        <div id="noDatabaseConnection" class="hidden text-center py-12">
                             <div class="max-w-md mx-auto">
                                 <i class="fas fa-database text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
                                 <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Database Connection</h3>
@@ -444,6 +444,88 @@
                                 <button onclick="showSupabaseConnectionModal()" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold">
                                     <i class="fas fa-plug mr-2"></i>Connect Database
                                 </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Connected but Empty Database State -->
+                        <div id="connectedEmptyDatabase" class="hidden text-center py-12">
+                            <div class="max-w-md mx-auto">
+                                <i class="fas fa-database text-green-500 text-6xl mb-4"></i>
+                                <h3 class="text-xl font-semibold text-green-600 dark:text-green-400 mb-2">✅ Database Connected Successfully!</h3>
+                                <p class="text-gray-600 dark:text-gray-400 mb-6">Your Supabase database is connected and ready. Add your first patient to get started or import existing patient data.</p>
+                                
+                                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                                    <button onclick="showAddPatientModal()" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold">
+                                        <i class="fas fa-user-plus mr-2"></i>Add First Patient
+                                    </button>
+                                    <button onclick="importPatientsDemo()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                        <i class="fas fa-download mr-2"></i>Import Sample Data
+                                    </button>
+                                </div>
+                                
+                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-6">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-info-circle text-blue-600 mr-3 mt-0.5"></i>
+                                        <div class="text-left">
+                                            <h4 class="font-semibold text-blue-900 dark:text-blue-100 mb-1">Database Status</h4>
+                                            <p class="text-sm text-blue-800 dark:text-blue-200">
+                                                Your database tables are ready. As you add patients, they will be automatically saved and synchronized with your Supabase database.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Demo Patient Grid (showing sample patient) -->
+                        <div id="demoPatientGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Sample Patient Card -->
+                            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-green-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                        DF
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold">Dharui Fakhroo</h3>
+                                        <p class="text-gray-600 dark:text-gray-400 text-sm">Dharui123@gmail.com</p>
+                                        <p class="text-gray-500 dark:text-gray-500 text-sm">37352222</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-birthday-cake w-4 mr-2 text-gray-400"></i>
+                                        <span>25 years old</span>
+                                    </div>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-id-card w-4 mr-2 text-gray-400"></i>
+                                        <span>CPR: 001000853</span>
+                                    </div>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-map-marker-alt w-4 mr-2 text-gray-400"></i>
+                                        <span>Manama, Bahrain</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">
+                                        Active
+                                    </span>
+                                    <div class="flex space-x-2">
+                                        <button onclick="safeViewPatientDetails('sample-id')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="safeAssignPatient('sample-id', 'Dharui Fakhroo')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Assign to Physiotherapist">
+                                            <i class="fas fa-user-md"></i>
+                                        </button>
+                                        <button onclick="safeEditPatient('sample-id')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Patient">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="safeDeletePatient('sample-id', 'Dharui Fakhroo')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Patient">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -4766,15 +4848,95 @@
                     connectButton.classList.remove('bg-white', 'text-primary', 'hover:bg-gray-100');
                     connectButton.classList.add('bg-green-500', 'text-white', 'hover:bg-green-600');
                     connectButton.title = 'Database connected successfully';
+                    
+                    // Update patient view to show connected state
+                    showConnectedPatientView();
                 } else {
                     statusElement.innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Disconnected';
                     connectButton.innerHTML = '<i class="fas fa-database mr-2"></i>Connect Supabase';
                     connectButton.classList.remove('bg-green-500', 'text-white', 'hover:bg-green-600');
                     connectButton.classList.add('bg-white', 'text-primary', 'hover:bg-gray-100');
                     connectButton.title = 'Click to connect database';
+                    
+                    // Update patient view to show disconnected state
+                    showDisconnectedPatientView();
                 }
+                
+                // Update settings page connection status too
+                const settingsStatusElement = document.getElementById('settingsConnectionStatus');
+                if (settingsStatusElement) {
+                    if (isConnected) {
+                        settingsStatusElement.innerHTML = '<i class="fas fa-circle text-green-400 mr-1"></i>Connected';
+                    } else {
+                        settingsStatusElement.innerHTML = '<i class="fas fa-circle text-red-400 mr-1"></i>Not Connected';
+                    }
+                }
+                
             } catch (error) {
                 console.error('Error updating connection status:', error);
+            }
+        }
+        
+        // Show Connected Patient View
+        function showConnectedPatientView() {
+            try {
+                // Hide no database connection state
+                const noDatabaseElement = document.getElementById('noDatabaseConnection');
+                if (noDatabaseElement) {
+                    noDatabaseElement.classList.add('hidden');
+                }
+                
+                // Show connected empty database state (since we don't have patients yet)
+                const connectedEmptyElement = document.getElementById('connectedEmptyDatabase');
+                if (connectedEmptyElement) {
+                    connectedEmptyElement.classList.remove('hidden');
+                }
+                
+                // Show demo patient grid
+                const demoGridElement = document.getElementById('demoPatientGrid');
+                if (demoGridElement) {
+                    demoGridElement.classList.remove('hidden');
+                }
+                
+                // Update patient count
+                const patientCountElement = document.getElementById('patientCount');
+                if (patientCountElement) {
+                    patientCountElement.textContent = 'Total: 1 patient (connected)';
+                }
+                
+            } catch (error) {
+                console.error('Error showing connected patient view:', error);
+            }
+        }
+        
+        // Show Disconnected Patient View
+        function showDisconnectedPatientView() {
+            try {
+                // Show no database connection state
+                const noDatabaseElement = document.getElementById('noDatabaseConnection');
+                if (noDatabaseElement) {
+                    noDatabaseElement.classList.remove('hidden');
+                }
+                
+                // Hide connected states
+                const connectedEmptyElement = document.getElementById('connectedEmptyDatabase');
+                if (connectedEmptyElement) {
+                    connectedEmptyElement.classList.add('hidden');
+                }
+                
+                const demoGridElement = document.getElementById('demoPatientGrid');
+                if (demoGridElement) {
+                    demoGridElement.classList.add('hidden');
+                }
+                
+                // Update patient count
+                const patientCountElement = document.getElementById('patientCount');
+                if (patientCountElement) {
+                    patientCountElement.textContent = 'No database connection';
+                }
+                
+            } catch (error) {
+                console.error('Error showing disconnected patient view:', error);
             }
         }
 
