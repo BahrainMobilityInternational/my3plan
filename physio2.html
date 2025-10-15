@@ -3956,75 +3956,235 @@
             document.getElementById('supabaseConnectionForm').addEventListener('submit', handleSupabaseConnection);
         }
 
-        // Handle Supabase Connection
+        // 🔧 BULLETPROOF Supabase Connection Handler - CRASH-SAFE VERSION
         async function handleSupabaseConnection(e) {
             e.preventDefault();
             
-            const url = document.getElementById('supabaseUrl').value.trim();
-            const key = document.getElementById('supabaseKey').value.trim();
-            
-            if (!url || !key) {
-                showNotification('Please provide both URL and API key', 'error');
-                return;
-            }
+            let isProcessing = false;
             
             try {
+                if (isProcessing) {
+                    console.log('Supabase connection already in progress, ignoring duplicate request');
+                    return;
+                }
+                
+                isProcessing = true;
+                
+                const url = document.getElementById('supabaseUrl')?.value?.trim();
+                const key = document.getElementById('supabaseKey')?.value?.trim();
+                
+                if (!url || !key) {
+                    showNotification('❌ Please provide both URL and API key', 'error');
+                    isProcessing = false;
+                    return;
+                }
+                
+                // Validate URL format
+                try {
+                    new URL(url);
+                    if (!url.includes('supabase.co')) {
+                        throw new Error('Invalid Supabase URL format');
+                    }
+                } catch (urlError) {
+                    showNotification('❌ Please enter a valid Supabase URL (e.g., https://your-project.supabase.co)', 'error');
+                    isProcessing = false;
+                    return;
+                }
+                
+                // Validate API key format
+                if (!key.startsWith('eyJ') || key.length < 100) {
+                    showNotification('❌ Please enter a valid Supabase API key', 'error');
+                    isProcessing = false;
+                    return;
+                }
+                
+                console.log('🔌 Starting SAFE Supabase connection...');
                 showLoading();
                 
-                console.log('Attempting to connect to Supabase...');
+                // SAFE Supabase client initialization with extensive error handling
+                let supabaseClient = null;
                 
-                // Initialize Supabase client
-                if (typeof window.supabase === 'undefined' && window.createClient) {
-                    supabase = window.createClient(url, key);
-                } else if (window.supabase && window.supabase.createClient) {
-                    supabase = window.supabase.createClient(url, key);
-                } else {
-                    throw new Error('Supabase library not loaded properly');
+                try {
+                    // Multiple fallback methods for Supabase client creation
+                    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                        console.log('Using window.supabase.createClient method');
+                        supabaseClient = window.supabase.createClient(url, key, {
+                            auth: {
+                                autoRefreshToken: false,
+                                persistSession: false
+                            },
+                            global: {
+                                headers: {
+                                    'X-Client-Info': 'physiotech-app'
+                                }
+                            }
+                        });
+                    } else if (typeof createClient !== 'undefined') {
+                        console.log('Using global createClient method');
+                        supabaseClient = createClient(url, key, {
+                            auth: {
+                                autoRefreshToken: false,
+                                persistSession: false
+                            }
+                        });
+                    } else if (window.createClient) {
+                        console.log('Using window.createClient method');
+                        supabaseClient = window.createClient(url, key);
+                    } else {
+                        throw new Error('Supabase library not properly loaded. Please refresh the page and try again.');
+                    }
+                    
+                    if (!supabaseClient) {
+                        throw new Error('Failed to create Supabase client instance');
+                    }
+                    
+                    console.log('✅ Supabase client created successfully');
+                    
+                } catch (clientError) {
+                    console.error('Supabase client creation failed:', clientError);
+                    throw new Error(`Failed to initialize Supabase client: ${clientError.message}`);
                 }
                 
-                // Test connection by attempting to fetch from a test query
-                const { data, error } = await supabase
-                    .from('patients')
-                    .select('count')
-                    .limit(1);
+                // SAFE connection test with timeout and proper error handling
+                console.log('🧪 Testing database connection...');
                 
-                if (error && !error.message.includes('relation "patients" does not exist')) {
-                    throw error;
+                let connectionTestResult = null;
+                
+                try {
+                    // Create a connection test promise with timeout
+                    const connectionTest = new Promise(async (resolve, reject) => {
+                        try {
+                            // Test with a simple query that should work on any database
+                            const { data, error, count } = await supabaseClient
+                                .from('patients')
+                                .select('*', { count: 'exact', head: true })
+                                .limit(1);
+                            
+                            if (error) {
+                                console.log('Test query error (expected if tables don\'t exist):', error);
+                                
+                                // These errors are OK - they mean connection works but tables don't exist
+                                if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                                    resolve({ success: true, tablesExist: false });
+                                } else if (error.message.includes('permission denied') || error.message.includes('JWT')) {
+                                    reject(new Error('Invalid API key or insufficient permissions'));
+                                } else if (error.message.includes('Invalid API key')) {
+                                    reject(new Error('Invalid Supabase API key'));
+                                } else {
+                                    reject(new Error(`Database error: ${error.message}`));
+                                }
+                            } else {
+                                resolve({ success: true, tablesExist: true, count: count });
+                            }
+                        } catch (testError) {
+                            console.error('Connection test error:', testError);
+                            reject(testError);
+                        }
+                    });
+                    
+                    // Add timeout to connection test
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Connection timeout - please check your internet connection')), 10000);
+                    });
+                    
+                    connectionTestResult = await Promise.race([connectionTest, timeoutPromise]);
+                    
+                } catch (testError) {
+                    console.error('Connection test failed:', testError);
+                    throw new Error(`Connection test failed: ${testError.message}`);
                 }
                 
-                // Store connection details
-                connectionDetails = { url, key };
+                // If we get here, connection is successful
+                console.log('🎉 Supabase connection test successful:', connectionTestResult);
                 
-                // Update connection status in UI
-                updateConnectionStatus(true);
+                // SAFELY store connection details and client
+                try {
+                    supabase = supabaseClient;
+                    connectionDetails = { url, key, connected: true, connectedAt: new Date().toISOString() };
+                    
+                    // Update connection status in UI
+                    updateConnectionStatus(true);
+                    
+                    console.log('✅ Supabase connection stored successfully');
+                    
+                } catch (storageError) {
+                    console.error('Error storing connection details:', storageError);
+                    throw new Error('Failed to save connection details');
+                }
                 
-                // Close modal
-                document.querySelector('.fixed').remove();
+                // SAFELY close modal
+                try {
+                    const modal = document.querySelector('.fixed');
+                    if (modal) {
+                        modal.remove();
+                    }
+                } catch (modalError) {
+                    console.error('Error closing modal:', modalError);
+                    // Don't fail the whole process for this
+                }
                 
                 hideLoading();
                 
-                showNotification('✅ Successfully connected to Supabase database! Real-time data synchronization is now active.', 'success');
+                // Show appropriate success message
+                if (connectionTestResult.tablesExist) {
+                    showNotification(`✅ Successfully connected to Supabase! Found existing data with ${connectionTestResult.count || 0} records.`, 'success');
+                    
+                    // SAFELY try to load existing data
+                    try {
+                        await safeSyncWithSupabase();
+                    } catch (syncError) {
+                        console.error('Data sync error (non-critical):', syncError);
+                        showNotification('⚠️ Connected successfully, but some data sync failed. You can still use all features.', 'success');
+                    }
+                } else {
+                    showNotification('✅ Connected to Supabase successfully! Database tables will be created automatically as you add data.', 'success');
+                }
                 
-                // Try to load data from Supabase
-                await loadDataFromSupabase();
+                console.log('🎯 Supabase connection completed successfully!');
                 
             } catch (error) {
-                console.error('Supabase connection error:', error);
-                hideLoading();
+                console.error('🚨 Critical Supabase connection error:', error);
                 
-                // Show specific error message
-                if (error.message.includes('Invalid API key') || error.message.includes('JWT')) {
-                    showNotification('❌ Invalid Supabase API key. Please check your credentials.', 'error');
-                } else if (error.message.includes('fetch') || error.message.includes('network')) {
-                    showNotification('❌ Network error. Please check your internet connection and URL.', 'error');
-                } else if (error.message.includes('relation') && error.message.includes('does not exist')) {
-                    // Tables don't exist yet, but connection is successful
-                    connectionDetails = { url, key };
-                    updateConnectionStatus(true);
-                    document.querySelector('.fixed').remove();
-                    showNotification('✅ Connected to Supabase! Database tables will be created automatically as you use the system.', 'success');
-                } else {
-                    showNotification('❌ Connection failed: ' + error.message, 'error');
+                // SAFE error handling - never crash the app
+                try {
+                    hideLoading();
+                    
+                    // Reset connection state
+                    supabase = null;
+                    connectionDetails = null;
+                    updateConnectionStatus(false);
+                    
+                    // Show user-friendly error message
+                    let userMessage = '❌ Failed to connect to Supabase. ';
+                    
+                    if (error.message.includes('timeout')) {
+                        userMessage += 'Connection timed out. Please check your internet connection.';
+                    } else if (error.message.includes('Invalid API key') || error.message.includes('JWT') || error.message.includes('permission')) {
+                        userMessage += 'Invalid API key or insufficient permissions. Please check your credentials.';
+                    } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                        userMessage += 'Network error. Please check your internet connection and URL.';
+                    } else if (error.message.includes('Supabase library')) {
+                        userMessage += 'Supabase library not loaded. Please refresh the page and try again.';
+                    } else {
+                        userMessage += `${error.message || 'Unknown error occurred'}`;
+                    }
+                    
+                    showNotification(userMessage, 'error');
+                    
+                } catch (errorHandlingError) {
+                    console.error('Error in error handling:', errorHandlingError);
+                    // Last resort - basic error message
+                    showNotification('❌ Connection failed. Please try again.', 'error');
+                }
+                
+            } finally {
+                isProcessing = false;
+                
+                // Emergency cleanup
+                try {
+                    hideLoading();
+                } catch (cleanupError) {
+                    console.error('Cleanup error:', cleanupError);
                 }
             }
         }
@@ -5258,4 +5418,4 @@ Date: ___________
         }
     </script>
 </body>
-</html>v
+</html>
