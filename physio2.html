@@ -434,52 +434,43 @@
                     </div>
 
                     <!-- Patients Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="patientsGrid">
-                        <!-- Sample Patient Card -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-                            <div class="flex items-center mb-4">
-                                <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-                                    DF
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold">Dharui Fakhroo</h3>
-                                    <p class="text-gray-600 dark:text-gray-400 text-sm">Dharui123@gmail.com</p>
-                                    <p class="text-gray-500 dark:text-gray-500 text-sm">37352222</p>
-                                </div>
+                    <div id="patientsGrid">
+                        <!-- No Database Connection State -->
+                        <div id="noDatabaseConnection" class="text-center py-12">
+                            <div class="max-w-md mx-auto">
+                                <i class="fas fa-database text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Database Connection</h3>
+                                <p class="text-gray-500 dark:text-gray-500 mb-6">Connect to Supabase to view and manage patients from your database.</p>
+                                <button onclick="showSupabaseConnectionModal()" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold">
+                                    <i class="fas fa-plug mr-2"></i>Connect Database
+                                </button>
                             </div>
-                            
-                            <div class="space-y-2 mb-4">
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-birthday-cake w-4 mr-2 text-gray-400"></i>
-                                    <span>25 years old</span>
-                                </div>
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-calendar w-4 mr-2 text-gray-400"></i>
-                                    <span>Last visit: Dec 18, 2024</span>
-                                </div>
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-notes-medical w-4 mr-2 text-gray-400"></i>
-                                    <span>3 treatments completed</span>
-                                </div>
+                        </div>
+                        
+                        <!-- Loading State -->
+                        <div id="patientsLoading" class="hidden text-center py-12">
+                            <div class="max-w-md mx-auto">
+                                <i class="fas fa-spinner fa-spin text-primary text-4xl mb-4"></i>
+                                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Loading Patients</h3>
+                                <p class="text-gray-500 dark:text-gray-500">Fetching patient data from your database...</p>
                             </div>
-
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm">Active</span>
-                                <div class="flex space-x-2">
-                                    <button onclick="viewPatientDetails('sample-id')" class="p-2 text-primary hover:text-secondary rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button onclick="assignPatientToPhysiotherapist('sample-id', 'Dharui Fakhroo')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Assign to Physiotherapist">
-                                        <i class="fas fa-user-md"></i>
-                                    </button>
-                                    <button onclick="editPatient('sample-id')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Patient">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deletePatient('sample-id', 'Dharui Fakhroo')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Patient">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
+                        </div>
+                        
+                        <!-- Empty Database State -->
+                        <div id="noPatientsFound" class="hidden text-center py-12">
+                            <div class="max-w-md mx-auto">
+                                <i class="fas fa-users text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Patients Yet</h3>
+                                <p class="text-gray-500 dark:text-gray-500 mb-6">Your database is connected but contains no patients. Add your first patient to get started.</p>
+                                <button onclick="showAddPatientModal()" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold">
+                                    <i class="fas fa-user-plus mr-2"></i>Add First Patient
+                                </button>
                             </div>
+                        </div>
+                        
+                        <!-- Real Patients Grid Container -->
+                        <div id="patientsGridContainer" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Real patients from Supabase will be loaded here -->
                         </div>
                     </div>
                 </div>
