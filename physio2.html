@@ -5340,73 +5340,191 @@ Date: ___________
         }
 
         function cancelAppointment(appointmentId) {
-            // Create cancel confirmation modal
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            modal.innerHTML = `
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-                    <div class="flex items-center mb-4">
-                        <i class="fas fa-calendar-times text-orange-500 text-2xl mr-3"></i>
-                        <h3 class="text-lg font-semibold">Cancel Appointment</h3>
+            try {
+                console.log('Opening cancel modal for appointment:', appointmentId);
+                
+                // Create cancel confirmation modal
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-calendar-times text-orange-500 text-2xl mr-3"></i>
+                            <h3 class="text-lg font-semibold">Cancel Appointment</h3>
+                        </div>
+                        
+                        <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-4">
+                            <p class="text-orange-800 dark:text-orange-200 text-sm">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                This appointment will be marked as cancelled but kept in the system for record-keeping.
+                            </p>
+                        </div>
+                        
+                        <p class="text-gray-700 dark:text-gray-300 mb-4">
+                            Are you sure you want to cancel this appointment?
+                        </p>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Cancellation Reason</label>
+                            <select id="cancellationReason-${appointmentId}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base">
+                                <option value="patient-request">Patient Requested</option>
+                                <option value="illness">Patient Illness</option>
+                                <option value="emergency">Emergency</option>
+                                <option value="no-show">No Show</option>
+                                <option value="scheduling-conflict">Scheduling Conflict</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Additional Notes (Optional)</label>
+                            <textarea id="cancellationNotes-${appointmentId}" rows="2" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base" placeholder="Additional cancellation details..."></textarea>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3">
+                            <button onclick="closeCancelModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                                Keep Appointment
+                            </button>
+                            <button onclick="confirmCancelAppointment('${appointmentId}')" class="px-4 py-2 bg-orange-600 text-white hover:bg-orange-700 rounded transition-colors">
+                                <i class="fas fa-calendar-times mr-2"></i>Cancel Appointment
+                            </button>
+                        </div>
                     </div>
-                    
-                    <p class="text-gray-700 dark:text-gray-300 mb-4">
-                        Are you sure you want to cancel this appointment?
-                    </p>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium mb-2">Cancellation Reason</label>
-                        <select id="cancellationReason" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base">
-                            <option value="patient-request">Patient Requested</option>
-                            <option value="illness">Patient Illness</option>
-                            <option value="emergency">Emergency</option>
-                            <option value="no-show">No Show</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div class="flex justify-end space-x-3">
-                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
-                            Keep Appointment
-                        </button>
-                        <button onclick="confirmCancelAppointment('${appointmentId}')" class="px-4 py-2 bg-orange-600 text-white hover:bg-orange-700 rounded transition-colors">
-                            <i class="fas fa-calendar-times mr-2"></i>Cancel Appointment
-                        </button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
+                `;
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error creating cancel modal:', error);
+                showNotification('❌ Error opening cancellation dialog', 'error');
+            }
         }
 
-        // 🛡️ ULTRA-SAFE Appointment Cancellation - ZERO-CRASH VERSION
-        function confirmCancelAppointment(appointmentId) {
-            console.log('🛡️ Starting ultra-safe appointment cancellation for ID:', appointmentId);
-            
-            // Step 1: ALWAYS close the modal first (most important)
+        // NEW: Delete Appointment Function
+        function deleteAppointment(appointmentId) {
+            try {
+                console.log('Opening delete modal for appointment:', appointmentId);
+                
+                // Create delete confirmation modal
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-trash text-red-500 text-2xl mr-3"></i>
+                            <h3 class="text-lg font-semibold">Delete Appointment</h3>
+                        </div>
+                        
+                        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                            <p class="text-red-800 dark:text-red-200 text-sm">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Warning:</strong> This appointment will be permanently deleted from the system. This action cannot be undone.
+                            </p>
+                        </div>
+                        
+                        <p class="text-gray-700 dark:text-gray-300 mb-4">
+                            Are you absolutely sure you want to permanently delete this appointment?
+                        </p>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Deletion Reason</label>
+                            <select id="deletionReason-${appointmentId}" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base">
+                                <option value="duplicate">Duplicate Appointment</option>
+                                <option value="error">Created by Error</option>
+                                <option value="patient-withdrawn">Patient Withdrawn from Treatment</option>
+                                <option value="administrative">Administrative Cleanup</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Confirmation</label>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="deleteConfirmation-${appointmentId}" class="mr-2 w-4 h-4 text-red-600">
+                                <label for="deleteConfirmation-${appointmentId}" class="text-sm text-gray-700 dark:text-gray-300">
+                                    I understand this action is permanent and cannot be undone
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3">
+                            <button onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                                Keep Appointment
+                            </button>
+                            <button onclick="confirmDeleteAppointment('${appointmentId}')" class="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded transition-colors">
+                                <i class="fas fa-trash mr-2"></i>Delete Permanently
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error creating delete modal:', error);
+                showNotification('❌ Error opening deletion dialog', 'error');
+            }
+        }
+
+        // Close Cancel Modal Function
+        function closeCancelModal() {
             try {
                 const modal = document.querySelector('.fixed');
                 if (modal) {
                     modal.remove();
-                    console.log('✅ Modal closed successfully');
                 }
+            } catch (error) {
+                console.error('Error closing cancel modal:', error);
+            }
+        }
+
+        // Close Delete Modal Function
+        function closeDeleteModal() {
+            try {
+                const modal = document.querySelector('.fixed');
+                if (modal) {
+                    modal.remove();
+                }
+            } catch (error) {
+                console.error('Error closing delete modal:', error);
+            }
+        }
+
+        // 🛡️ ULTRA-SAFE Appointment Cancellation - FIXED VERSION
+        function confirmCancelAppointment(appointmentId) {
+            console.log('🛡️ Starting ultra-safe appointment cancellation for ID:', appointmentId);
+            
+            let reason = 'cancelled';
+            let notes = '';
+            
+            // Step 1: Get cancellation details safely BEFORE closing modal
+            try {
+                const reasonSelect = document.getElementById(`cancellationReason-${appointmentId}`);
+                const notesTextarea = document.getElementById(`cancellationNotes-${appointmentId}`);
+                
+                if (reasonSelect && reasonSelect.value) {
+                    reason = reasonSelect.value.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                }
+                
+                if (notesTextarea && notesTextarea.value) {
+                    notes = notesTextarea.value.trim();
+                }
+                
+                console.log('✅ Cancellation details extracted:', { reason, notes });
+                
+            } catch (extractError) {
+                console.error('Data extraction error (non-critical):', extractError);
+            }
+            
+            // Step 2: Close the modal (most important for UX)
+            try {
+                closeCancelModal();
+                console.log('✅ Modal closed successfully');
             } catch (modalError) {
                 console.error('Modal close error (non-critical):', modalError);
             }
             
-            // Step 2: Get cancellation reason safely
-            let reason = 'cancelled';
-            try {
-                const reasonSelect = document.getElementById('cancellationReason');
-                if (reasonSelect && reasonSelect.value) {
-                    reason = reasonSelect.value.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
-                }
-            } catch (reasonError) {
-                console.error('Reason extraction error (non-critical):', reasonError);
-            }
-            
             // Step 3: Show immediate success feedback (most important for UX)
             try {
-                showNotification('✅ Appointment cancelled successfully!', 'success');
+                showNotification(`✅ Appointment cancelled successfully! Reason: ${reason}`, 'success');
             } catch (notificationError) {
                 console.error('Notification error (non-critical):', notificationError);
             }
@@ -5418,7 +5536,9 @@ Date: ___________
                     if (appointmentIndex >= 0) {
                         window.appointments[appointmentIndex].status = 'cancelled';
                         window.appointments[appointmentIndex].cancellation_reason = reason;
+                        window.appointments[appointmentIndex].cancellation_notes = notes;
                         window.appointments[appointmentIndex].cancelled_at = new Date().toISOString();
+                        window.appointments[appointmentIndex].cancelled_by = currentUser?.name || 'Administrator';
                         console.log('✅ Appointment data updated in memory');
                     }
                 }
@@ -5426,15 +5546,13 @@ Date: ___________
                 console.error('Data update error (non-critical):', dataError);
             }
             
-            // Step 5: Try to update UI (nice to have, but not critical)
+            // Step 5: Update UI safely
             try {
-                // Simple, safe approach: just hide the cancelled appointment
                 const appointmentCards = document.querySelectorAll('div');
                 let cardFound = false;
                 
                 appointmentCards.forEach(card => {
                     try {
-                        // Look for buttons that contain our appointment ID
                         const buttons = card.querySelectorAll('button[onclick]');
                         const hasAppointmentId = Array.from(buttons).some(btn => {
                             const onclick = btn.getAttribute('onclick');
@@ -5443,43 +5561,47 @@ Date: ___________
                         
                         if (hasAppointmentId && !cardFound) {
                             cardFound = true;
-                            console.log('✅ Found appointment card, updating...');
+                            console.log('✅ Found appointment card, updating UI...');
                             
-                            // Simple visual update - just fade out and mark as cancelled
-                            card.style.transition = 'all 0.5s ease';
-                            card.style.opacity = '0.5';
-                            card.style.filter = 'grayscale(1)';
+                            // Update status badge to cancelled
+                            const statusBadge = card.querySelector('.px-3.py-1');
+                            if (statusBadge) {
+                                statusBadge.className = 'px-3 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 rounded-full text-sm font-medium';
+                                statusBadge.innerHTML = '<i class="fas fa-calendar-times mr-1"></i>Cancelled';
+                            }
+
+                            // Update border color to orange (cancelled)
+                            card.style.borderLeftColor = '#F59E0B';
+                            card.classList.add('opacity-75');
                             
-                            // Add cancelled label - simple and safe
-                            const cancelLabel = document.createElement('div');
-                            cancelLabel.className = 'absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold z-10';
-                            cancelLabel.innerHTML = '❌ CANCELLED';
-                            cancelLabel.style.position = 'absolute';
-                            cancelLabel.style.zIndex = '10';
-                            
-                            // Make card container relative if it isn't already
-                            const cardStyle = window.getComputedStyle(card);
-                            if (cardStyle.position === 'static') {
-                                card.style.position = 'relative';
+                            // Update action buttons to show cancelled state
+                            const actionButtons = card.querySelector('.flex.space-x-2');
+                            if (actionButtons) {
+                                actionButtons.innerHTML = `
+                                    <button onclick="viewAppointmentDetails('${appointmentId}')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button onclick="rescheduleAppointment('${appointmentId}')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Reschedule">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
+                                    <button onclick="deleteAppointment('${appointmentId}')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Appointment">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                `;
                             }
                             
-                            // Add the label
-                            card.appendChild(cancelLabel);
-                            
-                            // Disable all buttons in the card
-                            const allButtons = card.querySelectorAll('button');
-                            allButtons.forEach(btn => {
-                                btn.disabled = true;
-                                btn.style.pointerEvents = 'none';
-                                btn.style.opacity = '0.5';
-                            });
+                            // Add cancellation info to notes
+                            const notesElement = card.querySelector('.text-xs');
+                            if (notesElement) {
+                                notesElement.innerHTML = `<strong>Cancelled:</strong> ${reason}${notes ? ` - ${notes}` : ''}`;
+                                notesElement.className = 'text-xs text-orange-700 dark:text-orange-300';
+                            }
                             
                             console.log('✅ Appointment card updated with cancelled status');
                         }
                         
                     } catch (cardUpdateError) {
                         console.error('Card update error (non-critical):', cardUpdateError);
-                        // Continue with other cards
                     }
                 });
                 
@@ -5489,19 +5611,19 @@ Date: ___________
                 
             } catch (uiError) {
                 console.error('UI update error (non-critical):', uiError);
-                // Don't let UI errors break the cancellation
             }
             
             // Step 6: Update database if connected (nice to have)
             try {
                 if (supabase && connectionDetails) {
-                    // Async database update - don't wait for it
                     supabase
                         .from('appointments')
                         .update({ 
                             status: 'cancelled',
                             cancellation_reason: reason,
-                            cancelled_at: new Date().toISOString()
+                            cancellation_notes: notes,
+                            cancelled_at: new Date().toISOString(),
+                            cancelled_by: currentUser?.name || 'Administrator'
                         })
                         .eq('id', appointmentId)
                         .then(result => {
@@ -5520,6 +5642,184 @@ Date: ___________
             }
             
             console.log('🎯 Ultra-safe appointment cancellation completed successfully!');
+        }
+
+        // 🛡️ ULTRA-SAFE Appointment Deletion - NEW FEATURE
+        function confirmDeleteAppointment(appointmentId) {
+            console.log('🛡️ Starting ultra-safe appointment deletion for ID:', appointmentId);
+            
+            let reason = 'administrative cleanup';
+            let isConfirmed = false;
+            
+            // Step 1: Get deletion details safely BEFORE closing modal
+            try {
+                const reasonSelect = document.getElementById(`deletionReason-${appointmentId}`);
+                const confirmCheckbox = document.getElementById(`deleteConfirmation-${appointmentId}`);
+                
+                if (reasonSelect && reasonSelect.value) {
+                    reason = reasonSelect.value.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                }
+                
+                if (confirmCheckbox) {
+                    isConfirmed = confirmCheckbox.checked;
+                }
+                
+                console.log('✅ Deletion details extracted:', { reason, isConfirmed });
+                
+            } catch (extractError) {
+                console.error('Data extraction error (non-critical):', extractError);
+            }
+            
+            // Check confirmation
+            if (!isConfirmed) {
+                showNotification('❌ Please confirm that you understand this action is permanent', 'error');
+                return;
+            }
+            
+            // Step 2: Close the modal
+            try {
+                closeDeleteModal();
+                console.log('✅ Delete modal closed successfully');
+            } catch (modalError) {
+                console.error('Modal close error (non-critical):', modalError);
+            }
+            
+            // Step 3: Show immediate success feedback
+            try {
+                showNotification(`🗑️ Appointment permanently deleted! Reason: ${reason}`, 'success');
+            } catch (notificationError) {
+                console.error('Notification error (non-critical):', notificationError);
+            }
+            
+            // Step 4: Remove from data completely
+            try {
+                if (window.appointments && Array.isArray(window.appointments)) {
+                    const originalLength = window.appointments.length;
+                    window.appointments = window.appointments.filter(apt => apt.id !== appointmentId);
+                    
+                    if (window.appointments.length < originalLength) {
+                        console.log('✅ Appointment removed from memory data');
+                    }
+                }
+                
+                // Also remove from assigned appointments
+                if (window.assignedAppointments && Array.isArray(window.assignedAppointments)) {
+                    window.assignedAppointments = window.assignedAppointments.filter(apt => apt.id !== appointmentId);
+                }
+                
+            } catch (dataError) {
+                console.error('Data removal error (non-critical):', dataError);
+            }
+            
+            // Step 5: Remove from UI completely
+            try {
+                const appointmentCards = document.querySelectorAll('div');
+                let cardFound = false;
+                
+                appointmentCards.forEach(card => {
+                    try {
+                        const buttons = card.querySelectorAll('button[onclick]');
+                        const hasAppointmentId = Array.from(buttons).some(btn => {
+                            const onclick = btn.getAttribute('onclick');
+                            return onclick && onclick.includes(appointmentId);
+                        });
+                        
+                        if (hasAppointmentId && !cardFound) {
+                            cardFound = true;
+                            console.log('✅ Found appointment card, removing from UI...');
+                            
+                            // Animate removal
+                            card.style.transition = 'all 0.5s ease-out';
+                            card.style.transform = 'translateX(-100%)';
+                            card.style.opacity = '0';
+                            
+                            // Remove after animation
+                            setTimeout(() => {
+                                try {
+                                    card.remove();
+                                    console.log('✅ Appointment card removed from DOM');
+                                } catch (removeError) {
+                                    console.error('Card removal error:', removeError);
+                                }
+                            }, 500);
+                            
+                            // Show deletion feedback immediately
+                            const deletionBanner = document.createElement('div');
+                            deletionBanner.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center';
+                            deletionBanner.innerHTML = `
+                                <i class="fas fa-trash text-red-500 text-xl mr-3"></i>
+                                <div>
+                                    <p class="font-semibold">Appointment Deleted</p>
+                                    <p class="text-sm">Appointment permanently removed from system. Reason: ${reason}</p>
+                                </div>
+                                <button onclick="this.remove()" class="ml-auto text-red-700 hover:text-red-900">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            
+                            // Add banner to appointments container
+                            const appointmentsContainer = card.parentNode;
+                            if (appointmentsContainer) {
+                                appointmentsContainer.insertBefore(deletionBanner, appointmentsContainer.firstChild);
+                            }
+                            
+                            // Auto-remove banner after 10 seconds
+                            setTimeout(() => {
+                                if (deletionBanner.parentNode) {
+                                    deletionBanner.remove();
+                                }
+                            }, 10000);
+                        }
+                        
+                    } catch (cardUpdateError) {
+                        console.error('Card removal error (non-critical):', cardUpdateError);
+                    }
+                });
+                
+                if (!cardFound) {
+                    console.log('ℹ️ Appointment card not found in current view - this is OK');
+                }
+                
+            } catch (uiError) {
+                console.error('UI removal error (non-critical):', uiError);
+            }
+            
+            // Step 6: Delete from database if connected
+            try {
+                if (supabase && connectionDetails) {
+                    supabase
+                        .from('appointments')
+                        .delete()
+                        .eq('id', appointmentId)
+                        .then(result => {
+                            if (result.error) {
+                                console.error('Database deletion error (non-critical):', result.error);
+                                showNotification('⚠️ Appointment removed locally, but database deletion failed', 'success');
+                            } else {
+                                console.log('✅ Appointment permanently deleted from database');
+                            }
+                        })
+                        .catch(dbError => {
+                            console.error('Database operation failed (non-critical):', dbError);
+                            showNotification('⚠️ Appointment removed locally, database cleanup pending', 'success');
+                        });
+                }
+            } catch (dbError) {
+                console.error('Database connection error (non-critical):', dbError);
+            }
+            
+            // Update appointment counts
+            try {
+                const pendingElement = document.getElementById('pendingAppointmentsCount');
+                if (pendingElement) {
+                    const current = parseInt(pendingElement.textContent) || 0;
+                    pendingElement.textContent = Math.max(0, current - 1);
+                }
+            } catch (countError) {
+                console.error('Count update error (non-critical):', countError);
+            }
+            
+            console.log('🎯 Ultra-safe appointment deletion completed successfully!');
         }
 
         // SAFE wrapper functions for appointment actions
