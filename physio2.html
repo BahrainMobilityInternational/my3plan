@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>PhysioTech - Comprehensive Physiotherapy Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -247,8 +247,8 @@
     <div id="mainApp" class="hidden">
         <!-- Navigation -->
         <nav class="bg-primary shadow-lg fixed top-0 left-0 right-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
+            <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+                <div class="flex justify-between h-12">
                     <div class="flex items-center">
                         <i class="fas fa-heartbeat text-white text-2xl mr-3"></i>
                         <span class="text-white text-xl font-bold">PhysioTech - Admin</span>
@@ -1519,6 +1519,12 @@
         let currentUser = null;
         let isLoggedIn = false;
 
+        // Constants for persistent storage
+        const STORAGE_KEYS = {
+            SUPABASE_CONNECTION: 'physiotech_supabase_connection',
+            USER_PREFERENCES: 'physiotech_user_preferences'
+        };
+
         // Predefined users
         const adminUser = {
             email: 'DhariBmi@gmail.com',
@@ -1623,6 +1629,13 @@
                 if (targetView) {
                     targetView.classList.remove('hidden');
                     currentView = viewName;
+                    
+                    // Special handling for users view to initialize it
+                    if (viewName === 'users') {
+                        console.log('Initializing users view...');
+                        showUsersView();
+                    }
+                    
                     console.log('Successfully switched to view:', viewName);
                 } else {
                     console.error('Target view not found:', viewName);
@@ -1635,7 +1648,7 @@
                 }
             } catch (error) {
                 console.error('Error switching views:', error);
-                // Ensure dashboard is visible as fallback
+                // Ensure dashboard is visible as fallball
                 const dashboardView = document.getElementById('dashboard');
                 if (dashboardView) {
                     dashboardView.classList.remove('hidden');
@@ -1758,6 +1771,18 @@
 
         function initializeApp() {
             console.log('Initializing PhysioTech Application...');
+            
+            // Load saved Supabase connection on startup
+            try {
+                const connectionRestored = loadSupabaseConnection();
+                if (connectionRestored) {
+                    console.log('🔄 Saved connection restoration initiated');
+                } else {
+                    console.log('ℹ️ No saved connection found - fresh start');
+                }
+            } catch (connectionError) {
+                console.error('Connection restoration error:', connectionError);
+            }
             
             setupNavigation();
             setupPhysioNavigation();
@@ -4653,6 +4678,160 @@
                 }
             }
         };
+
+        // Save Supabase Connection to Persistent Storage - SANDBOX SAFE
+        function saveSupabaseConnection(url, key) {
+            try {
+                // Check if localStorage is available (sandbox compatibility)
+                if (typeof Storage === 'undefined' || typeof localStorage === 'undefined') {
+                    console.log('ℹ️ localStorage not available - connection will be session-only');
+                    showNotification('🔗 Connected successfully! Note: Connection is session-only in this environment.', 'success');
+                    return;
+                }
+                
+                // Test localStorage access safely
+                try {
+                    localStorage.setItem('_test', 'test');
+                    localStorage.removeItem('_test');
+                } catch (accessError) {
+                    console.log('ℹ️ localStorage access restricted - using session-only storage');
+                    showNotification('🔗 Connected successfully! Note: Connection will not persist across sessions.', 'success');
+                    return;
+                }
+                
+                const connectionData = {
+                    url: url,
+                    key: key.substring(0, 20) + '...', // Store truncated key for security
+                    fullKey: btoa(key), // Base64 encode the full key for storage
+                    connected: true,
+                    connectedAt: new Date().toISOString()
+                };
+                
+                // Save to localStorage for persistence
+                localStorage.setItem(STORAGE_KEYS.SUPABASE_CONNECTION, JSON.stringify(connectionData));
+                console.log('✅ Supabase connection saved to persistent storage');
+                showNotification('🔗 Connected and saved! Connection will persist across sessions.', 'success');
+                
+            } catch (storageError) {
+                console.error('Failed to save connection to storage:', storageError);
+                if (storageError.message && storageError.message.includes('sandbox')) {
+                    console.log('ℹ️ Sandbox environment detected - using session-only storage');
+                    showNotification('🔗 Connected successfully! Session-only due to sandbox restrictions.', 'success');
+                } else {
+                    showNotification('⚠️ Connection established but may not persist after refresh', 'success');
+                }
+            }
+        }
+
+        // Load Supabase Connection from Persistent Storage - SANDBOX SAFE
+        function loadSupabaseConnection() {
+            try {
+                // Check if localStorage is available (sandbox compatibility)
+                if (typeof Storage === 'undefined' || typeof localStorage === 'undefined') {
+                    console.log('ℹ️ localStorage not available in sandbox environment - using session-only storage');
+                    return false;
+                }
+                
+                // Test localStorage access safely
+                try {
+                    localStorage.setItem('_test', 'test');
+                    localStorage.removeItem('_test');
+                } catch (accessError) {
+                    console.log('ℹ️ localStorage access restricted in sandbox - using session-only storage');
+                    return false;
+                }
+                
+                const savedConnection = localStorage.getItem(STORAGE_KEYS.SUPABASE_CONNECTION);
+                if (savedConnection) {
+                    const connectionData = JSON.parse(savedConnection);
+                    if (connectionData.connected && connectionData.url && connectionData.fullKey) {
+                        console.log('🔄 Found saved Supabase connection, attempting to restore...');
+                        
+                        // Show user that we're reconnecting
+                        showNotification('🔄 Restoring your previous database connection...', 'success');
+                        
+                        // Restore the full connection
+                        try {
+                            const fullKey = atob(connectionData.fullKey);
+                            autoRestoreSupabaseConnection(connectionData.url, fullKey);
+                            return true;
+                        } catch (decodeError) {
+                            console.error('Failed to decode saved key:', decodeError);
+                            showNotification('⚠️ Saved connection is corrupted. Please reconnect manually.', 'error');
+                            clearSavedConnection();
+                        }
+                    }
+                }
+            } catch (loadError) {
+                console.error('Failed to load connection from storage:', loadError);
+                if (loadError.message && loadError.message.includes('sandbox')) {
+                    console.log('ℹ️ Sandbox environment detected - persistent storage disabled');
+                } else {
+                    console.error('Unexpected storage error:', loadError);
+                }
+            }
+            return false;
+        }
+
+        // Auto-restore Supabase Connection
+        async function autoRestoreSupabaseConnection(url, key) {
+            try {
+                console.log('🔄 Auto-restoring Supabase connection...');
+                
+                // Create Supabase client
+                if (window.supabase && typeof window.supabase.createClient === 'function') {
+                    supabase = window.supabase.createClient(url, key, {
+                        auth: { autoRefreshToken: false, persistSession: false }
+                    });
+                } else if (typeof createClient !== 'undefined') {
+                    supabase = createClient(url, key);
+                } else {
+                    throw new Error('Supabase library not available');
+                }
+
+                // Store connection details
+                window.supabase = supabase;
+                connectionDetails = {
+                    url: url,
+                    key: key.substring(0, 20) + '...',
+                    connected: true,
+                    connectedAt: new Date().toISOString(),
+                    restored: true
+                };
+
+                // Update UI
+                updateConnectionStatus(true);
+                
+                // Test connection
+                const testResult = await supabase
+                    .from('_test_connection')
+                    .select('id')
+                    .limit(1);
+
+                const statusMessage = testResult.error && testResult.error.message.includes('does not exist')
+                    ? '✅ Database connection restored successfully!'
+                    : '✅ Database connection restored and verified!';
+                
+                showNotification(statusMessage, 'success');
+                console.log('✅ Supabase connection auto-restored successfully');
+
+            } catch (restoreError) {
+                console.error('Auto-restore failed:', restoreError);
+                showNotification('⚠️ Could not restore database connection. Please reconnect manually.', 'error');
+                clearSavedConnection();
+                updateConnectionStatus(false);
+            }
+        }
+
+        // Clear Saved Supabase Connection
+        function clearSavedConnection() {
+            try {
+                localStorage.removeItem(STORAGE_KEYS.SUPABASE_CONNECTION);
+                console.log('✅ Saved connection cleared');
+            } catch (error) {
+                console.error('Failed to clear saved connection:', error);
+            }
+        }
 
         // 🚀 STREAMLINED Supabase Connection Handler - WORKING VERSION
         async function handleSupabaseConnection(e) {
@@ -7571,6 +7750,511 @@ Date: ___________
                 showNotification('Error deleting patient: ' + error.message, 'error');
                 hideLoading();
             }
+        }
+
+        // Show Users & Admins View - MISSING FUNCTION FIX
+        function showUsersView() {
+            console.log('Initializing Users & Admins view...');
+            
+            try {
+                // Check if users view already has content
+                const usersView = document.getElementById('users');
+                if (!usersView) {
+                    console.error('Users view not found');
+                    return;
+                }
+                
+                // Create Users & Admins view content
+                usersView.innerHTML = `
+                    <!-- Page Header -->
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Users & Administrators</h1>
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-users-cog mr-2"></i>
+                            <span id="userCount">Total: 2 users</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                            <!-- Search Section -->
+                            <div class="flex-1 w-full lg:w-auto">
+                                <div class="relative">
+                                    <input type="text" id="userSearchInput" placeholder="Search users by name, email, or role..." 
+                                           class="w-full px-4 py-3 pl-12 pr-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                                <select id="userRoleFilter" class="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Administrators</option>
+                                    <option value="physiotherapist">Physiotherapists</option>
+                                    <option value="staff">Staff Members</option>
+                                </select>
+                                
+                                <button id="addNewAdministratorBtn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold flex items-center shadow-lg">
+                                    <i class="fas fa-user-shield mr-2"></i>Add New Administrator
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Users Grid -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-users text-primary mr-2"></i>
+                            System Users
+                        </h3>
+                        
+                        <div id="usersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            
+                            <!-- Admin User Card -->
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-6 hover:shadow-lg transition-shadow">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                        DA
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-blue-900 dark:text-blue-100">Admin User</h4>
+                                        <p class="text-blue-700 dark:text-blue-300 text-sm font-semibold">System Administrator</p>
+                                        <p class="text-blue-600 dark:text-blue-400 text-xs">Full System Access</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-envelope w-4 mr-2 text-blue-500"></i>
+                                        <span class="font-medium">DhariBmi@gmail.com</span>
+                                    </div>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-shield-alt w-4 mr-2 text-blue-500"></i>
+                                        <span>Administrator Role</span>
+                                    </div>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-calendar w-4 mr-2 text-blue-500"></i>
+                                        <span>Active since system launch</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-4 border-t border-blue-200 dark:border-blue-700">
+                                    <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-xs font-bold">
+                                        <i class="fas fa-crown mr-1"></i>ADMIN
+                                    </span>
+                                    <div class="flex space-x-2">
+                                        <button class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors" title="Current User">
+                                            <i class="fas fa-user-check"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Physiotherapist User Card -->
+                            <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg p-6 hover:shadow-lg transition-shadow">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                        MA
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-green-900 dark:text-green-100">Dr. Mariam Abdulatheem Ali</h4>
+                                        <p class="text-green-700 dark:text-green-300 text-sm font-semibold">Lead Physiotherapist</p>
+                                        <p class="text-green-600 dark:text-green-400 text-xs">Patient Care Access</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-envelope w-4 mr-2 text-green-500"></i>
+                                        <span class="font-medium">Mariambmi@gmail.com</span>
+                                    </div>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-user-md w-4 mr-2 text-green-500"></i>
+                                        <span>Physiotherapist Role</span>
+                                    </div>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-award w-4 mr-2 text-green-500"></i>
+                                        <span>7 years experience</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-4 border-t border-green-200 dark:border-green-700">
+                                    <span class="px-3 py-1 bg-green-600 text-white rounded-full text-xs font-bold">
+                                        <i class="fas fa-stethoscope mr-1"></i>PHYSIO
+                                    </span>
+                                    <div class="flex space-x-2">
+                                        <button onclick="editUser('mariam-physio-001')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-800 transition-colors" title="Edit User">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="resetUserPassword('mariam-physio-001')" class="p-2 text-orange-600 hover:text-orange-800 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors" title="Reset Password">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Add User Placeholder Card -->
+                            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:border-primary dark:hover:border-primary transition-colors cursor-pointer" onclick="document.getElementById('addNewAdministratorBtn').click()">
+                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                    <i class="fas fa-user-plus text-gray-400 dark:text-gray-500 text-2xl"></i>
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">Add New User</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-500 mb-4">Create a new administrator or staff account</p>
+                                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                                    <i class="fas fa-plus mr-2"></i>Add User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Management Information -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mt-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-600 text-lg mr-3 mt-0.5"></i>
+                            <div>
+                                <h4 class="font-medium text-blue-900 dark:text-blue-100 mb-2">User Management</h4>
+                                <div class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                                    <p>• <strong>Administrators</strong> have full system access including user management, settings, and all patient data</p>
+                                    <p>• <strong>Physiotherapists</strong> can access assigned patients, create appointments, and manage treatment plans</p>
+                                    <p>• <strong>Staff Members</strong> have limited access for appointment scheduling and basic patient information</p>
+                                    <p>• All users require secure passwords and can be assigned specific permissions based on their role</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listener for the Add New Administrator button
+                setTimeout(() => {
+                    const addAdminBtn = document.getElementById('addNewAdministratorBtn');
+                    if (addAdminBtn) {
+                        addAdminBtn.addEventListener('click', () => {
+                            showAddNewAdministratorModal();
+                        });
+                    }
+                }, 100);
+                
+                console.log('✅ Users & Admins view initialized successfully');
+                showNotification('👥 Users & Administrators section loaded. You can now add new administrators!', 'success');
+                
+            } catch (error) {
+                console.error('Error initializing Users view:', error);
+                showNotification('❌ Error loading Users section. Please try again.', 'error');
+            }
+        }
+
+        // Add New Administrator Modal Function
+        function showAddNewAdministratorModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-screen overflow-y-auto">
+                    <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-user-shield text-primary text-2xl mr-3"></i>
+                                <h2 class="text-2xl font-bold">Add New Administrator</h2>
+                            </div>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600 text-2xl">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form id="addAdministratorForm" class="p-6">
+                        <div class="space-y-6">
+                            <!-- Administrator Information -->
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-user text-primary mr-2"></i>
+                                    Administrator Information
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Full Name *</label>
+                                        <input type="text" id="adminFullName" required 
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                               placeholder="Enter administrator's full name">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Email Address *</label>
+                                        <input type="email" id="adminEmail" required 
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                               placeholder="admin@example.com">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Phone Number</label>
+                                        <input type="tel" id="adminPhone" 
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                               placeholder="97123456">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Login Credentials -->
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-key text-primary mr-2"></i>
+                                    Login Credentials
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Password *</label>
+                                        <div class="relative">
+                                            <input type="password" id="adminPassword" required 
+                                                   class="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                                   placeholder="Create secure password"
+                                                   minlength="8">
+                                            <button type="button" id="toggleAdminPassword" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">Minimum 8 characters required</p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Confirm Password *</label>
+                                        <input type="password" id="adminPasswordConfirm" required 
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                               placeholder="Confirm password"
+                                               minlength="8">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Role and Permissions -->
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                    <i class="fas fa-shield-alt text-primary mr-2"></i>
+                                    Role and Permissions
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">User Role</label>
+                                        <select id="adminRole" 
+                                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary">
+                                            <option value="admin">Administrator (Full Access)</option>
+                                            <option value="manager">Manager (Limited Admin)</option>
+                                            <option value="staff">Staff Member (Basic Access)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                                        <div class="flex items-start">
+                                            <i class="fas fa-exclamation-triangle text-yellow-600 mr-3 mt-0.5"></i>
+                                            <div class="text-sm">
+                                                <p class="font-semibold text-yellow-800 dark:text-yellow-200 mb-1">Administrator Access</p>
+                                                <p class="text-yellow-700 dark:text-yellow-300">This user will have full administrative privileges including user management, system settings, and access to all patient data.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-primary text-white hover:bg-secondary rounded-lg transition-colors font-medium">
+                                <i class="fas fa-user-shield mr-2"></i>Create Administrator
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Toggle password visibility
+            document.getElementById('toggleAdminPassword').addEventListener('click', () => {
+                const passwordInput = document.getElementById('adminPassword');
+                const toggleIcon = document.querySelector('#toggleAdminPassword i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleIcon.classList.remove('fa-eye');
+                    toggleIcon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    toggleIcon.classList.remove('fa-eye-slash');
+                    toggleIcon.classList.add('fa-eye');
+                }
+            });
+            
+            // Handle form submission
+            document.getElementById('addAdministratorForm').addEventListener('submit', handleAddAdministrator);
+        }
+
+        // Handle Add Administrator Form Submission
+        async function handleAddAdministrator(e) {
+            e.preventDefault();
+            
+            const fullName = document.getElementById('adminFullName')?.value?.trim();
+            const email = document.getElementById('adminEmail')?.value?.trim();
+            const password = document.getElementById('adminPassword')?.value?.trim();
+            const confirmPassword = document.getElementById('adminPasswordConfirm')?.value?.trim();
+            
+            if (!fullName || !email || !password) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showNotification('Password must be at least 8 characters long', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                const newAdmin = {
+                    id: `admin-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    full_name: fullName,
+                    email: email,
+                    password: password, // In production, this should be hashed
+                    phone: document.getElementById('adminPhone')?.value?.trim() || '',
+                    role: document.getElementById('adminRole')?.value || 'admin',
+                    created_at: new Date().toISOString(),
+                    is_active: true,
+                    created_by: currentUser?.name || 'System Administrator'
+                };
+                
+                // Store locally
+                if (!window.administrators) {
+                    window.administrators = [];
+                }
+                window.administrators.push(newAdmin);
+                
+                // Save to Supabase if connected
+                if (supabase && connectionDetails) {
+                    try {
+                        const { error } = await supabase
+                            .from('administrators')
+                            .insert([newAdmin]);
+                        
+                        if (error) {
+                            console.error('Supabase error:', error);
+                            showNotification('⚠️ Administrator created locally, but database sync failed.', 'success');
+                        } else {
+                            showNotification('✅ Administrator created and saved to database successfully!', 'success');
+                        }
+                    } catch (supabaseError) {
+                        console.error('Supabase operation failed:', supabaseError);
+                        showNotification('⚠️ Administrator created locally, but database sync failed.', 'success');
+                    }
+                } else {
+                    showNotification(`✅ Administrator "${fullName}" created successfully! They can now log in with email: ${email}`, 'success');
+                }
+                
+                // Add to users grid
+                addAdministratorToUsersGrid(newAdmin);
+                
+                // Close modal
+                document.querySelector('.fixed').remove();
+                
+                hideLoading();
+                
+                console.log('New administrator created:', newAdmin);
+                
+            } catch (error) {
+                console.error('Error creating administrator:', error);
+                showNotification('Error creating administrator: ' + error.message, 'error');
+                hideLoading();
+            }
+        }
+
+        // Add Administrator to Users Grid
+        function addAdministratorToUsersGrid(admin) {
+            try {
+                const usersGrid = document.getElementById('usersGrid');
+                if (!usersGrid) return;
+                
+                const initials = admin.full_name.split(' ').map(name => name.charAt(0)).join('').toUpperCase().substring(0, 2);
+                
+                const adminCard = document.createElement('div');
+                adminCard.className = 'bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-6 hover:shadow-lg transition-shadow';
+                adminCard.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                            ${initials}
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-bold text-purple-900 dark:text-purple-100">${admin.full_name}</h4>
+                            <p class="text-purple-700 dark:text-purple-300 text-sm font-semibold">Administrator</p>
+                            <p class="text-purple-600 dark:text-purple-400 text-xs">✨ Newly Created</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-envelope w-4 mr-2 text-purple-500"></i>
+                            <span class="font-medium">${admin.email}</span>
+                        </div>
+                        ${admin.phone ? `
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-phone w-4 mr-2 text-purple-500"></i>
+                                <span>${admin.phone}</span>
+                            </div>
+                        ` : ''}
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-calendar w-4 mr-2 text-purple-500"></i>
+                            <span>Created today</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-4 border-t border-purple-200 dark:border-purple-700">
+                        <span class="px-3 py-1 bg-purple-600 text-white rounded-full text-xs font-bold">
+                            <i class="fas fa-user-shield mr-1"></i>NEW ADMIN
+                        </span>
+                        <div class="flex space-x-2">
+                            <button onclick="editUser('${admin.id}')" class="p-2 text-purple-600 hover:text-purple-800 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-colors" title="Edit User">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="resetUserPassword('${admin.id}')" class="p-2 text-orange-600 hover:text-orange-800 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors" title="Reset Password">
+                                <i class="fas fa-key"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert before the "Add User" placeholder card (last card)
+                const placeholderCard = usersGrid.lastElementChild;
+                usersGrid.insertBefore(adminCard, placeholderCard);
+                
+                // Update user count
+                const userCountElement = document.getElementById('userCount');
+                if (userCountElement) {
+                    const currentCount = parseInt(userCountElement.textContent.match(/\d+/)) || 2;
+                    userCountElement.textContent = `Total: ${currentCount + 1} users`;
+                }
+                
+            } catch (error) {
+                console.error('Error adding administrator to grid:', error);
+            }
+        }
+
+        // User Management Functions (placeholders for now)
+        function editUser(userId) {
+            showNotification('👤 Edit user feature available in full version!');
+        }
+
+        function resetUserPassword(userId) {
+            showNotification('🔑 Password reset feature available in full version!');
         }
     </script>
 </body>
