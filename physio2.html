@@ -628,7 +628,7 @@
                         <div id="appointmentsContainer" class="p-6">
                             <div class="appointments-list space-y-4">
                                 <!-- Today's Appointment -->
-                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 border-green-500">
+                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 border-green-500" data-appointment-id="dharui-appointment-today">
                                     <div class="flex items-center space-x-4">
                                         <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
                                             DF
@@ -649,16 +649,16 @@
                                             <i class="fas fa-calendar-check mr-1"></i>Scheduled
                                         </span>
                                         <div class="flex space-x-2">
-                                            <button onclick="editAppointment('sample-appointment-1')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Appointment">
+                                            <button onclick="editAppointment('dharui-appointment-today')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Appointment">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button onclick="completeAppointment('sample-appointment-1')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Mark Complete">
+                                            <button onclick="completeAppointment('dharui-appointment-today')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Mark Complete">
                                                 <i class="fas fa-check"></i>
                                             </button>
-                                            <button onclick="cancelAppointment('sample-appointment-1')" class="p-2 text-orange-600 hover:text-orange-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
+                                            <button onclick="cancelAppointment('dharui-appointment-today')" class="p-2 text-orange-600 hover:text-orange-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
                                                 <i class="fas fa-calendar-times"></i>
                                             </button>
-                                            <button onclick="deleteAppointment('sample-appointment-1')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Appointment">
+                                            <button onclick="deleteAppointment('dharui-appointment-today')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Appointment">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -666,7 +666,7 @@
                                 </div>
 
                                 <!-- Tomorrow's Appointment -->
-                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 border-blue-500">
+                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 border-blue-500" data-appointment-id="ahmed-appointment-tomorrow">
                                     <div class="flex items-center space-x-4">
                                         <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white font-bold">
                                             AK
@@ -687,24 +687,27 @@
                                             <i class="fas fa-calendar-alt mr-1"></i>Upcoming
                                         </span>
                                         <div class="flex space-x-2">
-                                            <button onclick="sendAppointmentToPhysiotherapist('sample-appointment-2', 'mariam-physio-001', 'Ahmed Al-Khalifa')" class="p-2 text-purple-600 hover:text-purple-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Send to Physiotherapist">
+                                            <button onclick="sendAppointmentToPhysiotherapist('ahmed-appointment-tomorrow', 'mariam-physio-001', 'Ahmed Al-Khalifa')" class="p-2 text-purple-600 hover:text-purple-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Send to Physiotherapist">
                                                 <i class="fas fa-share"></i>
                                             </button>
-                                            <button onclick="editAppointment('sample-appointment-2')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Appointment">
+                                            <button onclick="editAppointment('ahmed-appointment-tomorrow')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Edit Appointment">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button onclick="completeAppointment('sample-appointment-2')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Mark Complete">
+                                            <button onclick="completeAppointment('ahmed-appointment-tomorrow')" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Mark Complete">
                                                 <i class="fas fa-check"></i>
                                             </button>
-                                            <button onclick="cancelAppointment('sample-appointment-2')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
-                                                <i class="fas fa-times"></i>
+                                            <button onclick="cancelAppointment('ahmed-appointment-tomorrow')" class="p-2 text-orange-600 hover:text-orange-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
+                                                <i class="fas fa-calendar-times"></i>
+                                            </button>
+                                            <button onclick="deleteAppointment('ahmed-appointment-tomorrow')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Appointment">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Completed Appointment -->
-                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow opacity-75 border-l-4 border-gray-400">
+                                <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow opacity-75 border-l-4 border-gray-400" data-appointment-id="fatima-appointment-completed">
                                     <div class="flex items-center space-x-4">
                                         <div class="w-12 h-12 bg-gray-500 rounded-full flex items-center justify-center text-white font-bold">
                                             FZ
@@ -725,11 +728,17 @@
                                             <i class="fas fa-check-circle mr-1"></i>Completed
                                         </span>
                                         <div class="flex space-x-2">
-                                            <button onclick="viewAppointmentDetails('sample-appointment-3')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
+                                            <button onclick="viewAppointmentDetails('fatima-appointment-completed')" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button onclick="duplicateAppointment('sample-appointment-3')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Duplicate Appointment">
+                                            <button onclick="duplicateAppointment('fatima-appointment-completed')" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Duplicate Appointment">
                                                 <i class="fas fa-copy"></i>
+                                            </button>
+                                            <button onclick="cancelAppointment('fatima-appointment-completed')" class="p-2 text-orange-600 hover:text-orange-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Cancel Appointment">
+                                                <i class="fas fa-calendar-times"></i>
+                                            </button>
+                                            <button onclick="deleteAppointment('fatima-appointment-completed')" class="p-2 text-red-600 hover:text-red-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" title="Delete Appointment">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
                                     </div>
@@ -4189,6 +4198,47 @@
                                 <input type="tel" id="physioPhone" 
                                        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
                                        placeholder="97123456">
+                            </div>
+                            
+                            <!-- Login Credentials Section -->
+                            <div class="col-span-full">
+                                <h3 class="text-lg font-semibold mb-4 flex items-center mt-4">
+                                    <i class="fas fa-key text-primary mr-2"></i>
+                                    Login Credentials
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Password *</label>
+                                <div class="relative">
+                                    <input type="password" id="physioPassword" required 
+                                           class="w-full px-4 py-3 pl-12 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                           placeholder="Create secure password"
+                                           minlength="8">
+                                    <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                                    <button type="button" id="togglePhysioPassword" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Minimum 8 characters required. This will be used to access the physiotherapist portal.
+                                </p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Confirm Password *</label>
+                                <div class="relative">
+                                    <input type="password" id="physioPasswordConfirm" required 
+                                           class="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:ring-2 focus:ring-primary focus:border-primary" 
+                                           placeholder="Confirm password"
+                                           minlength="8">
+                                    <i class="fas fa-lock absolute left-4 top-4 text-gray-400"></i>
+                                </div>
+                                <div id="passwordMatchIndicator" class="text-xs mt-1 hidden">
+                                    <span id="passwordMatch" class="text-green-600"><i class="fas fa-check mr-1"></i>Passwords match</span>
+                                    <span id="passwordNoMatch" class="text-red-600 hidden"><i class="fas fa-times mr-1"></i>Passwords do not match</span>
+                                </div>
                             </div>
                             
                             <!-- Professional Information -->
