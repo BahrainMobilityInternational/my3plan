@@ -2522,11 +2522,11 @@
             console.log('PhysioTech Application initialized successfully!');
         }
 
-        // FIXED: Load Supabase Connection (with comprehensive error handling)
+        // FIXED: Safe Storage Access (sandbox-compatible)
         function loadSupabaseConnection() {
             try {
-                // Check if localStorage is available in this environment
-                if (typeof Storage !== 'undefined' && window.localStorage) {
+                // Test localStorage availability safely
+                if (typeof window !== 'undefined' && window.localStorage && testLocalStorage()) {
                     const saved = localStorage.getItem(STORAGE_KEYS.SUPABASE_CONNECTION);
                     if (saved) {
                         try {
@@ -2536,31 +2536,75 @@
                                 return connectToSupabase(connectionDetails.url, connectionDetails.anonKey, false);
                             } else {
                                 console.warn('⚠️ Invalid connection details found in storage');
-                                localStorage.removeItem(STORAGE_KEYS.SUPABASE_CONNECTION);
+                                safeRemoveFromStorage(STORAGE_KEYS.SUPABASE_CONNECTION);
                                 return false;
                             }
                         } catch (parseError) {
                             console.error('❌ Failed to parse saved connection details:', parseError);
-                            localStorage.removeItem(STORAGE_KEYS.SUPABASE_CONNECTION);
+                            safeRemoveFromStorage(STORAGE_KEYS.SUPABASE_CONNECTION);
                             return false;
                         }
                     }
                 } else {
-                    console.log('ℹ️ localStorage not available in sandboxed environment - using session storage');
+                    console.log('ℹ️ localStorage not available - using session memory storage');
                     return false;
                 }
                 return false;
             } catch (error) {
-                console.error('❌ Error loading saved connection:', error);
-                // Sandboxed environment - localStorage not available
-                if (error.name === 'SecurityError' || error.message.includes('sandboxed')) {
-                    console.log('ℹ️ Sandboxed environment detected - storage disabled for security');
-                }
+                console.log('ℹ️ Storage access blocked in sandboxed environment - using memory storage');
                 return false;
             }
         }
 
-        // FIXED: Connect to Supabase (comprehensive error handling)
+        // Safe localStorage test function
+        function testLocalStorage() {
+            try {
+                const test = '__localStorage_test__';
+                localStorage.setItem(test, 'test');
+                localStorage.removeItem(test);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Safe storage removal
+        function safeRemoveFromStorage(key) {
+            try {
+                if (testLocalStorage()) {
+                    localStorage.removeItem(key);
+                }
+            } catch (error) {
+                console.log('ℹ️ Cannot access storage for removal');
+            }
+        }
+
+        // Safe storage setter
+        function safeSetStorage(key, value) {
+            try {
+                if (testLocalStorage()) {
+                    localStorage.setItem(key, value);
+                    return true;
+                }
+            } catch (error) {
+                console.log('ℹ️ Cannot access storage for saving');
+            }
+            return false;
+        }
+
+        // Safe storage getter
+        function safeGetStorage(key, defaultValue = null) {
+            try {
+                if (testLocalStorage()) {
+                    return localStorage.getItem(key) || defaultValue;
+                }
+            } catch (error) {
+                console.log('ℹ️ Cannot access storage for reading');
+            }
+            return defaultValue;
+        }
+
+        // FIXED: Connect to Supabase (sandbox-safe error handling)
         function connectToSupabase(url, anonKey, saveConnection = true) {
             try {
                 // Validate input parameters
@@ -2610,17 +2654,11 @@
                         
                         if (saveConnection) {
                             connectionDetails = { url, anonKey };
-                            try {
-                                // Try to save to localStorage if available
-                                if (typeof Storage !== 'undefined' && window.localStorage) {
-                                    localStorage.setItem(STORAGE_KEYS.SUPABASE_CONNECTION, JSON.stringify(connectionDetails));
-                                    console.log('💾 Connection details saved to localStorage');
-                                } else {
-                                    console.log('ℹ️ localStorage not available - connection will not persist after refresh');
-                                }
-                            } catch (storageError) {
-                                console.log('ℹ️ Could not save connection details (sandboxed environment)');
-                                // Continue without saving - this is not a critical error
+                            const saved = safeSetStorage(STORAGE_KEYS.SUPABASE_CONNECTION, JSON.stringify(connectionDetails));
+                            if (saved) {
+                                console.log('💾 Connection details saved to storage');
+                            } else {
+                                console.log('ℹ️ Connection will not persist after refresh (storage not available)');
                             }
                         }
 
@@ -2650,6 +2688,61 @@
                 showNotification('Failed to connect to Supabase: ' + error.message, 'error');
                 updateConnectionStatus(false);
                 return false;
+            }
+        }
+
+        // ===== APPOINTMENT STORAGE FUNCTIONS - SANDBOX-SAFE SYSTEM =====
+
+        // Save Appointment to Storage (sandbox-safe)
+        function saveAppointment(appointmentData) {
+            try {
+                const existingData = safeGetStorage('physiotech_appointments', '[]');
+                let appointments = [];
+                
+                if (existingData && existingData !== '[]') {
+                    appointments = JSON.parse(existingData);
+                }
+                
+                appointments.push(appointmentData);
+                const saved = safeSetStorage('physiotech_appointments', JSON.stringify(appointments));
+                
+                if (saved) {
+                    console.log('💾 Appointment saved:', appointmentData);
+                } else {
+                    console.log('ℹ️ Appointment stored in session (storage not available)');
+                    // Store in global variable as fallback
+                    if (!window.sessionAppointments) window.sessionAppointments = [];
+                    window.sessionAppointments.push(appointmentData);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Failed to save appointment:', error);
+                // Fallback to session storage
+                if (!window.sessionAppointments) window.sessionAppointments = [];
+                window.sessionAppointments.push(appointmentData);
+                return true;
+            }
+        }
+
+        // Load All Appointments from Storage (sandbox-safe)
+        function loadAllAppointments() {
+            try {
+                const existingData = safeGetStorage('physiotech_appointments', '[]');
+                let appointments = [];
+                
+                if (existingData && existingData !== '[]') {
+                    appointments = JSON.parse(existingData);
+                } else if (window.sessionAppointments) {
+                    appointments = window.sessionAppointments;
+                }
+                
+                console.log('📅 Loaded appointments:', appointments.length);
+                return appointments;
+            } catch (error) {
+                console.error('❌ Failed to load appointments:', error);
+                // Return session appointments as fallback
+                return window.sessionAppointments || [];
             }
         }
 
