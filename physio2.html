@@ -3218,9 +3218,12 @@
                 }
                 
                 // Collect all form data
+                const assignedPhysio = modal.querySelector('#assignPhysiotherapist').value;
                 const patientData = {
+                    id: 'patient-' + Date.now(), // Unique patient ID
                     firstName: firstName,
                     lastName: lastName,
+                    fullName: `${firstName} ${lastName}`,
                     email: modal.querySelector('#patientEmail').value,
                     phone: modal.querySelector('#patientPhone').value,
                     cpr: modal.querySelector('#cprNumber').value,
@@ -3229,12 +3232,34 @@
                     medicalHistory: modal.querySelector('#medicalHistory').value,
                     emergencyName: modal.querySelector('#emergencyName').value,
                     emergencyPhone: modal.querySelector('#emergencyPhone').value,
-                    assignedPhysio: modal.querySelector('#assignPhysiotherapist').value,
-                    assignmentNotes: modal.querySelector('#assignmentNotes').value
+                    assignedPhysio: assignedPhysio,
+                    assignmentNotes: modal.querySelector('#assignmentNotes').value,
+                    createdBy: currentUser?.email || 'admin',
+                    createdAt: new Date().toISOString(),
+                    lastModified: new Date().toISOString(),
+                    status: 'active',
+                    treatmentSessions: 0,
+                    lastSessionDate: null
                 };
                 
-                console.log('New patient data:', patientData);
-                showNotification(`Patient ${firstName} ${lastName} added successfully!`, 'success');
+                // Save patient to shared storage system
+                const saved = savePatientToSystem(patientData);
+                
+                if (saved) {
+                    console.log('💾 New patient data saved:', patientData);
+                    showNotification(`✅ Patient ${firstName} ${lastName} added successfully!`, 'success');
+                    
+                    // If assigned to a physiotherapist, show assignment confirmation
+                    if (assignedPhysio) {
+                        const physioName = assignedPhysio === 'mariam-physio-001' ? 'Dr. Mariam Abdulatheem Ali' : 'Dr. Dhari Fakhroo';
+                        setTimeout(() => {
+                            showNotification(`👩‍⚕️ Patient assigned to ${physioName} - Available in their dashboard now!`, 'success');
+                        }, 1000);
+                    }
+                } else {
+                    showNotification('⚠️ Patient saved to session storage (storage limitations)', 'success');
+                }
+                
                 modal.remove();
             });
             
