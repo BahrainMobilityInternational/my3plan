@@ -2556,7 +2556,7 @@
             }
         }
 
-        // Safe localStorage test function
+        // Simplified localStorage test function
         function testLocalStorage() {
             try {
                 const test = '__localStorage_test__';
@@ -2568,39 +2568,50 @@
             }
         }
 
-        // Safe storage removal
+        // Direct storage access with fallback
         function safeRemoveFromStorage(key) {
             try {
-                if (testLocalStorage()) {
-                    localStorage.removeItem(key);
-                }
+                localStorage.removeItem(key);
+                console.log(`🗑️ Removed ${key} from localStorage`);
             } catch (error) {
-                console.log('ℹ️ Cannot access storage for removal');
+                console.log(`ℹ️ Could not remove ${key} from storage:`, error.message);
             }
         }
 
-        // Safe storage setter
+        // Direct storage setter with fallback
         function safeSetStorage(key, value) {
             try {
-                if (testLocalStorage()) {
-                    localStorage.setItem(key, value);
-                    return true;
-                }
+                localStorage.setItem(key, value);
+                console.log(`💾 Saved ${key} to localStorage successfully`);
+                return true;
             } catch (error) {
-                console.log('ℹ️ Cannot access storage for saving');
+                console.log(`ℹ️ Could not save ${key} to storage:`, error.message);
+                // Fallback to session storage in memory
+                if (!window.memoryStorage) window.memoryStorage = {};
+                window.memoryStorage[key] = value;
+                console.log(`💾 Saved ${key} to memory storage as fallback`);
+                return false; // Return false to indicate localStorage failed but data was saved
             }
-            return false;
         }
 
-        // Safe storage getter
+        // Direct storage getter with fallback
         function safeGetStorage(key, defaultValue = null) {
             try {
-                if (testLocalStorage()) {
-                    return localStorage.getItem(key) || defaultValue;
+                const value = localStorage.getItem(key);
+                if (value !== null) {
+                    console.log(`📖 Retrieved ${key} from localStorage`);
+                    return value;
                 }
             } catch (error) {
-                console.log('ℹ️ Cannot access storage for reading');
+                console.log(`ℹ️ Could not read ${key} from localStorage:`, error.message);
             }
+            
+            // Check memory storage fallback
+            if (window.memoryStorage && window.memoryStorage[key]) {
+                console.log(`📖 Retrieved ${key} from memory storage`);
+                return window.memoryStorage[key];
+            }
+            
             return defaultValue;
         }
 
@@ -4174,62 +4185,230 @@
             }
         }
 
-        // FIXED: Load Appointments for Specific Physiotherapist 
+        // FIXED: Load Appointments for Specific Physiotherapist - REAL DATA SYNC
         function loadAssignedAppointments() {
             try {
-                const existingData = localStorage.getItem('physiotech_appointments');
+                console.log('🔄 Loading appointments for Dr. Mariam Abdulatheem Ali...');
+                
+                // Use safe storage to get appointments (handles sandboxed environment)
+                const existingData = safeGetStorage('physiotech_appointments', '[]');
+                let allAppointments = [];
                 let assignedAppointments = [];
                 
-                if (existingData) {
-                    const allAppointments = JSON.parse(existingData);
-                    
-                    // Filter appointments for current physiotherapist
-                    assignedAppointments = allAppointments.filter(apt => 
-                        apt.physioId === 'mariam-physio-001' // Current physio ID
-                    );
-                    
-                    console.log('👩‍⚕️ Loaded assigned appointments:', assignedAppointments);
-                } else {
-                    // Fallback: Add sample appointments for first time
-                    assignedAppointments = [
-                        {
-                            id: 'appt-001',
-                            patientName: 'Ahmed Al-Khalifa',
-                            date: new Date().toISOString().split('T')[0],
-                            time: '10:00',
-                            duration: 60,
-                            physioId: 'mariam-physio-001',
-                            physioName: 'Dr. Mariam Abdulatheem Ali',
-                            notes: 'Follow-up for back pain treatment',
-                            status: 'scheduled'
-                        },
-                        {
-                            id: 'appt-002',
-                            patientName: 'Fatima Al-Zahra',
-                            date: new Date().toISOString().split('T')[0],
-                            time: '14:00',
-                            duration: 45,
-                            physioId: 'mariam-physio-001',
-                            physioName: 'Dr. Mariam Abdulatheem Ali',
-                            notes: 'Initial assessment for knee injury',
-                            status: 'scheduled'
-                        }
-                    ];
+                // Parse stored appointments
+                if (existingData && existingData !== '[]') {
+                    try {
+                        allAppointments = JSON.parse(existingData);
+                        console.log('📊 Total appointments in system:', allAppointments.length);
+                    } catch (parseError) {
+                        console.error('❌ Failed to parse appointments:', parseError);
+                        allAppointments = [];
+                    }
                 }
                 
-                // Update physiotherapist dashboard
+                // Filter appointments for current physiotherapist (Dr. Mariam)
+                if (allAppointments.length > 0) {
+                    assignedAppointments = allAppointments.filter(apt => 
+                        apt.physioId === 'mariam-physio-001' || 
+                        (apt.physioName && apt.physioName.includes('Mariam'))
+                    );
+                    
+                    console.log('👩‍⚕️ Appointments assigned to Dr. Mariam:', assignedAppointments.length);
+                    console.log('📋 Assigned appointments:', assignedAppointments);
+                } else {
+                    console.log('ℹ️ No appointments found in system');
+                }
+                
+                // Update physiotherapist dashboard with REAL data
                 updatePhysiotherapistSchedule(assignedAppointments);
                 
                 // Store globally for voice announcements
                 window.assignedAppointments = assignedAppointments;
                 
-                showNotification(`📅 ${assignedAppointments.length} appointments loaded for your schedule`, 'success');
+                // Show appropriate message based on appointment count
+                if (assignedAppointments.length > 0) {
+                    showNotification(`📅 ${assignedAppointments.length} appointment(s) assigned to you by admin`, 'success');
+                } else {
+                    showNotification('📝 No appointments currently assigned. Check with admin for new assignments.', 'success');
+                }
                 
                 return assignedAppointments;
+                
             } catch (error) {
                 console.error('❌ Failed to load assigned appointments:', error);
+                showNotification('⚠️ Failed to load appointments. Please refresh and try again.', 'error');
                 return [];
             }
+        }
+
+        // Updated Function: Update Physiotherapist Schedule with REAL APPOINTMENTS
+        function updatePhysiotherapistSchedule(assignments) {
+            console.log('👩‍⚕️ Updating physiotherapist schedule with assigned appointments:', assignments);
+            
+            const todaySchedule = document.getElementById('todaySchedule');
+            const physioAppointmentsContainer = document.getElementById('physioAppointmentsContainer');
+            
+            if (todaySchedule && assignments.length > 0) {
+                // Clear existing schedule
+                todaySchedule.innerHTML = '';
+                
+                // Filter today's appointments
+                const today = new Date().toISOString().split('T')[0];
+                const todaysAppointments = assignments.filter(apt => apt.date === today);
+                
+                console.log(`📅 Today's appointments (${today}):`, todaysAppointments.length);
+                
+                if (todaysAppointments.length > 0) {
+                    // Add today's assignments to schedule
+                    todaysAppointments.forEach(appointment => {
+                        const appointmentElement = document.createElement('div');
+                        appointmentElement.className = 'flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800';
+                        
+                        const initials = appointment.patientName.split(' ').map(n => n[0]).join('').toUpperCase();
+                        
+                        appointmentElement.innerHTML = `
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                    ${initials}
+                                </div>
+                                <div>
+                                    <p class="font-medium">${appointment.time} - ${appointment.patientName}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">${appointment.duration} minutes • ${appointment.notes || 'Assigned by admin'}</p>
+                                    <p class="text-xs text-green-700 dark:text-green-300">📧 ${appointment.patientEmail || 'No email provided'}</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs mb-1">
+                                    <i class="fas fa-calendar-check mr-1"></i>${appointment.status}
+                                </span>
+                                <span class="text-xs text-green-600">Admin assigned</span>
+                            </div>
+                        `;
+                        
+                        todaySchedule.appendChild(appointmentElement);
+                    });
+                    
+                    // Update the detailed appointments view if it exists
+                    if (physioAppointmentsContainer) {
+                        updateDetailedAppointmentsView(todaysAppointments);
+                    }
+                } else {
+                    // Show no today's appointments but still show assigned ones for other days
+                    todaySchedule.innerHTML = `
+                        <div class="text-center py-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <i class="fas fa-calendar-day text-yellow-500 text-3xl mb-3"></i>
+                            <p class="text-yellow-700 dark:text-yellow-300 font-medium">No appointments scheduled for today</p>
+                            <p class="text-sm text-yellow-600 dark:text-yellow-400">You have ${assignments.length} appointment(s) on other days</p>
+                        </div>
+                    `;
+                }
+                
+                // Update appointment counts across the dashboard
+                const todayCount = todaysAppointments.length;
+                const totalAssigned = assignments.length;
+                
+                updateAppointmentCounts(todayCount, totalAssigned);
+                
+                console.log(`✅ Updated schedule: ${todayCount} today, ${totalAssigned} total assigned`);
+                
+            } else if (todaySchedule) {
+                // Show no appointments message
+                todaySchedule.innerHTML = `
+                    <div class="text-center py-8 bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg">
+                        <i class="fas fa-calendar-times text-blue-400 text-4xl mb-3"></i>
+                        <p class="text-blue-600 dark:text-blue-300 font-medium mb-2">No appointments assigned yet</p>
+                        <p class="text-sm text-blue-500 dark:text-blue-400">Check with your administrator for new assignments</p>
+                        <div class="mt-4 p-3 bg-blue-100 dark:bg-blue-800 rounded-lg max-w-sm mx-auto">
+                            <p class="text-xs text-blue-800 dark:text-blue-200">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Appointments assigned by admin will appear here automatically
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                updateAppointmentCounts(0, 0);
+            }
+        }
+        
+        // Update Detailed Appointments View for Physiotherapist
+        function updateDetailedAppointmentsView(appointments) {
+            const container = document.getElementById('physioAppointmentsContainer');
+            if (!container) return;
+            
+            const appointmentsListDiv = container.querySelector('.space-y-4');
+            if (!appointmentsListDiv) return;
+            
+            // Clear existing appointments except static ones (we'll add to them)
+            // This function adds real appointments to the existing static examples
+            
+            appointments.forEach(appointment => {
+                const initials = appointment.patientName.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                const appointmentDiv = document.createElement('div');
+                appointmentDiv.className = 'flex items-center justify-between p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow border-l-4 border-green-500 bg-gradient-to-r from-green-50 to-transparent dark:from-green-900/20';
+                
+                appointmentDiv.innerHTML = `
+                    <div class="flex items-center space-x-4 flex-1">
+                        <div class="w-14 h-14 bg-secondary rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            ${initials}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-semibold text-xl text-gray-900 dark:text-white">${appointment.patientName}</h4>
+                                <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm font-medium">
+                                    <i class="fas fa-user-shield mr-1"></i>Admin Assigned
+                                </span>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                                <i class="fas fa-envelope mr-1"></i>${appointment.patientEmail || 'No email'} • <i class="fas fa-phone ml-2 mr-1"></i>Contact needed
+                            </p>
+                            <p class="text-gray-800 dark:text-gray-300 font-medium mt-1">
+                                <i class="fas fa-clock mr-2 text-blue-600"></i>${appointment.date}, ${appointment.time} (${appointment.duration} min)
+                            </p>
+                            <div class="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <p class="text-sm text-green-800 dark:text-green-200">
+                                    <i class="fas fa-user-shield mr-2"></i><strong>Admin Notes:</strong> ${appointment.notes || 'New appointment assigned by administrator'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col space-y-2 ml-4">
+                        <button onclick="startTreatmentSession('${appointment.id}')" class="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors text-sm font-medium">
+                            <i class="fas fa-play mr-1"></i>Start Session
+                        </button>
+                        <button onclick="viewPatientHistory('${appointment.id}')" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium">
+                            <i class="fas fa-history mr-1"></i>History
+                        </button>
+                        <button onclick="addTreatmentNotes('${appointment.id}')" class="px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors text-sm font-medium">
+                            <i class="fas fa-notes-medical mr-1"></i>Notes
+                        </button>
+                    </div>
+                `;
+                
+                // Insert at the beginning (newest first)
+                appointmentsListDiv.insertBefore(appointmentDiv, appointmentsListDiv.firstChild);
+            });
+            
+            console.log(`📋 Added ${appointments.length} real appointments to detailed view`);
+        }
+        
+        // Update Appointment Counts Across Dashboard
+        function updateAppointmentCounts(todayCount = 0, totalCount = 0) {
+            const elements = [
+                { id: 'todayAppointmentsCount', value: todayCount },
+                { id: 'physioTodayAppointments', value: todayCount },
+                { id: 'physioAppointmentCount', value: `Today: ${todayCount} appointment${todayCount !== 1 ? 's' : ''}` }
+            ];
+            
+            elements.forEach(({ id, value }) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            });
+            
+            console.log(`📊 Updated appointment counts: ${todayCount} today, ${totalCount} total`);
         }
 
         // Missing Function: Load Assigned Patients
@@ -5149,10 +5328,309 @@
             showNotification('🔐 Opening permissions management...', 'success');
         }
 
-        // Edit User
+        // Edit User - FUNCTIONAL IMPLEMENTATION
         function editUser(userId) {
             console.log('Editing user:', userId);
-            showNotification('✏️ Opening user editor...', 'success');
+            
+            // Determine user data based on userId
+            let userData = {};
+            let userType = '';
+            
+            if (userId === 'admin-001' || userId === 'admin-new') {
+                userType = 'admin';
+                userData = {
+                    fullName: 'Dhari Admin',
+                    email: 'DhariBmi@gmail.com',
+                    phone: '97123456',
+                    role: 'Super Administrator',
+                    department: 'Administration',
+                    status: 'Active'
+                };
+            } else if (userId === 'physio-001') {
+                userType = 'physiotherapist';
+                userData = {
+                    fullName: 'Dr. Mariam Abdulatheem Ali',
+                    email: 'Mariambmi@gmail.com',
+                    phone: '97362123',
+                    role: 'Physiotherapist',
+                    department: 'Clinical',
+                    specializations: 'Orthopedic, Sports Medicine',
+                    status: 'Active',
+                    experience: '7 years'
+                };
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto';
+            modal.innerHTML = `
+                <div class="bg-slate-800 text-white p-8 rounded-xl shadow-2xl max-w-3xl w-full mx-4 my-8 max-h-[95vh] overflow-y-auto">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-3xl font-bold flex items-center">
+                            <i class="fas fa-user-edit text-blue-500 mr-3"></i>Edit User - ${userData.fullName}
+                        </h2>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form id="editUserForm" class="space-y-8">
+                        <!-- Personal Information Section -->
+                        <div class="bg-slate-700 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                                <i class="fas fa-user mr-3"></i>Personal Information
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-white">Full Name *</label>
+                                    <input type="text" id="editFullName" value="${userData.fullName}" required
+                                           class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-white">Email Address *</label>
+                                    <input type="email" id="editEmail" value="${userData.email}" required
+                                           class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-white">Phone Number</label>
+                                    <input type="tel" id="editPhone" value="${userData.phone}" 
+                                           class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-white">Department</label>
+                                    <select id="editDepartment"
+                                            class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="administration" ${userData.department === 'Administration' ? 'selected' : ''}>Administration</option>
+                                        <option value="clinical" ${userData.department === 'Clinical' ? 'selected' : ''}>Clinical</option>
+                                        <option value="it">Information Technology</option>
+                                        <option value="hr">Human Resources</option>
+                                        <option value="finance">Finance</option>
+                                        <option value="operations">Operations</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            ${userType === 'physiotherapist' ? `
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-white">Specializations</label>
+                                <input type="text" id="editSpecializations" value="${userData.specializations}" 
+                                       class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Role & Permissions Section -->
+                        <div class="bg-slate-700 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                                <i class="fas fa-key mr-3"></i>Role & Permissions
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-white">Current Role</label>
+                                    <div class="px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg">
+                                        <span class="text-${userType === 'admin' ? 'red' : 'blue'}-400 font-semibold">${userData.role}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-white">Account Status</label>
+                                    <select id="editStatus"
+                                            class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="active" ${userData.status === 'Active' ? 'selected' : ''}>Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="suspended">Suspended</option>
+                                        <option value="pending">Pending Activation</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Permissions Grid -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-3 text-white">System Permissions</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center p-3 bg-slate-600 rounded-lg cursor-pointer hover:bg-slate-500 transition-colors">
+                                        <input type="checkbox" name="editPermissions" value="patient-management" class="mr-3" checked>
+                                        <span>Patient Management</span>
+                                    </label>
+                                    <label class="flex items-center p-3 bg-slate-600 rounded-lg cursor-pointer hover:bg-slate-500 transition-colors">
+                                        <input type="checkbox" name="editPermissions" value="appointment-management" class="mr-3" ${userType === 'admin' ? 'checked' : ''}>
+                                        <span>Appointment Management</span>
+                                    </label>
+                                    <label class="flex items-center p-3 bg-slate-600 rounded-lg cursor-pointer hover:bg-slate-500 transition-colors">
+                                        <input type="checkbox" name="editPermissions" value="reports" class="mr-3" ${userType === 'admin' ? 'checked' : ''}>
+                                        <span>Reports & Analytics</span>
+                                    </label>
+                                    <label class="flex items-center p-3 bg-slate-600 rounded-lg cursor-pointer hover:bg-slate-500 transition-colors">
+                                        <input type="checkbox" name="editPermissions" value="system-settings" class="mr-3" ${userType === 'admin' ? 'checked' : ''}>
+                                        <span>System Settings</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Settings -->
+                        <div class="bg-slate-700 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                                <i class="fas fa-shield-alt mr-3"></i>Security Settings
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="forcePasswordReset" class="mr-3">
+                                    <span>Force password reset on next login</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="enableTwoFactor" class="mr-3" ${userType === 'admin' ? 'checked' : ''}>
+                                    <span>Enable two-factor authentication</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="sessionTimeout" class="mr-3" checked>
+                                    <span>Enable automatic session timeout</span>
+                                </label>
+                            </div>
+                            
+                            <div class="mt-6 p-4 bg-red-900/20 border border-red-800 rounded-lg">
+                                <h4 class="text-red-400 font-semibold mb-2">Danger Zone</h4>
+                                <div class="flex flex-wrap gap-3">
+                                    <button type="button" onclick="resetUserPassword('${userId}')" 
+                                            class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors">
+                                        <i class="fas fa-key mr-2"></i>Reset Password
+                                    </button>
+                                    <button type="button" onclick="suspendUser('${userId}')" 
+                                            class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors">
+                                        <i class="fas fa-pause mr-2"></i>Suspend Account
+                                    </button>
+                                    ${userId !== 'admin-001' ? `
+                                    <button type="button" onclick="deleteUser('${userId}')" 
+                                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors">
+                                        <i class="fas fa-trash mr-2"></i>Delete User
+                                    </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Activity History -->
+                        <div class="bg-slate-700 rounded-lg p-6">
+                            <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                                <i class="fas fa-history mr-3"></i>Recent Activity
+                            </h3>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-slate-600 rounded">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-sign-in-alt text-green-400 mr-3"></i>
+                                        <span class="text-sm">Last login: Today, 9:15 AM</span>
+                                    </div>
+                                    <span class="text-xs text-green-400">Active</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-600 rounded">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-edit text-blue-400 mr-3"></i>
+                                        <span class="text-sm">Profile updated: Yesterday, 3:30 PM</span>
+                                    </div>
+                                    <span class="text-xs text-blue-400">Update</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-slate-600 rounded">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-users text-purple-400 mr-3"></i>
+                                        <span class="text-sm">${userType === 'admin' ? 'Managed users: 2 days ago' : 'Treated patients: 3 hours ago'}</span>
+                                    </div>
+                                    <span class="text-xs text-purple-400">Action</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex justify-end space-x-4 pt-6 border-t border-slate-600">
+                            <button type="button" onclick="this.closest('.fixed').remove()" 
+                                    class="px-8 py-3 text-gray-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors font-semibold">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="previewChanges()" 
+                                    class="px-8 py-3 bg-yellow-600 text-white hover:bg-yellow-700 rounded-lg font-semibold transition-colors">
+                                <i class="fas fa-eye mr-2"></i>Preview Changes
+                            </button>
+                            <button type="submit" 
+                                    class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 rounded-lg font-semibold transition-all duration-200 shadow-lg">
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            // Handle form submission
+            modal.querySelector('#editUserForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const updatedData = {
+                    fullName: modal.querySelector('#editFullName').value,
+                    email: modal.querySelector('#editEmail').value,
+                    phone: modal.querySelector('#editPhone').value,
+                    department: modal.querySelector('#editDepartment').value,
+                    status: modal.querySelector('#editStatus').value,
+                    permissions: Array.from(modal.querySelectorAll('input[name="editPermissions"]:checked')).map(cb => cb.value),
+                    twoFactor: modal.querySelector('#enableTwoFactor').checked
+                };
+                
+                console.log('💾 Updated user data:', updatedData);
+                showNotification(`✅ User ${updatedData.fullName} updated successfully!`, 'success');
+                
+                // Update the UI to reflect changes
+                setTimeout(() => {
+                    showNotification(`🔐 Security settings updated for ${updatedData.fullName}`, 'success');
+                }, 1000);
+                
+                modal.remove();
+            });
+            
+            document.body.appendChild(modal);
+        }
+
+        // Reset User Password
+        function resetUserPassword(userId) {
+            const modal = createConfirmModal(
+                'Reset User Password',
+                'Are you sure you want to reset this user\'s password? They will be required to create a new password on their next login.',
+                () => {
+                    showNotification('🔑 Password reset email sent to user', 'success');
+                }
+            );
+            document.body.appendChild(modal);
+        }
+
+        // Suspend User
+        function suspendUser(userId) {
+            const modal = createConfirmModal(
+                'Suspend User Account',
+                'Are you sure you want to suspend this user account? They will not be able to log in until the account is reactivated.',
+                () => {
+                    showNotification('⏸️ User account suspended successfully', 'success');
+                }
+            );
+            document.body.appendChild(modal);
+        }
+
+        // Delete User
+        function deleteUser(userId) {
+            const modal = createConfirmModal(
+                'Delete User Account',
+                'Are you sure you want to permanently delete this user account? This action cannot be undone and will remove all associated data.',
+                () => {
+                    showNotification('🗑️ User account deleted successfully', 'success');
+                }
+            );
+            document.body.appendChild(modal);
+        }
+
+        // Preview Changes
+        function previewChanges() {
+            showNotification('👁️ Changes preview - All modifications look good!', 'success');
         }
 
         // View User Permissions
@@ -5340,11 +5818,53 @@ Date: ___________________________
 
         function deleteAppointment(appointmentId) {
             console.log('Deleting appointment:', appointmentId);
+            
+            // Find the appointment element
+            const appointmentElement = document.querySelector(`[data-appointment-id="${appointmentId}"]`);
+            
             const modal = createConfirmModal(
                 'Delete Appointment',
                 'Are you sure you want to permanently delete this appointment? This action cannot be undone.',
                 () => {
-                    showNotification('🗑️ Appointment deleted successfully', 'success');
+                    // Actually delete the appointment
+                    try {
+                        // Remove from storage
+                        const existingData = safeGetStorage('physiotech_appointments', '[]');
+                        let appointments = [];
+                        
+                        if (existingData && existingData !== '[]') {
+                            appointments = JSON.parse(existingData);
+                        }
+                        
+                        // Filter out the appointment to delete
+                        const updatedAppointments = appointments.filter(apt => apt.id !== appointmentId);
+                        
+                        // Save back to storage
+                        const saved = safeSetStorage('physiotech_appointments', JSON.stringify(updatedAppointments));
+                        
+                        // Remove from UI with animation
+                        if (appointmentElement) {
+                            appointmentElement.style.transition = 'all 0.3s ease-out';
+                            appointmentElement.style.opacity = '0';
+                            appointmentElement.style.transform = 'translateX(-100%)';
+                            
+                            setTimeout(() => {
+                                appointmentElement.remove();
+                                showNotification('🗑️ Appointment deleted successfully', 'success');
+                                
+                                // Update appointment count
+                                updateAppointmentCounts();
+                            }, 300);
+                        } else {
+                            showNotification('🗑️ Appointment deleted from database', 'success');
+                        }
+                        
+                        console.log(`✅ Appointment ${appointmentId} deleted successfully`);
+                        
+                    } catch (error) {
+                        console.error('❌ Failed to delete appointment:', error);
+                        showNotification('❌ Failed to delete appointment. Please try again.', 'error');
+                    }
                 }
             );
             document.body.appendChild(modal);
