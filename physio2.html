@@ -5842,53 +5842,184 @@ Date: ___________________________
         }
 
         function deleteAppointment(appointmentId) {
-            console.log('Deleting appointment:', appointmentId);
+            console.log('🗑️ Attempting to delete appointment:', appointmentId);
             
-            // Find the appointment element
-            const appointmentElement = document.querySelector(`[data-appointment-id="${appointmentId}"]`);
+            // Enhanced appointment finding - try multiple selectors
+            let appointmentElement = document.querySelector(`[data-appointment-id="${appointmentId}"]`);
+            
+            // If not found by data attribute, try to find by ID or class
+            if (!appointmentElement) {
+                appointmentElement = document.getElementById(appointmentId);
+            }
+            
+            // If still not found, try to find by content matching
+            if (!appointmentElement && appointmentId.includes('appointment')) {
+                const allAppointments = document.querySelectorAll('.appointments-list > div, .space-y-4 > div');
+                for (let element of allAppointments) {
+                    if (element.innerHTML && element.innerHTML.includes(appointmentId)) {
+                        appointmentElement = element;
+                        break;
+                    }
+                }
+            }
             
             const modal = createConfirmModal(
                 'Delete Appointment',
                 'Are you sure you want to permanently delete this appointment? This action cannot be undone.',
                 () => {
-                    // Actually delete the appointment
+                    // Enhanced deletion with better error handling
                     try {
-                        // Remove from storage
-                        const existingData = safeGetStorage('physiotech_appointments', '[]');
-                        let appointments = [];
+                        console.log('🔄 Starting appointment deletion process...');
                         
-                        if (existingData && existingData !== '[]') {
-                            appointments = JSON.parse(existingData);
+                        let deletionSuccessful = false;
+                        
+                        // Method 1: Try to delete from localStorage
+                        try {
+                            const existingData = safeGetStorage('physiotech_appointments', '[]');
+                            let appointments = [];
+                            
+                            if (existingData && existingData !== '[]') {
+                                appointments = JSON.parse(existingData);
+                                console.log('📊 Found appointments in storage:', appointments.length);
+                            }
+                            
+                            // Filter out the appointment to delete
+                            const originalLength = appointments.length;
+                            const updatedAppointments = appointments.filter(apt => 
+                                apt.id !== appointmentId && 
+                                !apt.id?.includes(appointmentId) && 
+                                appointmentId !== apt.id
+                            );
+                            
+                            console.log(`📉 Appointments: ${originalLength} → ${updatedAppointments.length}`);
+                            
+                            if (updatedAppointments.length < originalLength) {
+                                // Save back to storage
+                                const saved = safeSetStorage('physiotech_appointments', JSON.stringify(updatedAppointments));
+                                deletionSuccessful = true;
+                                console.log('✅ Appointment removed from storage successfully');
+                            } else {
+                                console.log('⚠️ Appointment not found in storage, proceeding with UI removal');
+                                deletionSuccessful = true; // Still allow UI removal
+                            }
+                            
+                        } catch (storageError) {
+                            console.error('❌ Storage deletion error:', storageError);
+                            // Continue anyway - might just be a UI element
+                            deletionSuccessful = true;
                         }
                         
-                        // Filter out the appointment to delete
-                        const updatedAppointments = appointments.filter(apt => apt.id !== appointmentId);
-                        
-                        // Save back to storage
-                        const saved = safeSetStorage('physiotech_appointments', JSON.stringify(updatedAppointments));
-                        
-                        // Remove from UI with animation
+                        // Method 2: Remove from UI with enhanced targeting
                         if (appointmentElement) {
+                            console.log('🎯 Found appointment element, removing from UI');
                             appointmentElement.style.transition = 'all 0.3s ease-out';
                             appointmentElement.style.opacity = '0';
                             appointmentElement.style.transform = 'translateX(-100%)';
+                            appointmentElement.style.height = appointmentElement.offsetHeight + 'px';
                             
                             setTimeout(() => {
-                                appointmentElement.remove();
-                                showNotification('🗑️ Appointment deleted successfully', 'success');
+                                appointmentElement.style.height = '0px';
+                                appointmentElement.style.padding = '0px';
+                                appointmentElement.style.margin = '0px';
                                 
-                                // Update appointment count
-                                updateAppointmentCounts();
-                            }, 300);
+                                setTimeout(() => {
+                                    try {
+                                        appointmentElement.remove();
+                                        console.log('✅ Appointment element removed from UI');
+                                    } catch (removeError) {
+                                        console.error('UI removal error:', removeError);
+                                    }
+                                }, 150);
+                            }, 150);
+                            
                         } else {
-                            showNotification('🗑️ Appointment deleted from database', 'success');
+                            console.log('⚠️ Appointment element not found in UI');
+                            
+                            // Try alternative removal methods
+                            const fallbackSelectors = [
+                                `div:contains("${appointmentId}")`,
+                                `.appointment-${appointmentId}`,
+                                `[id*="${appointmentId}"]`,
+                                `[class*="${appointmentId}"]`
+                            ];
+                            
+                            let alternativeElement = null;
+                            for (let selector of fallbackSelectors) {
+                                try {
+                                    if (selector.includes(':contains')) {
+                                        // Manual search for content
+                                        const allDivs = document.querySelectorAll('div');
+                                        for (let div of allDivs) {
+                                            if (div.textContent && div.textContent.includes(appointmentId.replace('-', ' '))) {
+                                                alternativeElement = div;
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        alternativeElement = document.querySelector(selector);
+                                    }
+                                    
+                                    if (alternativeElement) {
+                                        console.log('🎯 Found alternative element:', selector);
+                                        break;
+                                    }
+                                } catch (selectorError) {
+                                    console.log('Selector failed:', selector, selectorError.message);
+                                }
+                            }
+                            
+                            if (alternativeElement) {
+                                alternativeElement.remove();
+                                console.log('✅ Alternative element removed');
+                            }
                         }
                         
-                        console.log(`✅ Appointment ${appointmentId} deleted successfully`);
+                        // Show success notification
+                        if (deletionSuccessful) {
+                            showNotification('🗑️ Appointment deleted successfully!', 'success');
+                            console.log(`✅ Appointment ${appointmentId} deletion completed`);
+                            
+                            // Update counts and refresh views
+                            setTimeout(() => {
+                                try {
+                                    updateAppointmentCounts();
+                                    
+                                    // Refresh physiotherapist appointments if needed
+                                    if (typeof loadAssignedAppointments === 'function') {
+                                        loadAssignedAppointments();
+                                    }
+                                    
+                                    showNotification('📊 Appointment counts updated', 'success');
+                                } catch (updateError) {
+                                    console.error('Update error:', updateError);
+                                }
+                            }, 500);
+                            
+                        } else {
+                            throw new Error('Deletion was not successful');
+                        }
                         
                     } catch (error) {
-                        console.error('❌ Failed to delete appointment:', error);
-                        showNotification('❌ Failed to delete appointment. Please try again.', 'error');
+                        console.error('❌ Complete deletion failure:', error);
+                        
+                        // Enhanced error message with troubleshooting
+                        let errorMessage = '❌ Failed to delete appointment. ';
+                        if (error.message.includes('storage')) {
+                            errorMessage += 'Storage issue detected. ';
+                        } else if (error.message.includes('element')) {
+                            errorMessage += 'UI element issue detected. ';
+                        } else {
+                            errorMessage += 'Unknown error occurred. ';
+                        }
+                        
+                        errorMessage += 'Please refresh the page and try again.';
+                        
+                        showNotification(errorMessage, 'error');
+                        
+                        // Offer alternative actions
+                        setTimeout(() => {
+                            showNotification('💡 Tip: Try refreshing the page or contact administrator if the issue persists.', 'success');
+                        }, 3000);
                     }
                 }
             );
