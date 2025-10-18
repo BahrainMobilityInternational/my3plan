@@ -2702,6 +2702,226 @@
             }
         }
 
+        // Edit Patient Function - COMPLETE IMPLEMENTATION
+function editPatient(patientId) {
+    console.log('Editing patient:', patientId);
+    
+    // Load all patients and find the one to edit
+    const patients = loadAllPatients();
+    const patient = patients.find(p => p.id === patientId);
+    
+    if (!patient) {
+        showNotification('❌ Patient not found', 'error');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto';
+    modal.innerHTML = `
+        <div class="bg-slate-800 text-white p-8 rounded-xl shadow-2xl max-w-4xl w-full mx-4 my-8 max-h-[95vh] overflow-y-auto">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-3xl font-bold flex items-center">
+                    <i class="fas fa-user-edit text-blue-500 mr-3"></i>Edit Patient - ${patient.fullName}
+                </h2>
+                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="editPatientForm" class="space-y-8">
+                <!-- Personal Information Section -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                        <i class="fas fa-user mr-3"></i>Personal Information
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">First Name *</label>
+                            <input type="text" id="editFirstName" value="${patient.firstName || ''}" required
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Last Name *</label>
+                            <input type="text" id="editLastName" value="${patient.lastName || ''}" required
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Email</label>
+                            <input type="email" id="editPatientEmail" value="${patient.email || ''}"
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Phone Number</label>
+                            <input type="tel" id="editPatientPhone" value="${patient.phone || ''}"
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">CPR Number</label>
+                            <input type="text" id="editCprNumber" value="${patient.cpr || ''}"
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Date of Birth</label>
+                            <input type="date" id="editDateOfBirth" value="${patient.dateOfBirth || ''}"
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical Information Section -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                        <i class="fas fa-heartbeat mr-3"></i>Medical Information
+                    </h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2 text-white">Medical History</label>
+                        <textarea id="editMedicalHistory" rows="4" placeholder="Enter medical history, conditions, allergies..."
+                                  class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">${patient.medicalHistory || ''}</textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Emergency Contact Name</label>
+                            <input type="text" id="editEmergencyName" value="${patient.emergencyName || ''}"
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Emergency Contact Phone</label>
+                            <input type="tel" id="editEmergencyPhone" value="${patient.emergencyPhone || ''}"
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physiotherapist Assignment Section -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                        <i class="fas fa-user-md mr-3"></i>Physiotherapist Assignment
+                    </h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2 text-white">Assign to Physiotherapist</label>
+                        <select id="editAssignPhysiotherapist"
+                                class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select a physiotherapist...</option>
+                            <option value="mariam-physio-001" ${patient.assignedPhysio === 'mariam-physio-001' ? 'selected' : ''}>Dr. Mariam Abdulatheem Ali</option>
+                            <option value="dhari-physio-001" ${patient.assignedPhysio === 'dhari-physio-001' ? 'selected' : ''}>Dr. Dhari Fakhroo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Patient Status Section -->
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center text-blue-500">
+                        <i class="fas fa-clipboard-check mr-3"></i>Patient Status
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Patient Status</label>
+                            <select id="editPatientStatus"
+                                    class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="active" ${patient.status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="inactive" ${patient.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                                <option value="completed" ${patient.status === 'completed' ? 'selected' : ''}>Treatment Completed</option>
+                                <option value="on-hold" ${patient.status === 'on-hold' ? 'selected' : ''}>On Hold</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-white">Treatment Sessions</label>
+                            <input type="number" id="editTreatmentSessions" value="${patient.treatmentSessions || 0}" min="0"
+                                   class="w-full px-4 py-3 bg-slate-600 border border-slate-500 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-slate-600">
+                    <button type="button" onclick="this.closest('.fixed').remove()" 
+                            class="px-8 py-3 text-gray-400 hover:text-white hover:bg-slate-600 rounded-lg transition-colors font-semibold">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 rounded-lg font-semibold transition-all duration-200 shadow-lg">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    // Handle form submission
+    modal.querySelector('#editPatientForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const updatedPatient = {
+            ...patient, // Keep existing data
+            firstName: modal.querySelector('#editFirstName').value.trim(),
+            lastName: modal.querySelector('#editLastName').value.trim(),
+            fullName: `${modal.querySelector('#editFirstName').value.trim()} ${modal.querySelector('#editLastName').value.trim()}`,
+            email: modal.querySelector('#editPatientEmail').value.trim(),
+            phone: modal.querySelector('#editPatientPhone').value.trim(),
+            cpr: modal.querySelector('#editCprNumber').value.trim(),
+            dateOfBirth: modal.querySelector('#editDateOfBirth').value,
+            medicalHistory: modal.querySelector('#editMedicalHistory').value.trim(),
+            emergencyName: modal.querySelector('#editEmergencyName').value.trim(),
+            emergencyPhone: modal.querySelector('#editEmergencyPhone').value.trim(),
+            assignedPhysio: modal.querySelector('#editAssignPhysiotherapist').value,
+            status: modal.querySelector('#editPatientStatus').value,
+            treatmentSessions: parseInt(modal.querySelector('#editTreatmentSessions').value) || 0,
+            lastModified: new Date().toISOString()
+        };
+        
+        // Validate required fields
+        if (!updatedPatient.firstName || !updatedPatient.lastName) {
+            showNotification('❌ Please fill in the required fields (First Name and Last Name)', 'error');
+            return;
+        }
+        
+        try {
+            // Update patient in storage
+            const patients = loadAllPatients();
+            const patientIndex = patients.findIndex(p => p.id === patientId);
+            
+            if (patientIndex !== -1) {
+                patients[patientIndex] = updatedPatient;
+                safeSetStorage('physiotech_patients', JSON.stringify(patients));
+                
+                // Update display
+                updatePatientsDisplay();
+                
+                showNotification(`✅ Patient ${updatedPatient.fullName} updated successfully!`, 'success');
+                
+                // Show assignment notification if physiotherapist changed
+                if (updatedPatient.assignedPhysio && updatedPatient.assignedPhysio !== patient.assignedPhysio) {
+                    const physioName = updatedPatient.assignedPhysio === 'mariam-physio-001' ? 'Dr. Mariam Abdulatheem Ali' : 'Dr. Dhari Fakhroo';
+                    setTimeout(() => {
+                        showNotification(`👩‍⚕️ Patient reassigned to ${physioName}`, 'success');
+                    }, 1000);
+                }
+                
+                modal.remove();
+            } else {
+                showNotification('❌ Patient not found in storage', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Failed to update patient:', error);
+            showNotification('❌ Failed to update patient. Please try again.', 'error');
+        }
+    });
+    
+    document.body.appendChild(modal);
+}
         // ===== APPOINTMENT STORAGE FUNCTIONS - SANDBOX-SAFE SYSTEM =====
 
         // Save Appointment to Storage (sandbox-safe)
