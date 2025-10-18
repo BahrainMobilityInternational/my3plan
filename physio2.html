@@ -3266,6 +3266,115 @@
             document.body.appendChild(modal);
         }
 
+        // Save Patient to Storage (sandbox-safe)
+function savePatientToSystem(patientData) {
+    try {
+        const existingData = safeGetStorage('physiotech_patients', '[]');
+        let patients = [];
+        
+        if (existingData && existingData !== '[]') {
+            patients = JSON.parse(existingData);
+        }
+        
+        patients.push(patientData);
+        const saved = safeSetStorage('physiotech_patients', JSON.stringify(patients));
+        
+        if (saved) {
+            console.log('💾 Patient saved:', patientData);
+        } else {
+            console.log('ℹ️ Patient stored in session (storage not available)');
+            // Store in global variable as fallback
+            if (!window.sessionPatients) window.sessionPatients = [];
+            window.sessionPatients.push(patientData);
+        }
+        
+        // Update patients display
+        updatePatientsDisplay();
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Failed to save patient:', error);
+        // Fallback to session storage
+        if (!window.sessionPatients) window.sessionPatients = [];
+        window.sessionPatients.push(patientData);
+        return true;
+    }
+}
+
+// Load All Patients from Storage (sandbox-safe)
+function loadAllPatients() {
+    try {
+        const existingData = safeGetStorage('physiotech_patients', '[]');
+        let patients = [];
+        
+        if (existingData && existingData !== '[]') {
+            patients = JSON.parse(existingData);
+        } else if (window.sessionPatients) {
+            patients = window.sessionPatients;
+        }
+        
+        console.log('👥 Loaded patients:', patients.length);
+        return patients;
+    } catch (error) {
+        console.error('❌ Failed to load patients:', error);
+        // Return session patients as fallback
+        return window.sessionPatients || [];
+    }
+}
+
+// Update Patients Display
+function updatePatientsDisplay(patients = null) {
+    try {
+        if (!patients) {
+            patients = loadAllPatients();
+        }
+        
+        const patientsGridContainer = document.getElementById('patientsGridContainer');
+        const patientCount = document.getElementById('patientCount');
+        
+        // Update patient count
+        if (patientCount) {
+            patientCount.textContent = `Total: ${patients.length} patient${patients.length !== 1 ? 's' : ''}`;
+        }
+        
+        if (patients.length > 0 && patientsGridContainer) {
+            patientsGridContainer.classList.remove('hidden');
+            patientsGridContainer.innerHTML = '';
+            
+            patients.forEach(patient => {
+                const initials = `${patient.firstName?.[0] || ''}${patient.lastName?.[0] || ''}`.toUpperCase();
+                
+                const patientCard = document.createElement('div');
+                patientCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-200 dark:border-gray-700';
+                patientCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                                ${initials}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${patient.fullName}</h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm">${patient.email || 'No email'}</p>
+                                <p class="text-gray-500 text-sm">${patient.phone || 'No phone'}</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full text-sm font-medium">
+                            ${patient.status || 'active'}
+                        </span>
+                    </div>
+                `;
+                
+                patientsGridContainer.appendChild(patientCard);
+            });
+        }
+        
+        console.log('✅ Patients display updated successfully');
+        
+    } catch (error) {
+        console.error('❌ Failed to update patients display:', error);
+    }
+}
+
         // ===== COMPREHENSIVE ADD PHYSIOTHERAPIST MODAL - PROFESSIONAL SYSTEM =====
         function showAddPhysiotherapistModal() {
             const modal = document.createElement('div');
