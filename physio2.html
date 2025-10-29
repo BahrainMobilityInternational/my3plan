@@ -1,6 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+    <!-- Add this script tag in your <head> section -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+
+<script>
+// Supabase Configuration
+const SUPABASE_URL = 'https://dntasjnwecurpbisqmdl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRudGFzam53ZWN1cnBiaXNnbWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3OTc0OTEsImV4cCI6MjA3NDM3MzQ5MX0.uxKX7uq12ScTra1IWk30LqzV6xlxmP7-Lf6r9AKRYBg'; // Replace with your real anon key
+
+// Initialize Supabase when page loads
+window.addEventListener('DOMContentLoaded', function() {
+    // Initialize Supabase client
+    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase initialized');
+    
+    // Update connection status
+    updateConnectionStatus(true);
+    
+    // Load existing settings
+    loadSettings();
+    
+    // Connect save button
+    connectSaveButton();
+});
+
+// Update the connection status in UI
+function updateConnectionStatus(isConnected) {
+    const statusElement = document.querySelector('.bg-yellow-900, .text-yellow-100');
+    if (statusElement && isConnected) {
+        statusElement.className = 'bg-green-900 text-green-100 p-4 rounded-lg flex items-center';
+        statusElement.innerHTML = `
+            <div class="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+            <div>
+                <div class="font-medium">Connected to Database</div>
+                <div class="text-sm opacity-75">Real-time data synchronization active</div>
+            </div>
+        `;
+    }
+}
+
+// Save all settings to Supabase
+async function saveAllSettings() {
+    if (!window.supabaseClient) {
+        console.error('❌ Supabase not initialized');
+        return;
+    }
+    
+    // Get current settings from your form
+    const settings = {
+        id: 1, // Fixed ID for single settings record
+        clinic_name: document.querySelector('input[placeholder*="Clinic"], input[type="text"]')?.value || 'Bahrain Mobility International',
+        session_duration: document.querySelector('select')?.value || '45 minutes',
+        timezone: document.querySelector('select:last-of-type')?.value || 'GMT+3 (Bahrain)',
+        email_notifications: document.querySelector('input[type="checkbox"]:nth-of-type(1)')?.checked || false,
+        sms_reminders: document.querySelector('input[type="checkbox"]:nth-of-type(2)')?.checked || false,
+        push_notifications: document.querySelector('input[type="checkbox"]:nth-of-type(3)')?.checked || false,
+        appointment_reminders: document.querySelector('input[type="checkbox"]:nth-of-type(4)')?.checked || false,
+        updated_at: new Date().toISOString()
+    };
+    
+    console.log('💾 Saving settings:', settings);
+    
+    const { data, error } = await window.supabaseClient
+        .from('physiotech_settings')
+        .upsert(settings, { onConflict: 'id' });
+        
+    if (error) {
+        console.error('❌ Error saving settings:', error);
+        showAlert('Error saving settings: ' + error.message);
+    } else {
+        console.log('✅ Settings saved successfully!', data);
+        showAlert('Settings saved successfully!');
+    }
+}
+
+// Load settings from Supabase
+async function loadSettings() {
+    if (!window.supabaseClient) return;
+    
+    const { data, error } = await window.supabaseClient
+        .from('physiotech_settings')
+        .select('*')
+        .single();
+        
+    if (data && !error) {
+        console.log('✅ Settings loaded from database:', data);
+        
+        // Apply loaded settings to your form
+        const clinicInput = document.querySelector('input[placeholder*="Clinic"], input[type="text"]');
+        if (clinicInput && data.clinic_name) {
+            clinicInput.value = data.clinic_name;
+        }
+        
+        // Set checkboxes
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        if (checkboxes[0]) checkboxes[0].checked = data.email_notifications;
+        if (checkboxes[1]) checkboxes[1].checked = data.sms_reminders;
+        if (checkboxes[2]) checkboxes[2].checked = data.push_notifications;
+        if (checkboxes[3]) checkboxes[3].checked = data.appointment_reminders;
+        
+    } else if (!error || error.code === 'PGRST116') {
+        console.log('ℹ️ No settings found, using defaults');
+    } else {
+        console.error('❌ Error loading settings:', error);
+    }
+}
+
+// Connect the save button
+function connectSaveButton() {
+    const saveButton = document.querySelector('button[class*="Save"], button:contains("Save")') || 
+                      Array.from(document.querySelectorAll('button')).find(btn => 
+                          btn.textContent.includes('Save'));
+
+    if (saveButton) {
+        saveButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            saveAllSettings();
+        });
+        console.log('✅ Save button connected');
+    } else {
+        // If button not found immediately, try again after a delay
+        setTimeout(connectSaveButton, 1000);
+    }
+}
+
+// Simple alert function (since alert() is not allowed)
+function showAlert(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    alertDiv.textContent = message;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhysioTech - Physiotherapy Management</title>
