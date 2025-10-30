@@ -14,21 +14,16 @@ let realtimeChannel;
 
 // Initialize everything
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('🚀 Starting initialization...');
-    
     try {
         // Initialize Supabase
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase client created');
         
         // Test basic connection
         const { data, error } = await supabaseClient.from('physiotech_settings').select('id').limit(1);
         if (error) {
-            console.error('❌ Connection test failed:', error);
             updateAllStatusElements(false);
             return;
         }
-        console.log('✅ Database connection successful');
         
         // Setup real-time subscription
         setupRealTimeSubscription();
@@ -42,18 +37,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Update status
         updateAllStatusElements(true);
         
-        console.log('✅ Initialization complete');
-        
     } catch (error) {
-        console.error('❌ Initialization failed:', error);
         updateAllStatusElements(false);
     }
 });
 
 // Setup real-time subscription
 function setupRealTimeSubscription() {
-    console.log('🔄 Setting up real-time subscription...');
-    
     realtimeChannel = supabaseClient
         .channel('settings-channel')
         .on('postgres_changes', {
@@ -61,24 +51,16 @@ function setupRealTimeSubscription() {
             schema: 'public',
             table: 'physiotech_settings'
         }, (payload) => {
-            console.log('🔄 Real-time change detected:', payload);
-            
             if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
                 applySettingsToForm(payload.new);
                 showNotification('Settings updated from another browser!', 'info');
             }
         })
-        .subscribe((status) => {
-            console.log('📡 Subscription status:', status);
-            if (status === 'SUBSCRIBED') {
-                console.log('✅ Real-time subscription active');
-            }
-        });
+        .subscribe();
 }
 
 // Update all connection status elements
 function updateAllStatusElements(connected) {
-    // Find all status-related elements and update them
     const statusTexts = [
         'Connected to Supabase',
         'Connection Failed',
@@ -103,31 +85,23 @@ function updateAllStatusElements(connected) {
 // Load settings from database
 async function loadSettingsFromDatabase() {
     try {
-        console.log('📥 Loading settings from database...');
-        
         const { data, error } = await supabaseClient
             .from('physiotech_settings')
             .select('*')
             .eq('id', 1)
             .single();
         
-        if (error) {
-            console.log('ℹ️ No existing settings found');
-            return;
+        if (data && !error) {
+            applySettingsToForm(data);
         }
         
-        console.log('✅ Settings loaded:', data);
-        applySettingsToForm(data);
-        
     } catch (error) {
-        console.error('❌ Error loading settings:', error);
+        // Silent fail
     }
 }
 
 // Apply settings to form elements
 function applySettingsToForm(settings) {
-    console.log('📝 Applying settings to form:', settings);
-    
     // Clinic name
     const clinicInputs = document.querySelectorAll('input[type="text"]');
     if (clinicInputs.length > 0 && settings.clinic_name) {
@@ -157,8 +131,6 @@ function applySettingsToForm(settings) {
 
 // Save settings to database
 async function saveSettingsToDatabase() {
-    console.log('💾 Saving settings...');
-    
     try {
         // Get current form values
         const clinicInputs = document.querySelectorAll('input[type="text"]');
@@ -177,30 +149,23 @@ async function saveSettingsToDatabase() {
             updated_at: new Date().toISOString()
         };
         
-        console.log('📤 Saving settings:', settings);
-        
         const { data, error } = await supabaseClient
             .from('physiotech_settings')
             .upsert(settings, { onConflict: 'id' });
         
         if (error) {
-            console.error('❌ Save error:', error);
             showNotification('Error saving settings: ' + error.message, 'error');
         } else {
-            console.log('✅ Settings saved successfully');
             showNotification('Settings saved successfully!', 'success');
         }
         
     } catch (error) {
-        console.error('❌ Save failed:', error);
         showNotification('Failed to save settings', 'error');
     }
 }
 
 // Setup event handlers
 function setupEventHandlers() {
-    console.log('🔗 Setting up event handlers...');
-    
     // Find save buttons
     const buttons = document.querySelectorAll('button');
     buttons.forEach(button => {
@@ -209,15 +174,12 @@ function setupEventHandlers() {
                 e.preventDefault();
                 saveSettingsToDatabase();
             });
-            console.log('✅ Save button connected');
         }
     });
 }
 
 // Show notification
 function showNotification(message, type = 'success') {
-    console.log(`📢 ${type.toUpperCase()}: ${message}`);
-    
     // Remove existing notifications
     document.querySelectorAll('.notification-alert').forEach(el => el.remove());
     
@@ -238,11 +200,9 @@ function showNotification(message, type = 'success') {
 window.addEventListener('beforeunload', function() {
     if (realtimeChannel) {
         realtimeChannel.unsubscribe();
-        console.log('🔄 Real-time subscription closed');
     }
 });
 </script>
-    
     <Script>
 // Connect the save button
 function connectSaveButton() {
