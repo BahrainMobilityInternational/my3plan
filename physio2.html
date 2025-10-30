@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <!-- Add this script tag in your <head> section -->
-<!-- Add this script tag in your <head> section -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 
 <script>
@@ -10,282 +9,236 @@
 const SUPABASE_URL = 'https://dntasjnwecurpbisgmdl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRudGFzam53ZWN1cnBiaXNnbWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3OTc0OTEsImV4cCI6MjA3NDM3MzQ5MX0.uxKX7uq12ScTra1IWk30LqzV6xlxmP7-Lf6r9AKRYBg';
 
-// Global variables
 let supabaseClient;
 let realtimeChannel;
 
-// Initialize Supabase when page loads
-window.addEventListener('DOMContentLoaded', async function() {
+// Initialize everything
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Starting initialization...');
+    
     try {
-        // Initialize Supabase client
+        // Initialize Supabase
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabaseClient = supabaseClient; // Keep for backward compatibility
-        console.log('✅ Supabase initialized');
+        console.log('✅ Supabase client created');
         
-        // Test the connection immediately
-        await testConnection();
+        // Test basic connection
+        const { data, error } = await supabaseClient.from('physiotech_settings').select('id').limit(1);
+        if (error) {
+            console.error('❌ Connection test failed:', error);
+            updateAllStatusElements(false);
+            return;
+        }
+        console.log('✅ Database connection successful');
         
-        // Setup real-time subscriptions for cross-browser sync
-        setupRealtimeSync();
-        
-        // Update connection status
-        updateConnectionStatus(true);
+        // Setup real-time subscription
+        setupRealTimeSubscription();
         
         // Load existing settings
-        await loadSettings();
+        await loadSettingsFromDatabase();
         
-        // Connect save button
-        connectSaveButton();
+        // Setup event handlers
+        setupEventHandlers();
+        
+        // Update status
+        updateAllStatusElements(true);
+        
+        console.log('✅ Initialization complete');
         
     } catch (error) {
-        console.error('❌ Supabase initialization failed:', error);
-        updateConnectionStatus(false);
+        console.error('❌ Initialization failed:', error);
+        updateAllStatusElements(false);
     }
 });
 
-// Setup real-time subscriptions for cross-browser synchronization
-function setupRealtimeSync() {
-    console.log('🔄 Setting up real-time sync...');
+// Setup real-time subscription
+function setupRealTimeSubscription() {
+    console.log('🔄 Setting up real-time subscription...');
     
     realtimeChannel = supabaseClient
-        .channel('physiotech_settings_changes')
+        .channel('settings-channel')
         .on('postgres_changes', {
-            event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+            event: '*',
             schema: 'public',
             table: 'physiotech_settings'
         }, (payload) => {
-            console.log('🔄 Real-time update received:', payload);
+            console.log('🔄 Real-time change detected:', payload);
             
-            // If this is an update/insert, refresh the form with new data
-            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-                loadSettingsFromData(payload.new);
-                showAlert('Settings updated from another browser');
+            if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+                applySettingsToForm(payload.new);
+                showNotification('Settings updated from another browser!', 'info');
             }
         })
         .subscribe((status) => {
+            console.log('📡 Subscription status:', status);
             if (status === 'SUBSCRIBED') {
-                console.log('✅ Real-time sync active');
-            } else if (status === 'CHANNEL_ERROR') {
-                console.error('❌ Real-time sync error');
+                console.log('✅ Real-time subscription active');
             }
         });
 }
 
-// Test database connection
-async function testConnection() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('physiotech_settings')
-            .select('count', { count: 'exact' });
-        
-        if (error) {
-            console.log('ℹ️ Connection test:', error.message);
-            return false;
-        } else {
-            console.log('✅ Database connection successful');
-            return true;
+// Update all connection status elements
+function updateAllStatusElements(connected) {
+    // Find all status-related elements and update them
+    const statusTexts = [
+        'Connected to Supabase',
+        'Connection Failed',
+        'Not Connected to Database',
+        'Connected to Database'
+    ];
+    
+    // Update text content
+    document.querySelectorAll('*').forEach(element => {
+        if (statusTexts.some(text => element.textContent?.includes(text))) {
+            if (connected) {
+                element.textContent = element.textContent.replace(/Connection Failed|Not Connected.*/, 'Connected to Database');
+                element.className = element.className.replace(/bg-red-\d+|bg-yellow-\d+/, 'bg-green-500');
+            } else {
+                element.textContent = element.textContent.replace(/Connected.*/, 'Connection Failed');
+                element.className = element.className.replace(/bg-green-\d+|bg-yellow-\d+/, 'bg-red-500');
+            }
         }
-    } catch (err) {
-        console.error('❌ Connection test failed:', err);
-        return false;
-    }
+    });
 }
 
-// Update the connection status in UI
-function updateConnectionStatus(isConnected) {
-    const statusElement = document.querySelector('#connectionStatus') || 
-                         document.querySelector('[class*="bg-yellow-900"]');
-    
-    if (statusElement) {
-        if (isConnected) {
-            statusElement.className = 'bg-green-900 text-green-100 p-4 rounded-lg flex items-center mb-6';
-            statusElement.innerHTML = `
-                <div class="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
-                <div>
-                    <div class="font-medium">Connected to Database</div>
-                    <div class="text-sm opacity-75">Real-time data synchronization active</div>
-                </div>
-            `;
-        } else {
-            statusElement.className = 'bg-red-900 text-red-100 p-4 rounded-lg flex items-center mb-6';
-            statusElement.innerHTML = `
-                <div class="w-3 h-3 bg-red-400 rounded-full mr-3"></div>
-                <div>
-                    <div class="font-medium">Connection Failed</div>
-                    <div class="text-sm opacity-75">Unable to connect to database</div>
-                </div>
-            `;
-        }
-    }
-}
-
-// Save all settings to Supabase
-async function saveAllSettings() {
-    if (!supabaseClient) {
-        console.error('❌ Supabase not initialized');
-        showAlert('Database not connected');
-        return;
-    }
-    
+// Load settings from database
+async function loadSettingsFromDatabase() {
     try {
-        // Get current settings from form with more specific selectors
-        const settings = {
-            id: 1, // Fixed ID for single settings record
-            clinic_name: document.getElementById('clinicName')?.value || 
-                        document.querySelector('input[type="text"]')?.value || 
-                        'Bahrain Mobility International',
-            session_duration: document.getElementById('sessionDuration')?.value || 
-                             document.querySelector('select')?.value || 
-                             '45 minutes',
-            timezone: document.getElementById('timezone')?.value || 
-                     document.querySelector('select:last-of-type')?.value || 
-                     'GMT+3 (Bahrain)',
-            email_notifications: document.getElementById('emailNotifications')?.checked || 
-                               document.querySelector('input[type="checkbox"]:nth-of-type(1)')?.checked || 
-                               false,
-            sms_reminders: document.getElementById('smsReminders')?.checked || 
-                          document.querySelector('input[type="checkbox"]:nth-of-type(2)')?.checked || 
-                          false,
-            push_notifications: document.getElementById('pushNotifications')?.checked || 
-                              document.querySelector('input[type="checkbox"]:nth-of-type(3)')?.checked || 
-                              false,
-            appointment_reminders: document.getElementById('appointmentReminders')?.checked || 
-                                 document.querySelector('input[type="checkbox"]:nth-of-type(4)')?.checked || 
-                                 false,
-            updated_at: new Date().toISOString()
-        };
+        console.log('📥 Loading settings from database...');
         
-        console.log('💾 Saving settings:', settings);
-        
-        const { data, error } = await supabaseClient
-            .from('physiotech_settings')
-            .upsert(settings, { onConflict: 'id' });
-            
-        if (error) {
-            console.error('❌ Error saving settings:', error);
-            showAlert('Error saving settings: ' + error.message, 'error');
-        } else {
-            console.log('✅ Settings saved successfully!', data);
-            showAlert('Settings saved successfully!', 'success');
-        }
-    } catch (err) {
-        console.error('❌ Save operation failed:', err);
-        showAlert('Failed to save settings', 'error');
-    }
-}
-
-// Load settings from Supabase
-async function loadSettings() {
-    if (!supabaseClient) return;
-    
-    try {
         const { data, error } = await supabaseClient
             .from('physiotech_settings')
             .select('*')
             .eq('id', 1)
             .single();
-            
-        if (data && !error) {
-            console.log('✅ Settings loaded from database:', data);
-            loadSettingsFromData(data);
-        } else if (error && error.code === 'PGRST116') {
-            console.log('ℹ️ No settings found, using defaults');
-        } else {
-            console.error('❌ Error loading settings:', error);
+        
+        if (error) {
+            console.log('ℹ️ No existing settings found');
+            return;
         }
-    } catch (err) {
-        console.error('❌ Load operation failed:', err);
+        
+        console.log('✅ Settings loaded:', data);
+        applySettingsToForm(data);
+        
+    } catch (error) {
+        console.error('❌ Error loading settings:', error);
     }
 }
 
-// Load settings from data object (used by both initial load and real-time updates)
-function loadSettingsFromData(data) {
-    // Set text inputs
-    const clinicInput = document.getElementById('clinicName') || 
-                       document.querySelector('input[type="text"]');
-    if (clinicInput && data.clinic_name) {
-        clinicInput.value = data.clinic_name;
+// Apply settings to form elements
+function applySettingsToForm(settings) {
+    console.log('📝 Applying settings to form:', settings);
+    
+    // Clinic name
+    const clinicInputs = document.querySelectorAll('input[type="text"]');
+    if (clinicInputs.length > 0 && settings.clinic_name) {
+        clinicInputs[0].value = settings.clinic_name;
     }
     
-    // Set select elements
-    const sessionSelect = document.getElementById('sessionDuration') || 
-                         document.querySelector('select');
-    if (sessionSelect && data.session_duration) {
-        sessionSelect.value = data.session_duration;
+    // Session duration
+    const sessionSelects = document.querySelectorAll('select');
+    if (sessionSelects.length > 0 && settings.session_duration) {
+        sessionSelects[0].value = settings.session_duration;
     }
     
-    const timezoneSelect = document.getElementById('timezone') || 
-                          document.querySelector('select:last-of-type');
-    if (timezoneSelect && data.timezone) {
-        timezoneSelect.value = data.timezone;
+    // Timezone
+    if (sessionSelects.length > 1 && settings.timezone) {
+        sessionSelects[1].value = settings.timezone;
     }
     
-    // Set checkboxes with specific IDs first, fallback to nth-child
-    const emailCheck = document.getElementById('emailNotifications') || 
-                      document.querySelector('input[type="checkbox"]:nth-of-type(1)');
-    if (emailCheck) emailCheck.checked = data.email_notifications || false;
-    
-    const smsCheck = document.getElementById('smsReminders') || 
-                    document.querySelector('input[type="checkbox"]:nth-of-type(2)');
-    if (smsCheck) smsCheck.checked = data.sms_reminders || false;
-    
-    const pushCheck = document.getElementById('pushNotifications') || 
-                     document.querySelector('input[type="checkbox"]:nth-of-type(3)');
-    if (pushCheck) pushCheck.checked = data.push_notifications || false;
-    
-    const appointmentCheck = document.getElementById('appointmentReminders') || 
-                           document.querySelector('input[type="checkbox"]:nth-of-type(4)');
-    if (appointmentCheck) appointmentCheck.checked = data.appointment_reminders || false;
-}
-
-// Connect the save button
-function connectSaveButton() {
-    // Try multiple ways to find the save button
-    const saveButton = document.getElementById('saveButton') ||
-                      document.querySelector('button[type="submit"]') ||
-                      document.querySelector('button:contains("Save")') ||
-                      Array.from(document.querySelectorAll('button')).find(btn => 
-                          btn.textContent.toLowerCase().includes('save'));
-
-    if (saveButton) {
-        saveButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            saveAllSettings();
-        });
-        console.log('✅ Save button connected');
-    } else {
-        console.log('⚠️ Save button not found, retrying...');
-        // If button not found immediately, try again after a delay
-        setTimeout(connectSaveButton, 1000);
+    // Checkboxes
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    if (checkboxes.length >= 4) {
+        checkboxes[0].checked = settings.email_notifications || false;
+        checkboxes[1].checked = settings.sms_reminders || false;
+        checkboxes[2].checked = settings.push_notifications || false;
+        checkboxes[3].checked = settings.appointment_reminders || false;
     }
 }
 
-// Enhanced alert function with different types
-function showAlert(message, type = 'success') {
-    const alertDiv = document.createElement('div');
-    const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+// Save settings to database
+async function saveSettingsToDatabase() {
+    console.log('💾 Saving settings...');
     
-    alertDiv.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
-    alertDiv.textContent = message;
-    document.body.appendChild(alertDiv);
+    try {
+        // Get current form values
+        const clinicInputs = document.querySelectorAll('input[type="text"]');
+        const selects = document.querySelectorAll('select');
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        
+        const settings = {
+            id: 1,
+            clinic_name: clinicInputs[0]?.value || 'Bahrain Mobility International',
+            session_duration: selects[0]?.value || '45 minutes',
+            timezone: selects[1]?.value || 'GMT+3 (Bahrain)',
+            email_notifications: checkboxes[0]?.checked || false,
+            sms_reminders: checkboxes[1]?.checked || false,
+            push_notifications: checkboxes[2]?.checked || false,
+            appointment_reminders: checkboxes[3]?.checked || false,
+            updated_at: new Date().toISOString()
+        };
+        
+        console.log('📤 Saving settings:', settings);
+        
+        const { data, error } = await supabaseClient
+            .from('physiotech_settings')
+            .upsert(settings, { onConflict: 'id' });
+        
+        if (error) {
+            console.error('❌ Save error:', error);
+            showNotification('Error saving settings: ' + error.message, 'error');
+        } else {
+            console.log('✅ Settings saved successfully');
+            showNotification('Settings saved successfully!', 'success');
+        }
+        
+    } catch (error) {
+        console.error('❌ Save failed:', error);
+        showNotification('Failed to save settings', 'error');
+    }
+}
+
+// Setup event handlers
+function setupEventHandlers() {
+    console.log('🔗 Setting up event handlers...');
     
-    // Animate in
+    // Find save buttons
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        if (button.textContent.toLowerCase().includes('save')) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                saveSettingsToDatabase();
+            });
+            console.log('✅ Save button connected');
+        }
+    });
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+    console.log(`📢 ${type.toUpperCase()}: ${message}`);
+    
+    // Remove existing notifications
+    document.querySelectorAll('.notification-alert').forEach(el => el.remove());
+    
+    const notification = document.createElement('div');
+    const bgColor = type === 'error' ? 'bg-red-500' : type === 'info' ? 'bg-blue-500' : 'bg-green-500';
+    
+    notification.className = `notification-alert fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
     setTimeout(() => {
-        alertDiv.style.transform = 'translateX(0)';
-    }, 10);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        alertDiv.style.transform = 'translateX(100%)';
-        setTimeout(() => alertDiv.remove(), 300);
-    }, 3000);
+        notification.remove();
+    }, 4000);
 }
 
-// Cleanup function for when page unloads
+// Cleanup
 window.addEventListener('beforeunload', function() {
     if (realtimeChannel) {
         realtimeChannel.unsubscribe();
-        console.log('🔄 Real-time sync disconnected');
+        console.log('🔄 Real-time subscription closed');
     }
 });
 </script>
