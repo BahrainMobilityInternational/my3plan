@@ -11413,5 +11413,36 @@ if (error) {
             }
         };
     </script>
+    <script>
+  // Functions to show/hide login pages
+  function showAdminLoginModal() {
+    // Hide the welcome screen
+    document.getElementById("welcomeScreen").classList.add("hidden");
+    // Show the admin login
+    document.getElementById("adminLoginPage").classList.remove("hidden");
+  }
+
+  function showPhysioLoginModal() {
+    document.getElementById("welcomeScreen").classList.add("hidden");
+    document.getElementById("physioLoginPage").classList.remove("hidden");
+  }
+
+  // Go back button
+  document.addEventListener("click", (event) => {
+    if (event.target.id === "backToSelectionFromAdmin") {
+      document.getElementById("adminLoginPage").classList.add("hidden");
+      document.getElementById("welcomeScreen").classList.remove("hidden");
+    }
+  });
+
+  // Wait for DOM before attaching clicks
+  document.addEventListener("DOMContentLoaded", () => {
+    const adminBtn = document.getElementById("administratorLoginBtn");
+    const physioBtn = document.getElementById("physiotherapistLoginBtn");
+
+    if (adminBtn) adminBtn.addEventListener("click", showAdminLoginModal);
+    if (physioBtn) physioBtn.addEventListener("click", showPhysioLoginModal);
+  });
+</script>
 </body>
 </html>
