@@ -8,7 +8,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+   // --- Supabase Configuration ---
+    <script>
+const SUPABASE_URL = 'https://dntasjnwecurpbisgmdl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRudGFzam53ZWN1cnBiaXNnbWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3OTc0OTEsImV4cCI6MjA3NDM3MzQ5MX0.uxKX7uq12ScTra1IWk30LqzV6xlxmP7-Lf6r9AKRYBg'; // never use service key!
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Optional connection test
+(async () => {
+  const { error } = await supabase.from('patients').select('*').limit(1);
+  console.log(error ? '❌ Supabase connection failed:' + error.message : '✅ Supabase connected');
+})();
     <!-- EmailJS for sending real emails -->
+        </script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script>
         tailwind.config = {
@@ -42,7 +55,33 @@
         }
     </style>
 </head>
-<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
+    <Script> 
+        // --- Local mirror object synced with Supabase ---
+const appData = {
+  patients: [],
+  appointments: [],
+  complaints: [],
+  physiotherapists: [],
+  exercises: [],
+};
+
+// Load data from Supabase at startup
+async function loadAllFromSupabase() {
+  const tables = ['patients', 'appointments', 'complaints', 'physiotherapists', 'exercises'];
+
+  for (const table of tables) {
+    const { data, error } = await supabase.from(table).select('*');
+    if (error) {
+      console.warn(`⚠️ Unable to load ${table}:`, error.message);
+    } else {
+      appData[table] = data;
+    }
+  }
+
+  console.log('✅ All data loaded from Supabase:', appData);
+}
+    </Script>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen"> <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- User Type Selection -->
     <div id="userTypeSelection" class="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-50 to-cyan-50">
         <div class="max-w-4xl mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10">
@@ -3415,7 +3454,14 @@
                 };
 
                 // Add patient to data store
-                appData.patients.push(newPatient);
+                const { data, error } = await supabase.from('patients').insert([newPatient]);
+if (error) {
+  showNotification(`❌ Failed to save patient: ${error.message}`, 'error');
+  console.error(error);
+} else {
+  appData.patients.push(...data); // keep local mirror updated
+  showNotification('✅ Patient saved in Supabase!', 'success');
+}
                 
                 // Update assignedPatients count for the physiotherapist
                 const assignedPhysio = appData.physiotherapists.find(p => 
