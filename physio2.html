@@ -14,6 +14,21 @@
  
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
+
+    <!-- 2️⃣ Initialize Supabase -->
+<script>
+  const SUPABASE_URL = 'https://dntasjnwecurpbisgmdl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRudGFzam53ZWN1cnBiaXNnbWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3OTc0OTEsImV4cCI6MjA3NDM3MzQ5MX0.uxKX7uq12ScTra1IWk30LqzV6xlxmP7-Lf6r9AKRYBg';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('✅ Supabase initialized');
+</script>
+
+
+
+
+
+
     
     <script>
         tailwind.config = {
