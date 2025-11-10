@@ -2565,7 +2565,7 @@
         }
 
         // ENTERPRISE SECURITY SYSTEM - Comprehensive Protection for Healthcare Data
-        const SecurityManager = {
+        SecurityManager = {
             // Security Configuration
             config: {
                 maxLoginAttempts: 3,
@@ -2598,7 +2598,7 @@
 
             // Advanced Password Validation
             validatePassword(password) {
-                const requirements = {
+                requirements = {
                     minLength: password.length >= this.config.passwordMinLength,
                     hasUppercase: /[A-Z]/.test(password),
                     hasLowercase: /[a-z]/.test(password),
@@ -2607,7 +2607,7 @@
                     noCommonPasswords: !['password', '12345678', 'admin', 'user'].includes(password.toLowerCase())
                 };
 
-                const score = Object.values(requirements).filter(Boolean).length;
+                score = Object.values(requirements).filter(Boolean).length;
                 const strength = score >= 6 ? 'strong' : score >= 4 ? 'medium' : 'weak';
                 
                 return {
@@ -3280,39 +3280,35 @@
         const SafeStorage = {
             storage: new Map(),
             
-setItem: async function (key, value) {
-  try {
-    // When storing patients list, sync it to Supabase
-    if (key === "patients") {
-      const patients = JSON.parse(value); // value is JSON string
-      if (!Array.isArray(patients)) {
-        console.warn("Expected patients to be an array");
-        return;
+
+  const storage = {
+    async setItem(key, value) {
+      try {
+        if (key === "patients") {
+          const patients = JSON.parse(value);
+          const { data, error } = await supabase.from("patients").upsert(patients);
+          if (error) {
+            console.error("Supabase insert error:", error);
+          } else {
+            console.log("✅ Saved patients to Supabase:", data);
+          }
+        } else {
+          localStorage.setItem(key, value);
+        }
+      } catch (err) {
+        console.error("Storage error:", err);
       }
+    },
 
-      // 💾 Write to Supabase 'patients' table
-      const { data, error } = await supabase.from("patients").upsert(patients);
-
-      if (error) {
-        console.error("Supabase insert failed:", error);
-        // fallback to localStorage for safety
-        localStorage.setItem(key, value);
-      } else {
-        console.log(`✅ ${data.length} patient(s) saved to Supabase`);
-        // optional: also cache locally for faster reloads
-        localStorage.setItem(key, value);
+    async getItem(key) {
+      if (key === "patients") {
+        const { data, error } = await supabase.from("patients").select("*");
+        if (error) console.error(error);
+        return JSON.stringify(data);
       }
-    } else {
-      // ✨ For other keys, keep using localStorage
-      localStorage.setItem(key, value);
-    }
-
-  } catch (error) {
-    console.error("Storage setItem error:", error);
-    this.storage.set(key, value);
-  }
-}
-
+      return localStorage.getItem(key);
+    },
+  };
             
 
         const SafeSessionStorage = {
