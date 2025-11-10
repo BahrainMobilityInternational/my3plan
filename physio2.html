@@ -3280,33 +3280,40 @@
         const SafeStorage = {
             storage: new Map(),
             
-            setItem: function(key, value) {
-                try {
-                    localStorage.setItem(key, value);
-                } catch (error) {
-                    console.log('localStorage not available, using memory storage');
-                    this.storage.set(key, value);
-                }
-            },
+setItem: async function (key, value) {
+  try {
+    // When storing patients list, sync it to Supabase
+    if (key === "patients") {
+      const patients = JSON.parse(value); // value is JSON string
+      if (!Array.isArray(patients)) {
+        console.warn("Expected patients to be an array");
+        return;
+      }
+
+      // 💾 Write to Supabase 'patients' table
+      const { data, error } = await supabase.from("patients").upsert(patients);
+
+      if (error) {
+        console.error("Supabase insert failed:", error);
+        // fallback to localStorage for safety
+        localStorage.setItem(key, value);
+      } else {
+        console.log(`✅ ${data.length} patient(s) saved to Supabase`);
+        // optional: also cache locally for faster reloads
+        localStorage.setItem(key, value);
+      }
+    } else {
+      // ✨ For other keys, keep using localStorage
+      localStorage.setItem(key, value);
+    }
+
+  } catch (error) {
+    console.error("Storage setItem error:", error);
+    this.storage.set(key, value);
+  }
+}
+
             
-            getItem: function(key) {
-                try {
-                    return localStorage.getItem(key);
-                } catch (error) {
-                    console.log('localStorage not available, using memory storage');
-                    return this.storage.get(key) || null;
-                }
-            },
-            
-            removeItem: function(key) {
-                try {
-                    localStorage.removeItem(key);
-                } catch (error) {
-                    console.log('localStorage not available, using memory storage');
-                    this.storage.delete(key);
-                }
-            }
-        };
 
         const SafeSessionStorage = {
             storage: new Map(),
