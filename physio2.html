@@ -3277,10 +3277,10 @@
         };
 
         // Storage fallback for sandboxed environment
-        const SafeStorage = {
-            storage: new Map(),
-            
+   
+  console.log("Supabase initialized");
 
+  // 2️⃣ Define storage functions cleanly
   const storage = {
     async setItem(key, value) {
       try {
@@ -3299,17 +3299,7 @@
         console.error("Storage error:", err);
       }
     },
-
-    async getItem(key) {
-      if (key === "patients") {
-        const { data, error } = await supabase.from("patients").select("*");
-        if (error) console.error(error);
-        return JSON.stringify(data);
-      }
-      return localStorage.getItem(key);
-    },
   };
-            
 
         const SafeSessionStorage = {
             storage: new Map(),
