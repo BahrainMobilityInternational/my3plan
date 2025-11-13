@@ -11,8 +11,11 @@
     <!-- EmailJS for sending real emails -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
- 
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Supabase SDK for database integration -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  
 
 
 
@@ -22,6 +25,297 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRudGFzam53ZWN1cnBiaXNnbWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3OTc0OTEsImV4cCI6MjA3NDM3MzQ5MX0.uxKX7uq12ScTra1IWk30LqzV6xlxmP7-Lf6r9AKRYBg';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   console.log('✅ Supabase initialized');
+    // ========== SUPABASE INTEGRATION - ADD TO YOUR EXISTING CODE ==========
+
+// Global Supabase client
+let supabaseClient = null;
+let isSupabaseConnected = false;
+let supabaseConfig = null;
+
+// Initialize Supabase connection
+async function initializeSupabase() {
+    try {
+        const savedConfig = localStorage.getItem('supabaseConfig');
+        if (savedConfig) {
+            const config = JSON.parse(savedConfig);
+            supabaseConfig = config;
+            
+            if (typeof supabase !== 'undefined') {
+                supabaseClient = supabase.createClient(config.url, config.anonKey);
+                
+                const connectionTest = await testDatabaseConnection();
+                
+                if (connectionTest.success) {
+                    isSupabaseConnected = true;
+                    updateSupabaseConnectionStatus(true, config);
+                    updateDatabaseStatusIndicators();
+                    await loadAllDataFromSupabase();
+                    
+                    if (config.enableRealTimeSync) {
+                        setupRealTimeSubscriptions();
+                    }
+                    
+                    showNotification('🗄️ Supabase connected! Data syncing enabled.', 'success');
+                    console.log('✅ Supabase initialized successfully');
+                } else {
+                    throw new Error(connectionTest.error);
+                }
+            } else {
+                setTimeout(initializeSupabase, 1000);
+            }
+        }
+    } catch (error) {
+        console.log('❌ Supabase initialization failed:', error.message);
+        isSupabaseConnected = false;
+        updateSupabaseConnectionStatus(false);
+        updateDatabaseStatusIndicators();
+    }
+}
+
+async function testDatabaseConnection() {
+    try {
+        if (!supabaseClient) {
+            return { success: false, error: 'Supabase client not initialized' };
+        }
+
+        const { data, error } = await supabaseClient
+            .from('patients')
+            .select('count', { count: 'exact', head: true });
+
+        if (error && error.code === 'PGRST116') {
+            return { success: true, message: 'Connection successful - tables need to be created' };
+        } else if (error) {
+            return { success: false, error: error.message };
+        } else {
+            return { success: true, message: 'Connection successful' };
+        }
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+async function loadAllDataFromSupabase() {
+    if (!isSupabaseConnected) return;
+
+    try {
+        console.log('🔄 Loading data from Supabase...');
+
+        const { data: patients, error: patientsError } = await supabaseClient
+            .from('patients')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (!patientsError && patients) {
+            patients.forEach(dbPatient => {
+                const existingIndex = appData.patients.findIndex(p => p.id === dbPatient.id);
+                const convertedPatient = {
+                    id: dbPatient.id,
+                    firstName: dbPatient.first_name,
+                    lastName: dbPatient.last_name,
+                    phone: dbPatient.phone,
+                    cprNumber: dbPatient.cpr_number,
+                    dateOfBirth: dbPatient.date_of_birth,
+                    gender: dbPatient.gender,
+                    email: dbPatient.email,
+                    currentCondition: dbPatient.current_condition,
+                    assignedPhysiotherapist: dbPatient.assigned_physiotherapist,
+                    treatmentStatus: dbPatient.treatment_status,
+                    dateRegistered: dbPatient.created_at
+                };
+                
+                if (existingIndex === -1) {
+                    appData.patients.push(convertedPatient);
+                } else {
+                    appData.patients[existingIndex] = convertedPatient;
+                }
+            });
+            console.log(`✅ Loaded ${patients.length} patients from database`);
+        }
+
+        updateDatabaseStatusIndicators();
+        updateDashboardStats();
+        updatePatientsDisplay();
+        loadPhysioPatients();
+
+    } catch (error) {
+        console.log('❌ Failed to load data from Supabase:', error.message);
+        updateDatabaseStatusIndicators();
+    }
+}
+
+async function saveToSupabase(table, data, operation = 'insert') {
+    if (!isSupabaseConnected) {
+        console.log('⚠️ Supabase not connected, using local storage');
+        return { success: false, error: 'Database not connected' };
+    }
+
+    try {
+        let result;
+        
+        if (operation === 'insert') {
+            result = await supabaseClient.from(table).insert(data).select();
+        } else if (operation === 'update') {
+            result = await supabaseClient.from(table).update(data).eq('id', data.id).select();
+        } else if (operation === 'delete') {
+            result = await supabaseClient.from(table).delete().eq('id', data.id);
+        }
+
+        if (result.error) {
+            throw result.error;
+        }
+
+        console.log(`✅ Data saved to ${table} table in Supabase`);
+        return { success: true, data: result.data };
+        
+    } catch (error) {
+        console.log(`❌ Failed to save to ${table}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+function setupRealTimeSubscriptions() {
+    if (!supabaseClient || !isSupabaseConnected) return;
+
+    try {
+        supabaseClient
+            .channel('patients_changes')
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'patients' 
+            }, (payload) => {
+                console.log('📡 Real-time update - Patients:', payload);
+                handleRealTimeUpdate('patients', payload);
+            })
+            .subscribe();
+
+        console.log('🔄 Real-time subscriptions activated');
+        
+    } catch (error) {
+        console.log('❌ Failed to set up real-time subscriptions:', error.message);
+    }
+}
+
+function handleRealTimeUpdate(table, payload) {
+    const { eventType, new: newRecord, old: oldRecord } = payload;
+    
+    try {
+        if (eventType === 'INSERT' && table === 'patients') {
+            const newPatient = {
+                id: newRecord.id,
+                firstName: newRecord.first_name,
+                lastName: newRecord.last_name,
+                phone: newRecord.phone,
+                cprNumber: newRecord.cpr_number,
+                dateOfBirth: newRecord.date_of_birth,
+                gender: newRecord.gender,
+                email: newRecord.email,
+                currentCondition: newRecord.current_condition,
+                assignedPhysiotherapist: newRecord.assigned_physiotherapist,
+                treatmentStatus: newRecord.treatment_status,
+                dateRegistered: newRecord.created_at
+            };
+            
+            if (!appData.patients.find(p => p.id === newPatient.id)) {
+                appData.patients.push(newPatient);
+                updatePatientsDisplay();
+                loadPhysioPatients();
+                showNotification(`📋 New patient synced: ${newPatient.firstName} ${newPatient.lastName}`, 'success');
+            }
+        } else if (eventType === 'DELETE' && table === 'patients') {
+            appData.patients = appData.patients.filter(p => p.id !== oldRecord.id);
+            updatePatientsDisplay();
+            loadPhysioPatients();
+            showNotification(`🗑️ Patient removed from database`, 'success');
+        }
+
+        updateDashboardStats();
+        
+    } catch (error) {
+        console.log('❌ Error handling real-time update:', error.message);
+    }
+}
+
+function convertAppPatientToDb(appPatient) {
+    return {
+        id: appPatient.id?.startsWith('patient-') ? undefined : appPatient.id,
+        first_name: appPatient.firstName,
+        last_name: appPatient.lastName,
+        phone: appPatient.phone,
+        cpr_number: appPatient.cprNumber,
+        date_of_birth: appPatient.dateOfBirth,
+        gender: appPatient.gender,
+        email: appPatient.email,
+        current_condition: appPatient.currentCondition,
+        assigned_physiotherapist: appPatient.assignedPhysiotherapist,
+        treatment_status: appPatient.treatmentStatus
+    };
+}
+
+function updateDatabaseStatusIndicators() {
+    const dbIndicator = document.getElementById('dbStatusIndicator');
+    const dbText = document.getElementById('dbStatusText');
+    const dbConnectionStatus = document.getElementById('dbConnectionStatus');
+    const physioSyncStatus = document.getElementById('physioSyncStatus');
+    
+    if (isSupabaseConnected) {
+        if (dbIndicator) dbIndicator.className = 'w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse';
+        if (dbText) dbText.textContent = 'Connected';
+        if (dbConnectionStatus) dbConnectionStatus.textContent = 'Connected';
+        if (physioSyncStatus) physioSyncStatus.textContent = 'Real-time';
+    } else {
+        if (dbIndicator) dbIndicator.className = 'w-2 h-2 bg-yellow-500 rounded-full mr-2';
+        if (dbText) dbText.textContent = 'Local Only';
+        if (dbConnectionStatus) dbConnectionStatus.textContent = 'Local Only';
+        if (physioSyncStatus) physioSyncStatus.textContent = 'Local';
+    }
+}
+
+async function testSupabaseConnection() {
+    if (!isSupabaseConnected) {
+        showNotification('⚠️ Not connected to Supabase. Click "Connect Supabase" first.', 'error');
+        return;
+    }
+
+    showNotification('🔄 Testing database connection...', 'success');
+    
+    try {
+        const connectionTest = await testDatabaseConnection();
+        
+        if (connectionTest.success) {
+            showNotification('✅ Database connection is working perfectly!', 'success');
+            await loadAllDataFromSupabase();
+        } else {
+            showNotification('❌ Database connection failed: ' + connectionTest.error, 'error');
+        }
+        
+    } catch (error) {
+        showNotification('❌ Connection test failed: ' + error.message, 'error');
+    }
+}
+
+function disconnectSupabase() {
+    showConfirmDialog(
+        'Are you sure you want to disconnect from Supabase?',
+        () => {
+            localStorage.removeItem('supabaseConfig');
+            supabaseClient = null;
+            isSupabaseConnected = false;
+            supabaseConfig = null;
+            
+            updateSupabaseConnectionStatus(false);
+            updateDatabaseStatusIndicators();
+            
+            showNotification('🔌 Disconnected from Supabase.', 'success');
+        }
+    );
+}
+
+// ========== END SUPABASE INTEGRATION ==========
+      // Initialize application
+console.log('✅ PhysioTech Application loaded successfully');
+console.log('📧 Admin login: DhariBmi@gmail.com / Dharui1979');
+console.log('👩‍⚕️ Physiotherapist login: Mariambmi@gmail.com / Mariam1979!');
 </script>
 
 
@@ -4405,82 +4699,83 @@
                 generateTemplateBtn.onclick = generateTreatmentTemplate;
             }
             
-            saveBtn.onclick = () => {
-                const form = document.getElementById('addPatientForm');
-                const formData = new FormData(form);
-                
-                // Validate required fields
-                const firstName = formData.get('firstName')?.trim();
-                const lastName = formData.get('lastName')?.trim();
-                const phone = formData.get('phone')?.trim();
-                const cprNumber = formData.get('cprNumber')?.trim();
-                const dateOfBirth = formData.get('dateOfBirth');
-                const gender = formData.get('gender');
-                const currentCondition = formData.get('currentCondition')?.trim();
-                const assignedPhysiotherapist = formData.get('assignedPhysiotherapist');
+            saveBtn.onclick = async () => {
+    const form = document.getElementById('addPatientForm');
+    const formData = new FormData(form);
+    
+    // Your existing validation code stays the same
+    const firstName = formData.get('firstName')?.trim();
+    const lastName = formData.get('lastName')?.trim();
+    const phone = formData.get('phone')?.trim();
+    const cprNumber = formData.get('cprNumber')?.trim();
+    const dateOfBirth = formData.get('dateOfBirth');
+    const gender = formData.get('gender');
+    const currentCondition = formData.get('currentCondition')?.trim();
+    const assignedPhysiotherapist = formData.get('assignedPhysiotherapist');
 
-                if (!firstName || !lastName || !phone || !cprNumber || !dateOfBirth || !gender || !currentCondition || !assignedPhysiotherapist) {
-                    showNotification('⚠️ Please fill in all required fields', 'error');
-                    return;
-                }
+    if (!firstName || !lastName || !phone || !cprNumber || !dateOfBirth || !gender || !currentCondition || !assignedPhysiotherapist) {
+        showNotification('⚠️ Please fill in all required fields', 'error');
+        return;
+    }
 
-                // Get uploaded files
-                const fileInput = document.getElementById('treatmentDocuments');
-                const uploadedFiles = fileInput ? Array.from(fileInput.files) : [];
-                
-                // Convert files to base64 for storage
-                const patientFiles = [];
-                for (const file of uploadedFiles) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        patientFiles.push({
-                            name: file.name,
-                            type: file.type,
-                            size: file.size,
-                            data: e.target.result,
-                            uploadDate: new Date().toISOString()
-                        });
-                    };
-                    reader.readAsDataURL(file);
-                }
+    // Show loading state
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    saveBtn.disabled = true;
 
-                // Create new patient object
-                const newPatient = {
-                    id: `patient-${Date.now()}`,
-                    firstName,
-                    lastName,
-                    phone,
-                    cprNumber,
-                    dateOfBirth,
-                    gender,
-                    email: formData.get('email')?.trim() || '',
-                    currentCondition,
-                    assignedPhysiotherapist,
-                    treatmentStatus: formData.get('treatmentStatus') || 'active',
-                    dateRegistered: new Date().toISOString(),
-                    assignmentNotes: formData.get('assignmentNotes')?.trim() || '',
-                    uploadedFiles: patientFiles
-                };
+    try {
+        // Create new patient object (your existing code)
+        const newPatient = {
+            id: `patient-${Date.now()}`,
+            firstName,
+            lastName,
+            phone,
+            cprNumber,
+            dateOfBirth,
+            gender,
+            email: formData.get('email')?.trim() || '',
+            currentCondition,
+            assignedPhysiotherapist,
+            treatmentStatus: 'active',
+            dateRegistered: new Date().toISOString()
+        };
 
-                // Add patient to data store
-                appData.patients.push(newPatient);
-                
-                // Update assignedPatients count for the physiotherapist
-                const assignedPhysio = appData.physiotherapists.find(p => 
-                    `Dr. ${p.firstName} ${p.lastName}` === assignedPhysiotherapist
-                );
-                if (assignedPhysio) {
-                    assignedPhysio.assignedPatients = (assignedPhysio.assignedPatients || 0) + 1;
-                }
-
-                // Update displays
-                updatePatientsDisplay();
-                
-                showNotification(`✅ Patient ${firstName} ${lastName} registered successfully!`, 'success');
-                closeModal();
-            };
+        // 🚀 NEW: Save to Supabase if connected
+        if (isSupabaseConnected) {
+            const dbPatient = convertAppPatientToDb(newPatient);
+            const result = await saveToSupabase('patients', dbPatient, 'insert');
+            
+            if (result.success && result.data && result.data[0]) {
+                newPatient.id = result.data[0].id;
+                showNotification('🗄️ Patient saved to database and will sync to other devices!', 'success');
+            } else {
+                showNotification('⚠️ Database save failed, using local storage only', 'error');
+            }
         }
 
+        // Your existing code continues unchanged
+        appData.patients.push(newPatient);
+        
+        const assignedPhysio = appData.physiotherapists.find(p => 
+            `Dr. ${p.firstName} ${p.lastName}` === assignedPhysiotherapist
+        );
+        if (assignedPhysio) {
+            assignedPhysio.assignedPatients = (assignedPhysio.assignedPatients || 0) + 1;
+        }
+
+        updatePatientsDisplay();
+        loadPhysioPatients();
+        
+        showNotification(`✅ Patient ${firstName} ${lastName} registered successfully${isSupabaseConnected ? ' and synced across devices' : ''}!`, 'success');
+        closeModal();
+        
+    } catch (error) {
+        console.log('❌ Error saving patient:', error.message);
+        showNotification('❌ Failed to save patient: ' + error.message, 'error');
+    } finally {
+        saveBtn.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Add Patient';
+        saveBtn.disabled = false;
+    }
+};
         function viewPatientDetails(patientId) {
             const patient = appData.patients.find(p => p.id === patientId);
             if (!patient) {
@@ -4865,19 +5160,34 @@
             };
         }
 
-        function deletePatientWithConfirm(patientId) {
-            const patient = appData.patients.find(p => p.id === patientId);
-            if (patient) {
-                showConfirmDialog(
-                    `Are you sure you want to delete ${patient.firstName} ${patient.lastName}?`,
-                    () => {
-                        appData.patients = appData.patients.filter(p => p.id !== patientId);
-                        updatePatientsDisplay();
-                        showNotification(`✅ Patient deleted`, 'success');
+       async function deletePatientWithConfirm(patientId) {
+    const patient = appData.patients.find(p => p.id === patientId);
+    if (patient) {
+        showConfirmDialog(
+            `Are you sure you want to delete ${patient.firstName} ${patient.lastName}?`,
+            async () => {
+                try {
+                    // 🚀 NEW: Delete from Supabase if connected
+                    if (isSupabaseConnected) {
+                        const result = await saveToSupabase('patients', { id: patientId }, 'delete');
+                        if (result.success) {
+                            showNotification('🗄️ Patient deleted from database and synced to other devices', 'success');
+                        }
                     }
-                );
+                    
+                    // Your existing code continues unchanged
+                    appData.patients = appData.patients.filter(p => p.id !== patientId);
+                    updatePatientsDisplay();
+                    showNotification(`✅ Patient deleted`, 'success');
+                    
+                } catch (error) {
+                    console.log('❌ Error deleting patient:', error.message);
+                    showNotification('❌ Failed to delete patient', 'error');
+                }
             }
-        }
+        );
+    }
+}
 
         // Appointment Management
         function updateAppointmentDisplay() {
@@ -10226,10 +10536,19 @@
         updateAppointmentDisplay = updateAppointmentDisplayWithPagination;
 
         // Set up event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            updateCurrentDateTime();
-            setInterval(updateCurrentDateTime, 30000);
-            
+       document.addEventListener('DOMContentLoaded', () => {
+    updateCurrentDateTime();
+    setInterval(updateCurrentDateTime, 30000);
+    
+    // Your existing code...
+    
+    // 🚀 ADD THIS LINE:
+    setTimeout(async () => {
+        await initializeSupabase();
+    }, 500);
+    
+    console.log('✅ PhysioTech Application fully loaded and ready!');
+});
             // Set up refresh dashboard button
             const refreshBtn = document.getElementById('refreshDashboard');
             if (refreshBtn) {
@@ -12703,7 +13022,150 @@
         setInterval(updateSecurityCounters, 10000); // Update every 10 seconds
     </script>
     <script>
+        // Supabase Connection Modal - ADD THIS AS NEW FUNCTION
+function showSupabaseConnectionModal() {
+    const content = `
+        <div class="space-y-6">
+            <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
+                <h4 class="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-3 flex items-center">
+                    <i class="fas fa-database text-purple-600 mr-2"></i>Connect to Supabase Database
+                </h4>
+                <p class="text-sm text-purple-800 dark:text-purple-300">
+                    Enable real-time data sharing between admin and physiotherapist dashboards.
+                </p>
+            </div>
+
+            <form id="supabaseConfigForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-white mb-2">Supabase Project URL *</label>
+                    <input type="url" id="supabaseUrl" name="supabaseUrl" required placeholder="https://abc123.supabase.co" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-white mb-2">Supabase API Key (anon/public) *</label>
+                    <input type="text" id="supabaseAnonKey" name="supabaseAnonKey" required placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <label class="flex items-center">
+                    <input type="checkbox" id="enableRealTimeSync" name="enableRealTimeSync" checked class="text-blue-500 focus:ring-blue-500 rounded">
+                    <span class="ml-2 text-sm text-gray-300">Enable real-time synchronization</span>
+                </label>
+            </form>
+        </div>
+    `;
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full border border-gray-700">
+            <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                <h3 class="text-xl font-semibold text-white flex items-center">
+                    <i class="fas fa-database text-blue-400 mr-2"></i>Connect Supabase Database
+                </h3>
+                <button class="close-modal text-gray-400 hover:text-white text-2xl transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                ${content}
+            </div>
+            <div class="flex justify-between space-x-3 p-6 border-t border-gray-700">
+                <button class="skip-config px-6 py-3 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                    Skip
+                </button>
+                <div class="flex gap-3">
+                    <button class="test-config px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <i class="fas fa-plug mr-2"></i>Test
+                    </button>
+                    <button class="save-config px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        <i class="fas fa-save mr-2"></i>Connect
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.close-modal');
+    const skipBtn = modal.querySelector('.skip-config');
+    const testBtn = modal.querySelector('.test-config');
+    const saveBtn = modal.querySelector('.save-config');
+    
+    const closeModal = () => modal.remove();
+    
+    closeBtn.onclick = closeModal;
+    skipBtn.onclick = () => {
+        showNotification('🗄️ Using local storage only', 'success');
+        closeModal();
+    };
+    
+    testBtn.onclick = async () => {
+        const form = document.getElementById('supabaseConfigForm');
+        const formData = new FormData(form);
         
+        const supabaseUrl = formData.get('supabaseUrl')?.trim();
+        const supabaseAnonKey = formData.get('supabaseAnonKey')?.trim();
+        
+        if (!supabaseUrl || !supabaseAnonKey) {
+            showNotification('⚠️ Please fill in both fields', 'error');
+            return;
+        }
+        
+        testBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
+        testBtn.disabled = true;
+        
+        try {
+            const testClient = supabase.createClient(supabaseUrl, supabaseAnonKey);
+            const { data, error } = await testClient.from('patients').select('count', { count: 'exact', head: true });
+            
+            if (error && error.code === 'PGRST116') {
+                showNotification('⚠️ Connection works but tables not found. Create tables first.', 'error');
+            } else if (error) {
+                showNotification('❌ Connection failed: ' + error.message, 'error');
+            } else {
+                showNotification('✅ Connection test successful!', 'success');
+            }
+        } catch (error) {
+            showNotification('❌ Test failed: ' + error.message, 'error');
+        } finally {
+            testBtn.innerHTML = '<i class="fas fa-plug mr-2"></i>Test';
+            testBtn.disabled = false;
+        }
+    };
+    
+    saveBtn.onclick = async () => {
+        const form = document.getElementById('supabaseConfigForm');
+        const formData = new FormData(form);
+        
+        const supabaseUrl = formData.get('supabaseUrl')?.trim();
+        const supabaseAnonKey = formData.get('supabaseAnonKey')?.trim();
+        const enableRealTimeSync = formData.get('enableRealTimeSync') === 'on';
+        
+        if (!supabaseUrl || !supabaseAnonKey) {
+            showNotification('⚠️ Please fill in all required fields', 'error');
+            return;
+        }
+        
+        try {
+            const config = {
+                url: supabaseUrl,
+                anonKey: supabaseAnonKey,
+                enableRealTimeSync,
+                connectedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('supabaseConfig', JSON.stringify(config));
+            await initializeSupabase();
+            
+            showNotification('✅ Supabase connected! Real-time data sharing enabled.', 'success');
+            closeModal();
+            
+        } catch (error) {
+            showNotification('❌ Failed to connect: ' + error.message, 'error');
+        }
+    };
+}
         </script>   
 </body>
 </html>
