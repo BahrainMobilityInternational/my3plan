@@ -418,8 +418,103 @@
 
                 <!-- Appointments View -->
                 <div id="appointments" class="view hidden">
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Appointments</h1>
-                    <p class="text-gray-600 dark:text-gray-400">Appointment functionality available in full version.</p>
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Appointment Management</h1>
+                            <p class="text-gray-600 dark:text-gray-400">Schedule and manage patient appointments with real-time sync</p>
+                        </div>
+                        <div class="flex gap-3 mt-4 lg:mt-0">
+                            <button onclick="showScheduleAppointmentModal()" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold">
+                                <i class="fas fa-calendar-plus mr-2"></i>Schedule Appointment
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Today</p>
+                                    <p class="text-2xl font-bold text-blue-600" id="todayAppointments">0</p>
+                                </div>
+                                <div class="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3">
+                                    <i class="fas fa-calendar-day text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">This Week</p>
+                                    <p class="text-2xl font-bold text-green-600" id="weekAppointments">0</p>
+                                </div>
+                                <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
+                                    <i class="fas fa-calendar-week text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Pending</p>
+                                    <p class="text-2xl font-bold text-yellow-600" id="pendingAppointments">0</p>
+                                </div>
+                                <div class="bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
+                                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Completed</p>
+                                    <p class="text-2xl font-bold text-purple-600" id="completedAppointments">0</p>
+                                </div>
+                                <div class="bg-purple-100 dark:bg-purple-900/30 rounded-lg p-3">
+                                    <i class="fas fa-check-circle text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointments Table -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Appointments</h3>
+                            <div class="flex items-center text-sm">
+                                <div class="w-2 h-2 rounded-full mr-2" id="appointmentSyncIndicator"></div>
+                                <span id="appointmentSyncStatus">Local storage</span>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date & Time</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Patient</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Physiotherapist</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Treatment</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="appointmentsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                            </table>
+                        </div>
+
+                        <div id="noAppointmentsFound" class="text-center py-12 hidden">
+                            <div class="max-w-md mx-auto">
+                                <i class="fas fa-calendar-times text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Appointments Scheduled</h3>
+                                <p class="text-gray-500 dark:text-gray-500 mb-6">Schedule your first appointment to get started.</p>
+                                <button onclick="showScheduleAppointmentModal()" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition-colors font-semibold">
+                                    <i class="fas fa-calendar-plus mr-2"></i>Schedule First Appointment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Physiotherapists View -->
@@ -541,6 +636,9 @@
                     <button class="physio-nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physio-patients">
                         <i class="fas fa-users mr-3"></i>All Patients
                     </button>
+                    <button class="physio-nav-btn w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-view="physio-appointments">
+                        <i class="fas fa-calendar mr-3"></i>My Appointments
+                    </button>
                 </nav>
             </div>
 
@@ -605,6 +703,101 @@
                             <i class="fas fa-user-md text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
                             <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Patients Available</h3>
                             <p class="text-gray-500 dark:text-gray-500 mb-6">Patients will appear here when added by administrators or synced from the database.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Appointments View -->
+                <div id="physio-appointments" class="physio-view hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Appointments</h1>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-calendar mr-2"></i>
+                                <span id="physioAppointmentCount">Total: 0 appointments</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <div class="w-2 h-2 rounded-full mr-2" id="physioAppointmentSyncIndicator"></div>
+                                <span id="physioAppointmentSyncStatus">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dr. Mariam's Appointment Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Today</p>
+                                    <p class="text-2xl font-bold text-blue-600" id="physioTodayAppointments">0</p>
+                                </div>
+                                <div class="bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3">
+                                    <i class="fas fa-calendar-day text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">This Week</p>
+                                    <p class="text-2xl font-bold text-green-600" id="physioWeekAppointments">0</p>
+                                </div>
+                                <div class="bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
+                                    <i class="fas fa-calendar-week text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Upcoming</p>
+                                    <p class="text-2xl font-bold text-purple-600" id="physioUpcomingAppointments">0</p>
+                                </div>
+                                <div class="bg-purple-100 dark:bg-purple-900/30 rounded-lg p-3">
+                                    <i class="fas fa-clock text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Completed</p>
+                                    <p class="text-2xl font-bold text-orange-600" id="physioCompletedAppointments">0</p>
+                                </div>
+                                <div class="bg-orange-100 dark:bg-orange-900/30 rounded-lg p-3">
+                                    <i class="fas fa-check-circle text-orange-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- My Appointments Grid -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">My Schedule</h3>
+                            <div class="flex items-center text-sm">
+                                <div class="w-2 h-2 rounded-full mr-2" id="physioScheduleSyncIndicator"></div>
+                                <span id="physioScheduleSyncStatus">Loading...</span>
+                            </div>
+                        </div>
+                        
+                        <div id="physioAppointmentsGrid" class="space-y-4"></div>
+
+                        <div id="physioNoAppointmentsFound" class="text-center py-12">
+                            <div class="max-w-md mx-auto">
+                                <i class="fas fa-calendar-times text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Appointments Scheduled</h3>
+                                <p class="text-gray-500 dark:text-gray-500 mb-6">Appointments scheduled by the admin will appear here automatically.</p>
+                                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                                    <p class="text-sm text-blue-800 dark:text-blue-300">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        ${isSupabaseConnected ? 
+                                            'Real-time sync is active - appointments will appear instantly when scheduled by admin!' : 
+                                            'Connect to database to see appointments scheduled by admin in real-time.'
+                                        }
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -758,12 +951,45 @@
                     console.log(`✅ Loaded ${patients.length} patients from database`);
                 }
 
-                console.log('✅ Data loaded from Supabase successfully');
+                // Load appointments
+                const { data: appointments, error: appointmentsError } = await supabaseClient
+                    .from('appointments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (!appointmentsError && appointments) {
+                    appointments.forEach(dbAppointment => {
+                        const existingIndex = appData.appointments.findIndex(a => a.id === dbAppointment.id);
+                        const convertedAppointment = {
+                            id: dbAppointment.id,
+                            patientId: dbAppointment.patient_id,
+                            patientName: dbAppointment.patient_name,
+                            physiotherapist: dbAppointment.physiotherapist,
+                            date: dbAppointment.appointment_date,
+                            time: dbAppointment.appointment_time,
+                            duration: dbAppointment.duration,
+                            treatmentType: dbAppointment.treatment_type,
+                            status: dbAppointment.status,
+                            notes: dbAppointment.notes,
+                            createdDate: dbAppointment.created_at
+                        };
+                        
+                        if (existingIndex === -1) {
+                            appData.appointments.push(convertedAppointment);
+                        } else {
+                            appData.appointments[existingIndex] = convertedAppointment;
+                        }
+                    });
+                    console.log(`✅ Loaded ${appointments.length} appointments from database`);
+                }
+
+                console.log('✅ All data loaded from Supabase successfully');
                 updateDatabaseStatusIndicators();
                 
                 // Update UI after loading data
                 updateDashboardStats();
                 updatePatientsDisplay();
+                updateAppointmentDisplay();
                 loadPhysioPatients();
 
             } catch (error) {
@@ -831,7 +1057,20 @@
                     })
                     .subscribe();
 
-                console.log('🔄 Real-time subscriptions activated');
+                // Subscribe to appointments changes
+                supabaseClient
+                    .channel('appointments_changes')
+                    .on('postgres_changes', { 
+                        event: '*', 
+                        schema: 'public', 
+                        table: 'appointments' 
+                    }, (payload) => {
+                        console.log('📡 Real-time update - Appointments:', payload);
+                        handleRealTimeUpdate('appointments', payload);
+                    })
+                    .subscribe();
+
+                console.log('🔄 Real-time subscriptions activated for patients and appointments');
                 
             } catch (error) {
                 console.log('❌ Failed to set up real-time subscriptions:', error.message);
@@ -870,6 +1109,64 @@
                     updatePatientsDisplay();
                     loadPhysioPatients();
                     showNotification(`🗑️ Patient removed from database`, 'success');
+                } else if (eventType === 'INSERT' && table === 'appointments') {
+                    // NEW APPOINTMENT ADDED - SYNC TO PHYSIOTHERAPIST
+                    const newAppointment = {
+                        id: newRecord.id,
+                        patientId: newRecord.patient_id,
+                        patientName: newRecord.patient_name,
+                        physiotherapist: newRecord.physiotherapist,
+                        date: newRecord.appointment_date,
+                        time: newRecord.appointment_time,
+                        duration: newRecord.duration,
+                        treatmentType: newRecord.treatment_type,
+                        status: newRecord.status,
+                        notes: newRecord.notes,
+                        createdDate: newRecord.created_at
+                    };
+                    
+                    if (!appData.appointments.find(a => a.id === newAppointment.id)) {
+                        appData.appointments.push(newAppointment);
+                        updateAppointmentDisplay();
+                        
+                        // Show notification if this appointment is for Dr. Mariam
+                        if (newAppointment.physiotherapist === 'Dr. Mariam Abdulatheem Ali') {
+                            showNotification(`📅 New appointment synced: ${newAppointment.patientName} on ${newAppointment.date} at ${newAppointment.time}`, 'success');
+                        }
+                    }
+                } else if (eventType === 'DELETE' && table === 'appointments') {
+                    const deletedAppointment = appData.appointments.find(a => a.id === oldRecord.id);
+                    appData.appointments = appData.appointments.filter(a => a.id !== oldRecord.id);
+                    updateAppointmentDisplay();
+                    
+                    if (deletedAppointment && deletedAppointment.physiotherapist === 'Dr. Mariam Abdulatheem Ali') {
+                        showNotification(`🗑️ Appointment cancelled: ${deletedAppointment.patientName}`, 'success');
+                    }
+                } else if (eventType === 'UPDATE' && table === 'appointments') {
+                    // APPOINTMENT UPDATED - SYNC CHANGES
+                    const updatedAppointment = {
+                        id: newRecord.id,
+                        patientId: newRecord.patient_id,
+                        patientName: newRecord.patient_name,
+                        physiotherapist: newRecord.physiotherapist,
+                        date: newRecord.appointment_date,
+                        time: newRecord.appointment_time,
+                        duration: newRecord.duration,
+                        treatmentType: newRecord.treatment_type,
+                        status: newRecord.status,
+                        notes: newRecord.notes,
+                        createdDate: newRecord.created_at
+                    };
+                    
+                    const index = appData.appointments.findIndex(a => a.id === updatedAppointment.id);
+                    if (index !== -1) {
+                        appData.appointments[index] = updatedAppointment;
+                        updateAppointmentDisplay();
+                        
+                        if (updatedAppointment.physiotherapist === 'Dr. Mariam Abdulatheem Ali') {
+                            showNotification(`📝 Appointment updated: ${updatedAppointment.patientName}`, 'success');
+                        }
+                    }
                 }
 
                 updateDashboardStats();
@@ -1186,6 +1483,8 @@
                 targetView.classList.remove('hidden');
                 if (viewName === 'patients') {
                     updatePatientsDisplay();
+                } else if (viewName === 'appointments') {
+                    updateAppointmentDisplay();
                 }
             }
         }
@@ -1534,7 +1833,208 @@
                 targetView.classList.remove('hidden');
                 if (viewName === 'physio-patients') {
                     loadPhysioPatients();
+                } else if (viewName === 'physio-appointments') {
+                    loadPhysioAppointments();
                 }
+            }
+        }
+
+        // Load Dr. Mariam's appointments
+        function loadPhysioAppointments() {
+            const appointmentsGrid = document.getElementById('physioAppointmentsGrid');
+            const emptyState = document.getElementById('physioNoAppointmentsFound');
+            const appointmentCountEl = document.getElementById('physioAppointmentCount');
+            const physioAppointmentSyncIndicator = document.getElementById('physioAppointmentSyncIndicator');
+            const physioAppointmentSyncStatus = document.getElementById('physioAppointmentSyncStatus');
+            const physioScheduleSyncIndicator = document.getElementById('physioScheduleSyncIndicator');
+            const physioScheduleSyncStatus = document.getElementById('physioScheduleSyncStatus');
+            
+            // Filter appointments for Dr. Mariam
+            const allAppointments = appData.appointments || [];
+            const myAppointments = allAppointments.filter(a => 
+                a.physiotherapist === 'Dr. Mariam Abdulatheem Ali'
+            );
+
+            if (appointmentCountEl) {
+                appointmentCountEl.textContent = `Total: ${myAppointments.length} appointment${myAppointments.length !== 1 ? 's' : ''}`;
+            }
+
+            // Update sync indicators
+            if (physioAppointmentSyncIndicator && physioAppointmentSyncStatus) {
+                if (isSupabaseConnected) {
+                    physioAppointmentSyncIndicator.className = 'w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse';
+                    physioAppointmentSyncStatus.textContent = 'Database synced';
+                } else {
+                    physioAppointmentSyncIndicator.className = 'w-2 h-2 bg-yellow-500 rounded-full mr-2';
+                    physioAppointmentSyncStatus.textContent = 'Local storage';
+                }
+            }
+
+            if (physioScheduleSyncIndicator && physioScheduleSyncStatus) {
+                if (isSupabaseConnected) {
+                    physioScheduleSyncIndicator.className = 'w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse';
+                    physioScheduleSyncStatus.textContent = 'Real-time sync active';
+                } else {
+                    physioScheduleSyncIndicator.className = 'w-2 h-2 bg-yellow-500 rounded-full mr-2';
+                    physioScheduleSyncStatus.textContent = 'Local storage';
+                }
+            }
+
+            // Update appointment stats for Dr. Mariam
+            const today = new Date().toISOString().split('T')[0];
+            const todayAppointments = myAppointments.filter(a => a.date === today);
+            const upcomingAppointments = myAppointments.filter(a => a.date >= today && (a.status === 'scheduled' || a.status === 'confirmed'));
+            const completedAppointments = myAppointments.filter(a => a.status === 'completed');
+
+            const physioTodayEl = document.getElementById('physioTodayAppointments');
+            const physioWeekEl = document.getElementById('physioWeekAppointments');
+            const physioUpcomingEl = document.getElementById('physioUpcomingAppointments');
+            const physioCompletedEl = document.getElementById('physioCompletedAppointments');
+
+            if (physioTodayEl) physioTodayEl.textContent = todayAppointments.length;
+            if (physioWeekEl) physioWeekEl.textContent = myAppointments.length;
+            if (physioUpcomingEl) physioUpcomingEl.textContent = upcomingAppointments.length;
+            if (physioCompletedEl) physioCompletedEl.textContent = completedAppointments.length;
+
+            if (myAppointments.length === 0) {
+                if (appointmentsGrid) appointmentsGrid.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+                
+                if (appointmentsGrid) {
+                    // Sort appointments by date and time
+                    const sortedAppointments = myAppointments.sort((a, b) => {
+                        const dateTimeA = new Date(a.date + 'T' + a.time);
+                        const dateTimeB = new Date(b.date + 'T' + b.time);
+                        return dateTimeA - dateTimeB;
+                    });
+
+                    appointmentsGrid.innerHTML = sortedAppointments.map(appointment => {
+                        const appointmentDate = new Date(appointment.date + 'T' + appointment.time);
+                        const formattedDate = appointmentDate.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        const formattedTime = appointmentDate.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+
+                        const statusColors = {
+                            'scheduled': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                            'confirmed': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+                            'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+                            'completed': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+                            'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                        };
+
+                        const isToday = appointment.date === today;
+                        const cardBorder = isToday ? 'border-l-4 border-green-500' : 'border-l-4 border-secondary';
+
+                        return `
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow ${cardBorder}">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-calendar text-white text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            ${appointment.patientName}
+                                        </h3>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            ${formattedDate} at ${formattedTime}
+                                        </p>
+                                        <p class="text-xs ${isSupabaseConnected ? 'text-green-600' : 'text-yellow-600'} dark:${isSupabaseConnected ? 'text-green-400' : 'text-yellow-400'} mt-1 flex items-center">
+                                            <i class="fas fa-${isSupabaseConnected ? 'cloud' : 'hdd'} mr-1"></i>
+                                            ${isSupabaseConnected ? 'Synced from admin' : 'Local only'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="px-3 py-1 ${statusColors[appointment.status] || statusColors.scheduled} rounded-full text-xs font-semibold">
+                                        ${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                                    </span>
+                                    ${isToday ? `
+                                        <span class="px-2 py-1 bg-green-500 text-white rounded-full text-xs font-bold">
+                                            TODAY
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 border border-blue-200 dark:border-blue-800">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-blue-700 dark:text-blue-300 font-medium">Treatment:</span>
+                                        <p class="text-blue-900 dark:text-blue-100">${appointment.treatmentType}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-blue-700 dark:text-blue-300 font-medium">Duration:</span>
+                                        <p class="text-blue-900 dark:text-blue-100">${appointment.duration} minutes</p>
+                                    </div>
+                                </div>
+                                ${appointment.notes ? `
+                                    <div class="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                                        <span class="text-blue-700 dark:text-blue-300 font-medium">Notes:</span>
+                                        <p class="text-blue-800 dark:text-blue-200 text-sm mt-1">${appointment.notes}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button onclick="viewAppointment('${appointment.id}')" class="flex-1 bg-secondary text-white px-4 py-2 rounded-lg hover:bg-sage transition-colors text-sm">
+                                    <i class="fas fa-eye mr-1"></i>View Details
+                                </button>
+                                ${appointment.status === 'scheduled' ? `
+                                    <button onclick="markAppointmentComplete('${appointment.id}')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                        <i class="fas fa-check mr-1"></i>Complete
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        // Mark appointment as complete (for physiotherapist)
+        async function markAppointmentComplete(appointmentId) {
+            const appointment = appData.appointments.find(a => a.id === appointmentId);
+            if (!appointment) {
+                showNotification('❌ Appointment not found', 'error');
+                return;
+            }
+
+            try {
+                // Update status to completed
+                appointment.status = 'completed';
+
+                // Save to Supabase if connected
+                if (isSupabaseConnected) {
+                    const dbAppointment = {
+                        id: appointment.id,
+                        status: 'completed'
+                    };
+                    const result = await saveToSupabase('appointments', dbAppointment, 'update');
+                    
+                    if (result.success) {
+                        showNotification('🗄️ Appointment marked as completed and synced to admin!', 'success');
+                    }
+                }
+
+                // Update display
+                loadPhysioAppointments();
+                updateAppointmentDisplay();
+                
+            } catch (error) {
+                console.log('❌ Error completing appointment:', error.message);
+                showNotification('❌ Failed to update appointment', 'error');
             }
         }
 
@@ -1916,15 +2416,553 @@
             showNotification('✅ Dashboard refreshed!', 'success');
         }
 
-        // Placeholder functions for missing features
+        // ========== APPOINTMENT FUNCTIONALITY WITH REAL-TIME SYNC ==========
+
+        // Update appointment display
         function updateAppointmentDisplay() {
-            console.log('Appointment display updated');
+            const appointments = appData.appointments || [];
+            const tbody = document.getElementById('appointmentsTableBody');
+            const emptyState = document.getElementById('noAppointmentsFound');
+            
+            // Update appointment stats
+            const today = new Date().toISOString().split('T')[0];
+            const todayAppointments = appointments.filter(a => a.date === today);
+            const pendingAppointments = appointments.filter(a => a.status === 'scheduled' || a.status === 'pending');
+            const completedAppointments = appointments.filter(a => a.status === 'completed');
+            
+            const todayEl = document.getElementById('todayAppointments');
+            const weekEl = document.getElementById('weekAppointments');
+            const pendingEl = document.getElementById('pendingAppointments');
+            const completedEl = document.getElementById('completedAppointments');
+            const appointmentSyncIndicator = document.getElementById('appointmentSyncIndicator');
+            const appointmentSyncStatus = document.getElementById('appointmentSyncStatus');
+            
+            if (todayEl) todayEl.textContent = todayAppointments.length;
+            if (weekEl) weekEl.textContent = appointments.length;
+            if (pendingEl) pendingEl.textContent = pendingAppointments.length;
+            if (completedEl) completedEl.textContent = completedAppointments.length;
+            
+            // Update sync status
+            if (appointmentSyncIndicator && appointmentSyncStatus) {
+                if (isSupabaseConnected) {
+                    appointmentSyncIndicator.className = 'w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse';
+                    appointmentSyncStatus.textContent = 'Database synced';
+                } else {
+                    appointmentSyncIndicator.className = 'w-2 h-2 bg-yellow-500 rounded-full mr-2';
+                    appointmentSyncStatus.textContent = 'Local storage';
+                }
+            }
+
+            if (appointments.length === 0) {
+                if (tbody) tbody.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+                
+                if (tbody) {
+                    tbody.innerHTML = appointments.map(appointment => {
+                        const appointmentDate = new Date(appointment.date + 'T' + appointment.time);
+                        const formattedDate = appointmentDate.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        const formattedTime = appointmentDate.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+
+                        const statusColors = {
+                            'scheduled': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                            'confirmed': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+                            'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+                            'completed': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+                            'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                        };
+
+                        return `
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                    <div class="font-medium">${formattedDate}</div>
+                                    <div class="text-gray-500 dark:text-gray-400">${formattedTime}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                    <div class="font-medium">${appointment.patientName}</div>
+                                    <div class="text-gray-500 dark:text-gray-400 flex items-center">
+                                        <i class="fas fa-${isSupabaseConnected ? 'cloud' : 'hdd'} mr-1"></i>
+                                        ${isSupabaseConnected ? 'Synced' : 'Local'}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    ${appointment.physiotherapist}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    <div>${appointment.treatmentType}</div>
+                                    <div class="text-xs">${appointment.duration} min</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[appointment.status] || statusColors.scheduled}">
+                                        ${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex gap-2">
+                                        <button onclick="viewAppointment('${appointment.id}')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="editAppointment('${appointment.id}')" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteAppointmentWithConfirm('${appointment.id}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+            
+            console.log('📅 Appointment display updated');
         }
 
+        // Schedule appointment modal - REAL FUNCTIONALITY
         function showScheduleAppointmentModal() {
-            showNotification('📅 Schedule appointment modal - coming soon!', 'success');
+            const content = `
+                <form id="scheduleAppointmentForm" class="space-y-6">
+                    <div class="space-y-4">
+                        <h4 class="text-lg font-semibold text-teal-400 mb-4 flex items-center">
+                            <i class="fas fa-calendar-plus text-teal-400 mr-2"></i>Schedule New Appointment
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Select Patient *</label>
+                                <select id="appointmentPatient" name="patientId" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                    <option value="">Choose a patient</option>
+                                    ${appData.patients.map(patient => `
+                                        <option value="${patient.id}">${patient.firstName} ${patient.lastName} - ${patient.cprNumber}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Physiotherapist *</label>
+                                <select id="appointmentPhysiotherapist" name="physiotherapist" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                    <option value="">Choose physiotherapist</option>
+                                    ${appData.physiotherapists.map(physio => `
+                                        <option value="Dr. ${physio.firstName} ${physio.lastName}">Dr. ${physio.firstName} ${physio.lastName}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Date *</label>
+                                <input type="date" id="appointmentDate" name="date" required min="${new Date().toISOString().split('T')[0]}" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Time *</label>
+                                <select id="appointmentTime" name="time" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                    <option value="">Select time</option>
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="08:30">08:30 AM</option>
+                                    <option value="09:00">09:00 AM</option>
+                                    <option value="09:30">09:30 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="10:30">10:30 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="11:30">11:30 AM</option>
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="12:30">12:30 PM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="13:30">01:30 PM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="14:30">02:30 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="15:30">03:30 PM</option>
+                                    <option value="16:00">04:00 PM</option>
+                                    <option value="16:30">04:30 PM</option>
+                                    <option value="17:00">05:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Duration</label>
+                                <select id="appointmentDuration" name="duration" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                    <option value="30">30 minutes</option>
+                                    <option value="45" selected>45 minutes</option>
+                                    <option value="60">60 minutes</option>
+                                    <option value="90">90 minutes</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Treatment Type</label>
+                                <select id="treatmentType" name="treatmentType" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                    <option value="Initial Assessment">Initial Assessment</option>
+                                    <option value="Follow-up Session">Follow-up Session</option>
+                                    <option value="Back Pain Therapy">Back Pain Therapy</option>
+                                    <option value="Knee Rehabilitation">Knee Rehabilitation</option>
+                                    <option value="Shoulder Treatment">Shoulder Treatment</option>
+                                    <option value="Sports Rehabilitation">Sports Rehabilitation</option>
+                                    <option value="Manual Therapy">Manual Therapy</option>
+                                    <option value="Exercise Therapy">Exercise Therapy</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Appointment Notes</label>
+                            <textarea id="appointmentNotes" name="notes" rows="3" placeholder="Add any specific notes or special instructions for this appointment..." class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                            <select id="appointmentStatus" name="status" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                                <option value="scheduled">Scheduled</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="pending">Pending Confirmation</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                            <h5 class="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-blue-600 mr-2"></i>Real-Time Sync
+                            </h5>
+                            <p class="text-sm text-blue-800 dark:text-blue-300">
+                                ${isSupabaseConnected ? 
+                                    '✅ This appointment will be instantly visible to Dr. Mariam on her dashboard!' : 
+                                    '⚠️ Connect to database to enable real-time sharing with physiotherapist.'
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </form>
+            `;
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+                    <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                        <h3 class="text-xl font-semibold text-white flex items-center">
+                            <i class="fas fa-calendar-plus text-teal-400 mr-2"></i>Schedule New Appointment
+                        </h3>
+                        <button class="close-modal text-gray-400 hover:text-white text-2xl transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        ${content}
+                    </div>
+                    <div class="flex justify-end space-x-3 p-6 border-t border-gray-700">
+                        <button class="cancel-modal px-6 py-3 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                            Cancel
+                        </button>
+                        <button class="save-appointment px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium">
+                            <i class="fas fa-calendar-check mr-2"></i>Schedule Appointment
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            const closeBtn = modal.querySelector('.close-modal');
+            const cancelBtn = modal.querySelector('.cancel-modal');
+            const saveBtn = modal.querySelector('.save-appointment');
+            
+            const closeModal = () => modal.remove();
+            
+            closeBtn.onclick = closeModal;
+            cancelBtn.onclick = closeModal;
+            
+            saveBtn.onclick = async () => {
+                const form = document.getElementById('scheduleAppointmentForm');
+                const formData = new FormData(form);
+                
+                const patientId = formData.get('patientId');
+                const physiotherapist = formData.get('physiotherapist');
+                const date = formData.get('date');
+                const time = formData.get('time');
+                const duration = formData.get('duration') || '45';
+                const treatmentType = formData.get('treatmentType');
+                const notes = formData.get('notes')?.trim() || '';
+                const status = formData.get('status') || 'scheduled';
+
+                if (!patientId || !physiotherapist || !date || !time) {
+                    showNotification('⚠️ Please fill in all required fields', 'error');
+                    return;
+                }
+
+                const patient = appData.patients.find(p => p.id === patientId);
+                if (!patient) {
+                    showNotification('❌ Patient not found', 'error');
+                    return;
+                }
+
+                // Show loading state
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Scheduling...';
+                saveBtn.disabled = true;
+
+                try {
+                    const newAppointment = {
+                        id: `appointment-${Date.now()}`,
+                        patientId,
+                        patientName: `${patient.firstName} ${patient.lastName}`,
+                        physiotherapist,
+                        date,
+                        time,
+                        duration: parseInt(duration),
+                        treatmentType,
+                        status,
+                        notes,
+                        createdDate: new Date().toISOString()
+                    };
+
+                    // Save to Supabase if connected
+                    if (isSupabaseConnected) {
+                        const dbAppointment = convertAppAppointmentToDb(newAppointment);
+                        const result = await saveToSupabase('appointments', dbAppointment, 'insert');
+                        
+                        if (result.success && result.data && result.data[0]) {
+                            newAppointment.id = result.data[0].id;
+                            showNotification('🗄️ Appointment saved to database and will sync to Dr. Mariam\'s dashboard!', 'success');
+                        } else {
+                            showNotification('⚠️ Database save failed, using local storage only', 'error');
+                        }
+                    }
+
+                    // Add to local data
+                    appData.appointments.push(newAppointment);
+                    updateAppointmentDisplay();
+                    
+                    showNotification(`✅ Appointment scheduled for ${patient.firstName} ${patient.lastName} on ${date} at ${time}${isSupabaseConnected ? ' - Dr. Mariam will see this instantly!' : ''}`, 'success');
+                    closeModal();
+                    
+                } catch (error) {
+                    console.log('❌ Error scheduling appointment:', error.message);
+                    showNotification('❌ Failed to schedule appointment: ' + error.message, 'error');
+                } finally {
+                    saveBtn.innerHTML = '<i class="fas fa-calendar-check mr-2"></i>Schedule Appointment';
+                    saveBtn.disabled = false;
+                }
+            };
         }
 
+        // Convert appointment format for database
+        function convertAppAppointmentToDb(appAppointment) {
+            return {
+                id: appAppointment.id?.startsWith('appointment-') ? undefined : appAppointment.id,
+                patient_id: appAppointment.patientId,
+                patient_name: appAppointment.patientName,
+                physiotherapist: appAppointment.physiotherapist,
+                appointment_date: appAppointment.date,
+                appointment_time: appAppointment.time,
+                duration: appAppointment.duration,
+                treatment_type: appAppointment.treatmentType,
+                status: appAppointment.status,
+                notes: appAppointment.notes
+            };
+        }
+
+        // View appointment details
+        function viewAppointment(appointmentId) {
+            const appointment = appData.appointments.find(a => a.id === appointmentId);
+            if (!appointment) {
+                showNotification('❌ Appointment not found', 'error');
+                return;
+            }
+
+            const patient = appData.patients.find(p => p.id === appointment.patientId);
+            const patientInfo = patient ? `${patient.firstName} ${patient.lastName} (${patient.cprNumber})` : appointment.patientName;
+
+            const appointmentDate = new Date(appointment.date + 'T' + appointment.time);
+            const formattedDateTime = appointmentDate.toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const content = `
+                <div class="space-y-6">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+                        <h4 class="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center">
+                            <i class="fas fa-calendar-check text-blue-600 mr-2"></i>Appointment Details
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Patient:</span>
+                                    <p class="text-blue-900 dark:text-blue-100 font-semibold">${patientInfo}</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Date & Time:</span>
+                                    <p class="text-blue-900 dark:text-blue-100 font-semibold">${formattedDateTime}</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Duration:</span>
+                                    <p class="text-blue-900 dark:text-blue-100 font-semibold">${appointment.duration} minutes</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Physiotherapist:</span>
+                                    <p class="text-blue-900 dark:text-blue-100 font-semibold">${appointment.physiotherapist}</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Treatment Type:</span>
+                                    <p class="text-blue-900 dark:text-blue-100 font-semibold">${appointment.treatmentType}</p>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Status:</span>
+                                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                        ${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${appointment.notes ? `
+                            <div class="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Notes:</span>
+                                <p class="text-blue-800 dark:text-blue-200 mt-1">${appointment.notes}</p>
+                            </div>
+                        ` : ''}
+
+                        <div class="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-${isSupabaseConnected ? 'cloud' : 'hdd'} text-blue-600 mr-2"></i>
+                                <span class="text-blue-700 dark:text-blue-300">
+                                    ${isSupabaseConnected ? 'Synced to database - visible to physiotherapist' : 'Local storage only'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+                    <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                        <h3 class="text-xl font-semibold text-white flex items-center">
+                            <i class="fas fa-eye text-blue-400 mr-2"></i>View Appointment Details
+                        </h3>
+                        <button class="close-modal text-gray-400 hover:text-white text-2xl transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        ${content}
+                    </div>
+                    <div class="flex justify-end space-x-3 p-6 border-t border-gray-700">
+                        <button onclick="editAppointment('${appointment.id}'); this.closest('.fixed').remove();" class="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+                            <i class="fas fa-edit mr-2"></i>Edit
+                        </button>
+                        <button class="close-modal px-6 py-3 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            const closeBtns = modal.querySelectorAll('.close-modal');
+            closeBtns.forEach(btn => {
+                btn.onclick = () => modal.remove();
+            });
+        }
+
+        // Edit appointment
+        function editAppointment(appointmentId) {
+            showNotification(`✏️ Edit appointment functionality coming soon!`, 'success');
+        }
+
+        // Delete appointment with confirmation
+        async function deleteAppointmentWithConfirm(appointmentId) {
+            const appointment = appData.appointments.find(a => a.id === appointmentId);
+            if (appointment) {
+                showConfirmDialog(
+                    `Are you sure you want to cancel the appointment with ${appointment.patientName}?`,
+                    async () => {
+                        try {
+                            // Delete from Supabase if connected
+                            if (isSupabaseConnected) {
+                                const result = await saveToSupabase('appointments', { id: appointmentId }, 'delete');
+                                if (result.success) {
+                                    showNotification('🗄️ Appointment cancelled in database and synced', 'success');
+                                }
+                            }
+                            
+                            // Remove from local data
+                            appData.appointments = appData.appointments.filter(a => a.id !== appointmentId);
+                            updateAppointmentDisplay();
+                            
+                        } catch (error) {
+                            console.log('❌ Error cancelling appointment:', error.message);
+                            showNotification('❌ Failed to cancel appointment', 'error');
+                        }
+                    }
+                );
+            }
+        }
+
+        // Load appointments from database
+        async function loadAppointmentsFromSupabase() {
+            if (!isSupabaseConnected) return;
+
+            try {
+                const { data: appointments, error: appointmentsError } = await supabaseClient
+                    .from('appointments')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (!appointmentsError && appointments) {
+                    appointments.forEach(dbAppointment => {
+                        const existingIndex = appData.appointments.findIndex(a => a.id === dbAppointment.id);
+                        const convertedAppointment = {
+                            id: dbAppointment.id,
+                            patientId: dbAppointment.patient_id,
+                            patientName: dbAppointment.patient_name,
+                            physiotherapist: dbAppointment.physiotherapist,
+                            date: dbAppointment.appointment_date,
+                            time: dbAppointment.appointment_time,
+                            duration: dbAppointment.duration,
+                            treatmentType: dbAppointment.treatment_type,
+                            status: dbAppointment.status,
+                            notes: dbAppointment.notes,
+                            createdDate: dbAppointment.created_at
+                        };
+                        
+                        if (existingIndex === -1) {
+                            appData.appointments.push(convertedAppointment);
+                        } else {
+                            appData.appointments[existingIndex] = convertedAppointment;
+                        }
+                    });
+                    console.log(`✅ Loaded ${appointments.length} appointments from database`);
+                }
+
+                updateAppointmentDisplay();
+
+            } catch (error) {
+                console.log('❌ Failed to load appointments from Supabase:', error.message);
+            }
+        }
+
+        // Other placeholder functions
         function exportPatients() {
             showNotification('📤 Export patients - coming soon!', 'success');
         }
@@ -1932,6 +2970,8 @@
         function saveAllSettings() {
             showNotification('💾 Settings saved!', 'success');
         }
+
+        // ========== END APPOINTMENT FUNCTIONALITY ==========
 
         // Set up event listeners - FIXED
         document.addEventListener('DOMContentLoaded', async () => {
