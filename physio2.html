@@ -3504,6 +3504,13 @@
                 updateComplaintsDisplay();
                 updatePhysiotherapistsDisplay();
                 
+                // REFRESH ALL CHARTS WITH REAL SUPABASE DATA
+                setTimeout(() => {
+                    updateAllChartsWithRealData();
+                    updateDashboardStatsWithRealData();
+                    console.log('📊 Charts refreshed with real Supabase data!');
+                }, 1000);
+                
                 showNotification('✅ Data loaded from Supabase successfully!', 'success');
                 
             } catch (error) {
@@ -11765,13 +11772,17 @@
         function createAppointmentVolumeChart() {
             const ctx = document.getElementById('appointmentVolumeChart');
             if (ctx) {
+                // Calculate REAL weekly appointment volume from Supabase
+                const appointments = appData.appointments || [];
+                const realVolumeData = calculateWeeklyAppointmentVolume(appointments);
+                
                 chartInstances.appointmentVolume = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
                         datasets: [{
                             label: 'Appointments',
-                            data: [12, 15, 14, 18, 11, 8, 4],
+                            data: realVolumeData,
                             backgroundColor: [
                                 '#3B82F6', '#10B981', '#F59E0B', '#EF4444', 
                                 '#8B5CF6', '#06B6D4', '#84CC16'
@@ -11814,13 +11825,16 @@
         function createRevenueChart() {
             const ctx = document.getElementById('revenueChart');
             if (ctx) {
+                // Calculate REAL monthly revenue from Supabase appointments
+                const realRevenueData = calculateMonthlyRevenueTrends();
+                
                 chartInstances.revenue = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: ['January', 'February', 'March', 'April', 'May', 'June'],
                         datasets: [{
                             label: 'Revenue (BHD)',
-                            data: [3200, 3850, 4250, 4650, 4100, 4450],
+                            data: realRevenueData,
                             borderColor: '#10B981',
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
                             fill: true,
