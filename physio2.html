@@ -15873,10 +15873,7 @@
 
         // Calculate real patient age distribution
         function calculateRealPatientAgeDistribution(patients) {
-            if (patients.length === 0) {
-                return [5, 15, 25, 12, 3]; // Default fallback
-            }
-            
+            // ALWAYS show real data, even if empty - NO FAKE FALLBACKS
             const ageGroups = [
                 getPatientsByAgeRange(patients, 0, 17).length,    // 0-17
                 getPatientsByAgeRange(patients, 18, 35).length,   // 18-35
@@ -15885,34 +15882,28 @@
                 getPatientsByAgeRange(patients, 75, 150).length   // 75+
             ];
             
-            console.log('📊 Real patient age distribution calculated:', ageGroups);
+            console.log('📊 REAL patient age distribution (no fallbacks):', ageGroups, 'from', patients.length, 'patients');
             return ageGroups;
         }
 
         // Calculate real patient gender distribution
         function calculateRealPatientGenderDistribution(patients) {
-            if (patients.length === 0) {
-                return [45, 55]; // Default fallback
-            }
-            
+            // ALWAYS show real data, even if empty - NO FAKE FALLBACKS
             const maleCount = patients.filter(p => p.gender === 'male').length;
             const femaleCount = patients.filter(p => p.gender === 'female').length;
             
-            console.log('📊 Real gender distribution calculated:', [maleCount, femaleCount]);
+            console.log('📊 REAL gender distribution (no fallbacks):', [maleCount, femaleCount], 'from', patients.length, 'patients');
             return [maleCount, femaleCount];
         }
 
         // Calculate real treatment status distribution
         function calculateRealTreatmentStatusDistribution(patients) {
-            if (patients.length === 0) {
-                return [70, 25, 5]; // Default fallback
-            }
-            
+            // ALWAYS show real data, even if empty - NO FAKE FALLBACKS
             const activeCount = patients.filter(p => p.treatmentStatus === 'active').length;
             const completedCount = patients.filter(p => p.treatmentStatus === 'completed').length;
             const inactiveCount = patients.filter(p => ['inactive', 'on-hold'].includes(p.treatmentStatus)).length;
             
-            console.log('📊 Real treatment status distribution calculated:', [activeCount, completedCount, inactiveCount]);
+            console.log('📊 REAL treatment status distribution (no fallbacks):', [activeCount, completedCount, inactiveCount], 'from', patients.length, 'patients');
             return [activeCount, completedCount, inactiveCount];
         }
 
