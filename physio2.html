@@ -2689,6 +2689,36 @@
                 });
             },
 
+            // Track User Activity
+            trackUserActivity() {
+                const activeUser = this.getCurrentUser();
+                if (activeUser) {
+                    const now = Date.now();
+                    const lastActivity = this.state.lastActivity.get(activeUser.email) || 0;
+                    
+                    // Only update if more than 30 seconds have passed since last update
+                    if (now - lastActivity > 30000) {
+                        this.state.lastActivity.set(activeUser.email, now);
+                        
+                        // Update session last activity
+                        const session = Array.from(this.state.activeSessions.values())
+                            .find(s => s.email === activeUser.email && s.isActive);
+                        if (session) {
+                            session.lastActivity = now;
+                        }
+                        
+                        // Log periodic activity (every 5 minutes)
+                        if (now - lastActivity > 5 * 60 * 1000) {
+                            this.logSecurityEvent('user_activity', {
+                                email: activeUser.email,
+                                userType: activeUser.type,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
+                    }
+                }
+            },
+
             checkSessionTimeouts() {
                 const now = Date.now();
                 this.state.activeSessions.forEach((session, sessionId) => {
@@ -3259,12 +3289,15 @@
                 // Create Supabase client
                 supabaseClient = window.supabase.createClient(config.url, config.anonKey);
                 
-                // Test connection
-                const { data, error } = await supabaseClient.from('test_connection').select('*').limit(1);
+                // Test connection by trying to access the auth user (this always works)
+                const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
                 
-                // If table doesn't exist, that's fine - we'll create it
-                if (error && !error.message.includes('relation') && !error.message.includes('does not exist')) {
-                    throw error;
+                // Test basic query capability with a simple select
+                const { error: testError } = await supabaseClient.from('patients').select('id').limit(1);
+                
+                // Table not existing is OK - that's expected for new projects
+                if (testError && !testError.message.includes('relation') && !testError.message.includes('does not exist') && !testError.code === 'PGRST116') {
+                    throw new Error(`Database query failed: ${testError.message}`);
                 }
                 
                 isSupabaseConnected = true;
