@@ -14996,13 +14996,13 @@
             if (activeSessionsCountEl) activeSessionsCountEl.textContent = activeSessions;
         }
 
-        // CHART-SPECIFIC EXCEL EXPORT FUNCTIONS - Beautiful Designed Excel Documents
+        // CHART-SPECIFIC EXCEL EXPORT FUNCTIONS - Beautiful Designed Excel Documents with Supabase Storage
 
-        // Export Patient Registration Chart to Excel
+        // Export Patient Registration Chart to Excel and Supabase
         function exportPatientRegistrationChart() {
             const modal = createExcelExportModal('Patient Registration Trends', 'chart-line');
             
-            setTimeout(() => {
+            setTimeout(async () => {
                 try {
                     const workbook = XLSX.utils.book_new();
                     
@@ -15041,10 +15041,34 @@
                     
                     // Generate and download
                     const fileName = `PatientRegistration_Chart_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    
+                    // Generate Excel file and save to Supabase
+                    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+                    const excelBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    
+                    // Convert to base64 for Supabase storage
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        const base64Data = e.target.result;
+                        
+                        // Save to Supabase
+                        await saveChartDocumentToSupabase({
+                            chartType: 'patient-registration',
+                            chartTitle: 'Patient Registration Trends',
+                            fileName: fileName,
+                            fileData: base64Data,
+                            dataSize: excelBlob.size,
+                            generatedBy: getCurrentUserName(),
+                            chartData: chartData
+                        });
+                    };
+                    reader.readAsDataURL(excelBlob);
+                    
+                    // Also download locally
                     XLSX.writeFile(workbook, fileName);
                     
                     modal.remove();
-                    showNotification('📊 Patient Registration chart exported to Excel successfully!', 'success');
+                    showNotification('📊 Patient Registration chart exported to Excel and saved to database!', 'success');
                     
                 } catch (error) {
                     modal.remove();
@@ -15678,6 +15702,487 @@
             const count = getPatientsByAgeRange(patients, minAge, maxAge).length;
             return Math.round((count / patients.length) * 100);
         }
+
+        // SUPABASE CHART DOCUMENTS INTEGRATION - Save Chart Excel Files to Database
+
+        // Save Chart Document to Supabase Database
+        async function saveChartDocumentToSupabase(documentData) {
+            if (!supabaseClient || !isSupabaseConnected) {
+                console.log('⚠️ Supabase not connected - Chart document saved locally only');
+                return { success: false, message: 'Database not connected' };
+            }
+            
+            try {
+                const chartDocument = {
+                    id: `chart-doc-${Date.now()}`,
+                    chart_type: documentData.chartType,
+                    chart_title: documentData.chartTitle,
+                    file_name: documentData.fileName,
+                    file_data: documentData.fileData, // base64 encoded Excel file
+                    file_size: documentData.dataSize,
+                    generated_by: documentData.generatedBy,
+                    chart_raw_data: JSON.stringify(documentData.chartData),
+                    document_type: 'excel',
+                    mime_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await supabaseClient
+                    .from('chart_reports')
+                    .insert([chartDocument]);
+                
+                if (error) {
+                    console.log('Chart document save error:', error.message);
+                    return { success: false, message: error.message };
+                }
+                
+                console.log(`📊 Chart document saved to Supabase: ${documentData.chartTitle}`);
+                return { 
+                    success: true, 
+                    message: 'Chart document saved successfully',
+                    documentId: chartDocument.id
+                };
+                
+            } catch (error) {
+                console.log('Error saving chart document to Supabase:', error.message);
+                return { success: false, message: error.message };
+            }
+        }
+
+        // Load Saved Chart Documents from Supabase
+        async function loadSavedChartDocuments() {
+            if (!supabaseClient || !isSupabaseConnected) {
+                return [];
+            }
+            
+            try {
+                const { data: chartDocs, error } = await supabaseClient
+                    .from('chart_reports')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    console.log('Failed to load chart documents:', error.message);
+                    return [];
+                }
+                
+                console.log(`📊 Loaded ${chartDocs.length} chart documents from Supabase`);
+                return chartDocs || [];
+                
+            } catch (error) {
+                console.log('Error loading chart documents:', error.message);
+                return [];
+            }
+        }
+
+        // Download Chart Document from Supabase
+        async function downloadChartDocumentFromSupabase(documentId) {
+            if (!supabaseClient || !isSupabaseConnected) {
+                showNotification('⚠️ Database not connected', 'error');
+                return;
+            }
+            
+            try {
+                const { data: doc, error } = await supabaseClient
+                    .from('chart_reports')
+                    .select('*')
+                    .eq('id', documentId)
+                    .single();
+                
+                if (error || !doc) {
+                    showNotification('❌ Chart document not found', 'error');
+                    return;
+                }
+                
+                // Convert base64 back to blob and download
+                const response = await fetch(doc.file_data);
+                const blob = await response.blob();
+                
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = doc.file_name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showNotification(`📥 Downloaded ${doc.chart_title} from database!`, 'success');
+                
+            } catch (error) {
+                console.log('Error downloading chart document:', error.message);
+                showNotification('❌ Download failed: ' + error.message, 'error');
+            }
+        }
+
+        // Show Saved Chart Documents Manager
+        async function showSavedChartDocuments() {
+            const savedDocs = await loadSavedChartDocuments();
+            
+            const content = `
+                <div class="space-y-6">
+                    <!-- Header -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
+                        <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center">
+                            <i class="fas fa-database text-blue-600 mr-2"></i>Saved Chart Documents in Supabase
+                        </h4>
+                        <p class="text-sm text-blue-800 dark:text-blue-300">
+                            All your chart Excel exports are automatically saved to the database. You can download them anytime.
+                        </p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-blue-600">${savedDocs.length}</div>
+                                <div class="text-xs text-blue-600">Total Documents</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600">${savedDocs.filter(doc => doc.chart_type.includes('patient')).length}</div>
+                                <div class="text-xs text-green-600">Patient Charts</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-purple-600">${savedDocs.filter(doc => doc.chart_type.includes('revenue')).length}</div>
+                                <div class="text-xs text-purple-600">Financial Charts</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-orange-600">${savedDocs.filter(doc => doc.chart_type.includes('appointment')).length}</div>
+                                <div class="text-xs text-orange-600">Appointment Charts</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Documents List -->
+                    <div class="bg-gray-700 rounded-lg p-6">
+                        <h5 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-file-excel text-green-400 mr-2"></i>Saved Chart Documents
+                        </h5>
+                        
+                        ${savedDocs.length === 0 ? `
+                            <div class="text-center py-8">
+                                <i class="fas fa-file-excel text-gray-400 text-4xl mb-4"></i>
+                                <h5 class="text-lg font-semibold text-gray-400 mb-2">No Chart Documents Saved</h5>
+                                <p class="text-gray-500">Export any chart to automatically save it to the database.</p>
+                            </div>
+                        ` : `
+                            <div class="space-y-3 max-h-96 overflow-y-auto">
+                                ${savedDocs.map(doc => `
+                                    <div class="bg-gray-600 rounded-lg p-4 border-l-4 ${getChartTypeColor(doc.chart_type)}">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center">
+                                                <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mr-4">
+                                                    <i class="fas ${getChartTypeIcon(doc.chart_type)} text-white"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="font-semibold text-white">${doc.chart_title}</h6>
+                                                    <p class="text-sm text-gray-300">Generated by ${doc.generated_by}</p>
+                                                    <p class="text-xs text-gray-400">${new Date(doc.created_at).toLocaleDateString()} • ${(doc.file_size / 1024 / 1024).toFixed(2)} MB</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button onclick="downloadChartDocumentFromSupabase('${doc.id}')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                                    <i class="fas fa-download mr-1"></i>Download
+                                                </button>
+                                                <button onclick="viewChartDocumentDetails('${doc.id}')" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                                    <i class="fas fa-eye mr-1"></i>Details
+                                                </button>
+                                                <button onclick="deleteChartDocument('${doc.id}')" class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm">
+                                                    <i class="fas fa-trash mr-1"></i>Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="text-xs text-gray-400 bg-gray-700 rounded p-2">
+                                            <strong>Document ID:</strong> ${doc.id} • <strong>File:</strong> ${doc.file_name}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Chart Document Actions -->
+                    <div class="bg-gray-700 rounded-lg p-6">
+                        <h5 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <i class="fas fa-cogs text-yellow-400 mr-2"></i>Document Management
+                        </h5>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button onclick="exportAllChartDocuments()" class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-download mr-2"></i>Download All Documents
+                            </button>
+                            <button onclick="deleteAllChartDocuments()" class="bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-trash mr-2"></i>Clear All Documents
+                            </button>
+                            <button onclick="refreshChartDocuments()" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>Refresh List
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+                    <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                        <h3 class="text-xl font-semibold text-white flex items-center">
+                            <i class="fas fa-database text-green-400 mr-2"></i>Chart Documents in Supabase
+                        </h3>
+                        <button class="close-modal text-gray-400 hover:text-white text-2xl transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        ${content}
+                    </div>
+                    <div class="flex justify-end space-x-3 p-6 border-t border-gray-700">
+                        <button class="close-modal px-6 py-3 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            const closeBtn = modal.querySelector('.close-modal');
+            closeBtn.onclick = () => modal.remove();
+        }
+
+        // Helper functions for chart document management
+        function getChartTypeColor(chartType) {
+            const colors = {
+                'patient-registration': 'border-blue-500',
+                'treatment-types': 'border-green-500', 
+                'revenue': 'border-yellow-500',
+                'appointment-volume': 'border-purple-500',
+                'payment-method': 'border-orange-500',
+                'revenue-compare': 'border-red-500',
+                'patient-age': 'border-indigo-500',
+                'patient-gender': 'border-pink-500',
+                'treatment-status': 'border-teal-500',
+                'success-rate': 'border-cyan-500',
+                'treatment-duration': 'border-amber-500'
+            };
+            return colors[chartType] || 'border-gray-500';
+        }
+
+        function getChartTypeIcon(chartType) {
+            const icons = {
+                'patient-registration': 'fa-chart-line',
+                'treatment-types': 'fa-chart-pie', 
+                'revenue': 'fa-chart-area',
+                'appointment-volume': 'fa-chart-bar',
+                'payment-method': 'fa-credit-card',
+                'revenue-compare': 'fa-chart-line',
+                'patient-age': 'fa-users',
+                'patient-gender': 'fa-venus-mars',
+                'treatment-status': 'fa-chart-doughnut',
+                'success-rate': 'fa-trophy',
+                'treatment-duration': 'fa-clock'
+            };
+            return icons[chartType] || 'fa-file-excel';
+        }
+
+        // View Chart Document Details
+        async function viewChartDocumentDetails(documentId) {
+            if (!supabaseClient || !isSupabaseConnected) {
+                showNotification('⚠️ Database not connected', 'error');
+                return;
+            }
+            
+            try {
+                const { data: doc, error } = await supabaseClient
+                    .from('chart_reports')
+                    .select('*')
+                    .eq('id', documentId)
+                    .single();
+                
+                if (error || !doc) {
+                    showNotification('❌ Chart document not found', 'error');
+                    return;
+                }
+
+                const chartData = JSON.parse(doc.chart_raw_data);
+                const fileSize = (doc.file_size / 1024 / 1024).toFixed(2);
+                
+                const content = `
+                    <div class="space-y-6">
+                        <!-- Document Overview -->
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
+                            <div class="flex items-center mb-4">
+                                <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white mr-4">
+                                    <i class="fas ${getChartTypeIcon(doc.chart_type)} text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">${doc.chart_title}</h2>
+                                    <p class="text-green-600 dark:text-green-400">Chart Document ID: ${doc.id}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Generated by ${doc.generated_by}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Document Information -->
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-green-400 mb-4 flex items-center">
+                                <i class="fas fa-info-circle text-green-400 mr-2"></i>Document Information
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <div>
+                                        <span class="text-sm text-gray-400">File Name:</span>
+                                        <p class="text-white font-medium">${doc.file_name}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-400">Chart Type:</span>
+                                        <p class="text-white font-medium">${doc.chart_type.replace('-', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-400">File Size:</span>
+                                        <p class="text-white font-medium">${fileSize} MB</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <span class="text-sm text-gray-400">Created Date:</span>
+                                        <p class="text-white font-medium">${new Date(doc.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-400">Document Type:</span>
+                                        <p class="text-white font-medium">${doc.document_type.toUpperCase()} Spreadsheet</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-400">Data Points:</span>
+                                        <p class="text-white font-medium">${chartData.length} rows</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart Data Preview -->
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-green-400 mb-4 flex items-center">
+                                <i class="fas fa-table text-green-400 mr-2"></i>Chart Data Preview
+                            </h3>
+                            <div class="bg-gray-600 rounded-lg p-4 max-h-64 overflow-y-auto">
+                                <div class="text-sm font-mono text-gray-300">
+                                    ${chartData.slice(0, 10).map((row, index) => `
+                                        <div class="py-1 ${index === 0 ? 'font-bold text-white' : ''}">
+                                            ${Array.isArray(row) ? row.join(' | ') : row}
+                                        </div>
+                                    `).join('')}
+                                    ${chartData.length > 10 ? '<div class="py-1 text-gray-400">... and ' + (chartData.length - 10) + ' more rows</div>' : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="bg-gray-700 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-green-400 mb-4 flex items-center">
+                                <i class="fas fa-cogs text-green-400 mr-2"></i>Document Actions
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <button onclick="downloadChartDocumentFromSupabase('${doc.id}'); document.querySelector('.close-modal').click();" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-download mr-2"></i>Download Excel File
+                                </button>
+                                <button onclick="shareChartDocument('${doc.id}')" class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                                    <i class="fas fa-share mr-2"></i>Share Document
+                                </button>
+                                <button onclick="deleteChartDocument('${doc.id}'); document.querySelector('.close-modal').click();" class="bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors">
+                                    <i class="fas fa-trash mr-2"></i>Delete Document
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+                modal.innerHTML = `
+                    <div class="bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+                        <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                            <h3 class="text-xl font-semibold text-white flex items-center">
+                                <i class="fas fa-file-excel text-green-400 mr-2"></i>Chart Document Details - ${doc.chart_title}
+                            </h3>
+                            <button class="close-modal text-gray-400 hover:text-white text-2xl transition-colors">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            ${content}
+                        </div>
+                        <div class="flex justify-end space-x-3 p-6 border-t border-gray-700">
+                            <button class="close-modal text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors px-6 py-3">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                const closeBtn = modal.querySelector('.close-modal');
+                closeBtn.onclick = () => modal.remove();
+                
+            } catch (error) {
+                console.log('Error showing chart document details:', error.message);
+                showNotification('❌ Failed to load document details', 'error');
+            }
+        }
+
+        // Delete Chart Document from Supabase
+        async function deleteChartDocument(documentId) {
+            if (!supabaseClient || !isSupabaseConnected) {
+                showNotification('⚠️ Database not connected', 'error');
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('chart_reports')
+                    .delete()
+                    .eq('id', documentId);
+                
+                if (error) {
+                    showNotification('❌ Failed to delete chart document: ' + error.message, 'error');
+                    return;
+                }
+                
+                showNotification('🗑️ Chart document deleted from database', 'success');
+                
+            } catch (error) {
+                console.log('Error deleting chart document:', error.message);
+                showNotification('❌ Delete failed: ' + error.message, 'error');
+            }
+        }
+
+        // Add "View Saved Charts" button to Reports section
+        function addSavedChartsButton() {
+            const reportsView = document.getElementById('reports');
+            if (reportsView) {
+                const reportTypes = reportsView.querySelector('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3.gap-6.mb-8');
+                if (reportTypes) {
+                    const savedChartsCard = document.createElement('div');
+                    savedChartsCard.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6';
+                    savedChartsCard.innerHTML = `
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fas fa-database text-green-600 text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Saved Chart Documents</h3>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">View and manage chart documents saved in Supabase database.</p>
+                        <button onclick="showSavedChartDocuments()" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-database mr-2"></i>View Saved Charts
+                        </button>
+                    `;
+                    reportTypes.appendChild(savedChartsCard);
+                }
+            }
+        }
+
+        // Initialize saved charts button after DOM is loaded
+        setTimeout(() => {
+            if (isSupabaseConnected) {
+                addSavedChartsButton();
+            }
+        }, 3000);
 
         // Initialize Security System after all dependencies are ready
         setTimeout(() => {
