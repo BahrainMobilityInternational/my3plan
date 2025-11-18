@@ -10430,6 +10430,13 @@
                     // Update connection status in UI
                     updateSupabaseConnectionStatus(true, supabaseConfig);
                     
+                    // FORCE REFRESH ALL CHARTS WITH REAL DATA AFTER SUPABASE CONNECTION
+                    setTimeout(() => {
+                        console.log('🔄 Force refreshing charts after Supabase connection...');
+                        forceRefreshAllChartsWithRealData();
+                        updateDashboardStatsWithRealData();
+                    }, 2000);
+                    
                     showNotification('✅ Supabase connected successfully! Database synchronization enabled.', 'success');
                     closeModal();
                     
