@@ -5779,6 +5779,7 @@
                     };
 
                     appData.appointments.push(newAppointment);
+                    saveAllDataToMemoryStorage();
                     
                     // SAVE TO SUPABASE DATABASE
                     saveToSupabase('appointments', newAppointment).then(result => {
@@ -9153,6 +9154,7 @@
                 
                 // Add all appointments to data store
                 appData.appointments.push(...appointmentsToCreate);
+                saveAllDataToMemoryStorage();
                 
                 // Update displays
                 updateAppointmentDisplay();
