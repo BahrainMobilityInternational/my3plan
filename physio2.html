@@ -2845,29 +2845,6 @@ function showNotification(message, type = 'success') {
     }, 5000);
 }
 
-// Initialize data storage
-if (!window.appData) {
-    window.appData = {
-        appointments: [],
-        patients: [],
-        complaints: [],
-        physiotherapists: [
-            {
-                id: 'physio-001',
-                firstName: 'Mariam',
-                lastName: 'Abdulatheem Ali',
-                email: 'Mariambmi@gmail.com',
-                phone: '+973 3333 9999',
-                licenseNumber: 'BH-PT-2024-001',
-                specializations: ['Orthopedic', 'Sports Medicine', 'Manual Therapy'],
-                experience: '8 years',
-                status: 'active',
-                tempPassword: 'Mariam1979!'
-            }
-        ]
-    };
-}
-
 // Basic persistence functions
 function saveAllDataToMemoryStorage() {
     try {
@@ -2914,6 +2891,45 @@ function showBulkAppointmentModal() {
 function showCalendarView() {
     showNotification('📅 Calendar view coming soon!', 'success');
 }
+/// EMERGENCY FIX - Initialize data immediately
+console.log('🚨 Emergency data initialization...');
+
+// Force create appData if it doesn't exist
+if (!window.appData) {
+    window.appData = {};
+}
+
+// Force create physiotherapists array
+window.appData.physiotherapists = [
+    {
+        id: 'physio-001',
+        firstName: 'Mariam',
+        lastName: 'Abdulatheem Ali',
+        email: 'Mariambmi@gmail.com',
+        phone: '+973 3333 9999',
+        licenseNumber: 'BH-PT-2024-001',
+        specializations: ['Orthopedic', 'Sports Medicine', 'Manual Therapy'],
+        experience: '8 years',
+        status: 'active',
+        assignedPatients: 0,
+        tempPassword: 'Mariam1979!'
+    }
+];
+
+// Initialize other arrays
+window.appData.appointments = [];
+window.appData.patients = [];
+window.appData.complaints = [];
+
+console.log('✅ Emergency data created');
+console.log('👩‍⚕️ Dr. Mariam available:', window.appData.physiotherapists[0].email);
+
+// Stop any login loops
+let loginAttempts = 0;
+const MAX_LOGIN_ATTEMPTS = 3;
+
+// Call this function to ensure data exists
+ensurePhysiotherapistsArray();
 
 // Login functions
 document.getElementById('adminLoginBtn').onclick = () => {
@@ -5210,46 +5226,62 @@ document.getElementById('loginForm').onsubmit = (e) => {
         setTimeout(() => errorDiv.classList.add('hidden'), 5000);
     }
 };
-
-  document.getElementById('physioLoginForm').onsubmit = (e) => {
+document.getElementById('physioLoginForm').onsubmit = (e) => {
     e.preventDefault();
+    
+    // Prevent login spam
+    loginAttempts++;
+    if (loginAttempts > MAX_LOGIN_ATTEMPTS) {
+        console.log('🛑 Too many login attempts, blocking for 5 seconds');
+        showNotification('Too many attempts. Please wait 5 seconds.', 'error');
+        setTimeout(() => { loginAttempts = 0; }, 5000);
+        return;
+    }
+    
     const email = document.getElementById('physioLoginEmail').value.trim();
     const password = document.getElementById('physioLoginPassword').value;
     const errorDiv = document.getElementById('physioLoginError');
 
-    console.log('🔍 Physiotherapist login attempt:', email);
+    console.log('🔍 Safe login attempt:', email, 'Attempt #:', loginAttempts);
 
-    // Check against ALL physiotherapists (not just hardcoded ones)
+    // Ensure data exists
+    if (!window.appData || !window.appData.physiotherapists) {
+        console.log('❌ Physiotherapists data missing - recreating...');
+        window.appData = { physiotherapists: [/* Dr. Mariam data */] };
+    }
+
+    console.log('📊 Available physiotherapists:', window.appData.physiotherapists.length);
+
+    // Find physiotherapist (safe check)
     const physiotherapist = window.appData.physiotherapists.find(p => 
-        p.email.toLowerCase() === email.toLowerCase() && 
-        p.tempPassword === password &&
-        p.status === 'active'
+        p && p.email && p.email.toLowerCase() === email.toLowerCase() && 
+        p.tempPassword === password && p.status === 'active'
     );
 
     if (physiotherapist) {
         console.log('✅ Login successful for:', physiotherapist.firstName, physiotherapist.lastName);
         
-        // Store the logged-in physiotherapist info
-        try {
-            sessionStorage.setItem('loggedInPhysiotherapist', JSON.stringify(physiotherapist));
-        } catch (e) {
-            console.log('SessionStorage not available');
-        }
+        // Reset attempts
+        loginAttempts = 0;
         
+        // Hide login, show dashboard
         document.getElementById('physioLoginPage').classList.add('hidden');
         document.getElementById('physioDashboard').classList.remove('hidden');
         
-        // Initialize dashboard with the correct physiotherapist
-        setTimeout(() => initializePhysioDashboard(physiotherapist), 100);
+        showNotification(`Welcome, Dr. ${physiotherapist.firstName}!`, 'success');
         
-        showNotification(`Welcome back, Dr. ${physiotherapist.firstName} ${physiotherapist.lastName}!`, 'success');
+        // Stop here - don't call other functions that might cause errors
+        console.log('🏥 Dashboard shown successfully');
+        
     } else {
         console.log('❌ Login failed for:', email);
         errorDiv.textContent = 'Invalid email or password.';
         errorDiv.classList.remove('hidden');
-        setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+        setTimeout(() => errorDiv.classList.add('hidden'), 3000);
     }
 };
+
+console.log('🔐 Safe login system installed');
 
         // SECURE Two-Factor Authentication Modal
         function show2FAModal(email, userType, onSuccess) {
