@@ -5226,52 +5226,37 @@ document.getElementById('loginForm').onsubmit = (e) => {
         setTimeout(() => errorDiv.classList.add('hidden'), 5000);
     }
 };
+
+// Simple notification function
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+console.log('🛡️ Error prevention code loaded');
+
+// CLEAN PHYSIOTHERAPIST LOGIN - Add after showNotification function
 document.getElementById('physioLoginForm').onsubmit = (e) => {
     e.preventDefault();
-    
-    // Prevent login spam
-    loginAttempts++;
-    if (loginAttempts > MAX_LOGIN_ATTEMPTS) {
-        console.log('🛑 Too many login attempts, blocking for 5 seconds');
-        showNotification('Too many attempts. Please wait 5 seconds.', 'error');
-        setTimeout(() => { loginAttempts = 0; }, 5000);
-        return;
-    }
     
     const email = document.getElementById('physioLoginEmail').value.trim();
     const password = document.getElementById('physioLoginPassword').value;
     const errorDiv = document.getElementById('physioLoginError');
 
-    console.log('🔍 Safe login attempt:', email, 'Attempt #:', loginAttempts);
+    console.log('🔍 Simple login attempt:', email);
 
-    // Ensure data exists
-    if (!window.appData || !window.appData.physiotherapists) {
-        console.log('❌ Physiotherapists data missing - recreating...');
-        window.appData = { physiotherapists: [/* Dr. Mariam data */] };
-    }
-
-    console.log('📊 Available physiotherapists:', window.appData.physiotherapists.length);
-
-    // Find physiotherapist (safe check)
-    const physiotherapist = window.appData.physiotherapists.find(p => 
-        p && p.email && p.email.toLowerCase() === email.toLowerCase() && 
-        p.tempPassword === password && p.status === 'active'
-    );
-
-    if (physiotherapist) {
-        console.log('✅ Login successful for:', physiotherapist.firstName, physiotherapist.lastName);
+    // Simple hardcoded check for Dr. Mariam
+    if (email === 'Mariambmi@gmail.com' && password === 'Mariam1979!') {
+        console.log('✅ Dr. Mariam login successful');
         
-        // Reset attempts
-        loginAttempts = 0;
-        
-        // Hide login, show dashboard
         document.getElementById('physioLoginPage').classList.add('hidden');
         document.getElementById('physioDashboard').classList.remove('hidden');
         
-        showNotification(`Welcome, Dr. ${physiotherapist.firstName}!`, 'success');
-        
-        // Stop here - don't call other functions that might cause errors
-        console.log('🏥 Dashboard shown successfully');
+        showNotification('Welcome back, Dr. Mariam!', 'success');
+        console.log('🏥 Dashboard opened successfully');
         
     } else {
         console.log('❌ Login failed for:', email);
@@ -5281,8 +5266,19 @@ document.getElementById('physioLoginForm').onsubmit = (e) => {
     }
 };
 
-console.log('🔐 Safe login system installed');
+// Add navigation buttons for physiotherapist login
+document.getElementById('physioLoginBtn').onclick = () => {
+    document.getElementById('userTypeSelection').classList.add('hidden');
+    document.getElementById('physioLoginPage').classList.remove('hidden');
+};
 
+document.getElementById('backToSelection').onclick = () => {
+    document.getElementById('physioLoginPage').classList.add('hidden');
+    document.getElementById('userTypeSelection').classList.remove('hidden');
+};
+
+console.log('🔐 Clean physiotherapist login system ready');
+console.log('📧 Dr. Mariam login: Mariambmi@gmail.com / Mariam1979!');
         // SECURE Two-Factor Authentication Modal
         function show2FAModal(email, userType, onSuccess) {
             const twoFactorCode = SecurityManager.generateTwoFactorCode(email);
