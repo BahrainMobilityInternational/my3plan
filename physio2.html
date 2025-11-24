@@ -8820,6 +8820,117 @@ function createQuickTestAppointment() {
 }
 
 console.log('📅 Appointment functions added - Schedule Appointment should now work!');
+
+// ADD PHYSIOTHERAPIST FUNCTIONS HERE
+function showAddPhysiotherapistModal() {
+    console.log('👩‍⚕️ Opening add physiotherapist modal...');
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full">
+            <div class="p-6 border-b border-gray-700">
+                <h3 class="text-xl font-semibold text-white">👩‍⚕️ Add New Physiotherapist</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="physioFirstName" placeholder="First Name *" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                    <input type="text" id="physioLastName" placeholder="Last Name *" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                </div>
+                <input type="email" id="physioEmail" placeholder="Email Address *" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                <input type="tel" id="physioPhone" placeholder="Phone Number *" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                <input type="text" id="physioLicense" placeholder="License Number *" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                <select id="physioExperience" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+                    <option value="">Select Experience</option>
+                    <option value="2-5">2-5 years</option>
+                    <option value="6-10">6-10 years</option>
+                    <option value="11-15">11-15 years</option>
+                    <option value="16-20">16-20 years</option>
+                </select>
+                <input type="password" id="physioPassword" placeholder="Temporary Password *" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white">
+            </div>
+            <div class="flex gap-3 p-6 border-t border-gray-700">
+                <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 text-gray-300 border border-gray-600 rounded hover:bg-gray-700">Cancel</button>
+                <button onclick="saveNewPhysiotherapist()" class="flex-1 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700">Add Physiotherapist</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function saveNewPhysiotherapist() {
+    console.log('👩‍⚕️ Saving physiotherapist...');
+    
+    const firstName = document.getElementById('physioFirstName').value.trim();
+    const lastName = document.getElementById('physioLastName').value.trim();
+    const email = document.getElementById('physioEmail').value.trim();
+    const phone = document.getElementById('physioPhone').value.trim();
+    const license = document.getElementById('physioLicense').value.trim();
+    const experience = document.getElementById('physioExperience').value;
+    const password = document.getElementById('physioPassword').value.trim();
+
+    if (!firstName || !lastName || !email || !phone || !license || !experience || !password) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+
+    const newPhysio = {
+        id: `physio-${Date.now()}`,
+        firstName,
+        lastName,
+        email,
+        phone,
+        licenseNumber: license,
+        experience,
+        specializations: ['General Practice'],
+        status: 'active',
+        tempPassword: password,
+        assignedPatients: 0,
+        dateRegistered: new Date().toISOString()
+    };
+
+    // Add to data
+    if (!window.appData.physiotherapists) window.appData.physiotherapists = [];
+    window.appData.physiotherapists.push(newPhysio);
+
+    // Save to Supabase if available
+    if (typeof saveToSupabase === 'function') {
+        saveToSupabase('physiotherapists', newPhysio);
+    }
+
+    document.querySelector('.fixed').remove();
+    showNotification(`✅ Dr. ${firstName} ${lastName} added successfully!`, 'success');
+    console.log('✅ New physiotherapist created:', newPhysio);
+}
+
+// Fix the navigation error
+function setupPhysioNavigation() {
+    console.log('🧭 Setting up physiotherapist navigation...');
+    const navButtons = document.querySelectorAll('.physio-nav-btn');
+    navButtons.forEach(btn => {
+        btn.onclick = () => {
+            const view = btn.dataset.view;
+            showPhysioView(view);
+            document.querySelectorAll('.physio-nav-btn').forEach(b => {
+                b.classList.remove('bg-secondary', 'text-white');
+            });
+            btn.classList.add('bg-secondary', 'text-white');
+        };
+    });
+}
+
+function showPhysioView(viewName) {
+    document.querySelectorAll('.physio-view').forEach(view => {
+        view.classList.add('hidden');
+    });
+    const targetView = document.getElementById(viewName);
+    if (targetView) {
+        targetView.classList.remove('hidden');
+    }
+}
+
+console.log('👩‍⚕️ Physiotherapist management functions added');
+
 console.log('🧪 Quick test: Run createQuickTestAppointment() to test');
 
         // UPDATE PROGRESS (Treatment progress tracking)
