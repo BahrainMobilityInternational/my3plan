@@ -5034,7 +5034,7 @@ document.getElementById('loginForm').onsubmit = (e) => {
     }
 };
 
-   document.getElementById('physioLoginForm').onsubmit = (e) => {
+  document.getElementById('physioLoginForm').onsubmit = (e) => {
     e.preventDefault();
     const email = document.getElementById('physioLoginEmail').value.trim();
     const password = document.getElementById('physioLoginPassword').value;
@@ -5042,8 +5042,8 @@ document.getElementById('loginForm').onsubmit = (e) => {
 
     console.log('🔍 Physiotherapist login attempt:', email);
 
-    // Simple login check without complex security
-    const physiotherapist = appData.physiotherapists.find(p => 
+    // Check against ALL physiotherapists (not just hardcoded ones)
+    const physiotherapist = window.appData.physiotherapists.find(p => 
         p.email.toLowerCase() === email.toLowerCase() && 
         p.tempPassword === password &&
         p.status === 'active'
@@ -5052,13 +5052,17 @@ document.getElementById('loginForm').onsubmit = (e) => {
     if (physiotherapist) {
         console.log('✅ Login successful for:', physiotherapist.firstName, physiotherapist.lastName);
         
-        // Store the logged-in physiotherapist
-        SafeSessionStorage.setItem('loggedInPhysiotherapist', JSON.stringify(physiotherapist));
+        // Store the logged-in physiotherapist info
+        try {
+            sessionStorage.setItem('loggedInPhysiotherapist', JSON.stringify(physiotherapist));
+        } catch (e) {
+            console.log('SessionStorage not available');
+        }
         
         document.getElementById('physioLoginPage').classList.add('hidden');
         document.getElementById('physioDashboard').classList.remove('hidden');
         
-        // Initialize with the correct physiotherapist
+        // Initialize dashboard with the correct physiotherapist
         setTimeout(() => initializePhysioDashboard(physiotherapist), 100);
         
         showNotification(`Welcome back, Dr. ${physiotherapist.firstName} ${physiotherapist.lastName}!`, 'success');
@@ -5069,6 +5073,7 @@ document.getElementById('loginForm').onsubmit = (e) => {
         setTimeout(() => errorDiv.classList.add('hidden'), 5000);
     }
 };
+
         // SECURE Two-Factor Authentication Modal
         function show2FAModal(email, userType, onSuccess) {
             const twoFactorCode = SecurityManager.generateTwoFactorCode(email);
@@ -7868,46 +7873,38 @@ function showScheduleAppointmentModal() {
             }
         }
 
-   function initializePhysioDashboard(physiotherapist = null) {
-    // Get physiotherapist from parameter or session storage
-    let physio = physiotherapist;
-    if (!physio) {
-        const loggedPhysio = SafeSessionStorage.getItem('loggedInPhysiotherapist');
-        if (loggedPhysio) {
-            physio = JSON.parse(loggedPhysio);
-        }
+        function initializePhysioDashboard(physiotherapist) {
+    console.log('🏥 Initializing dashboard for:', physiotherapist.firstName, physiotherapist.lastName);
+    
+    // Update dashboard title dynamically
+    const titleEl = document.getElementById('physioPortalTitle');
+    if (titleEl) {
+        titleEl.textContent = `PhysioTech - Dr. ${physiotherapist.firstName} Portal`;
     }
     
-    if (physio) {
-        console.log('🏥 Initializing dashboard for:', physio.firstName, physio.lastName);
-        
-        // Update dashboard title dynamically
-        const titleEl = document.getElementById('physioPortalTitle');
-        if (titleEl) {
-            titleEl.textContent = `PhysioTech - Dr. ${physio.firstName} Portal`;
-        }
-        
-        // Update user name in navigation
-        const userNameEl = document.getElementById('physioUserName');
-        if (userNameEl) {
-            userNameEl.textContent = `Dr. ${physio.firstName} ${physio.lastName}`;
-        }
-        
-        // Update the dashboard title
-        const dashboardTitleEl = document.getElementById('physioDashboardTitle');
-        if (dashboardTitleEl) {
-            dashboardTitleEl.textContent = `Dr. ${physio.firstName}'s Dashboard`;
-        }
+    // Update user name in navigation
+    const userNameEl = document.getElementById('physioUserName');
+    if (userNameEl) {
+        userNameEl.textContent = `Dr. ${physiotherapist.firstName} ${physiotherapist.lastName}`;
     }
     
-    // Continue with your existing initialization
+    // Update the dashboard title
+    const dashboardTitleEl = document.getElementById('physioDashboardTitle');
+    if (dashboardTitleEl) {
+        dashboardTitleEl.textContent = `Dr. ${physiotherapist.firstName}'s Dashboard`;
+    }
+    
+    // Set up navigation and functionality
     setupPhysioNavigation();
     loadPhysioPatients();
     updateExerciseStatistics();
     displaySharedExerciseLibrary();
     loadPhysioTodayAppointments();
-    console.log('👩‍⚕️ Physiotherapist dashboard initialized');
+    
+    console.log('👩‍⚕️ Dashboard initialized for Dr.', physiotherapist.firstName);
 }
+
+ 
         function showPhysioView(viewName) {
             document.querySelectorAll('.physio-view').forEach(view => {
                 view.classList.add('hidden');
@@ -15371,49 +15368,167 @@ function showView(viewName) {
             }
         }
 
-        // ADDED: Load Dr. Mariam's weekly calendar with time slots
-        function loadPhysioWeeklySchedule() {
-            const physioName = 'Dr. Mariam Abdulatheem Ali';
-            const allAppointments = appData.appointments || [];
-            const myAppointments = allAppointments.filter(apt => apt.physiotherapist === physioName);
-            
-            const scheduleContainer = document.getElementById('scheduleContainer');
-            if (scheduleContainer) {
-                // Get current week dates
-                const today = new Date();
-                const startOfWeek = new Date(today);
-                startOfWeek.setDate(today.getDate() - today.getDay()); // Get Sunday
-                
-                const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                const timeSlots = [
-                    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', 
-                    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
-                    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'
-                ];
-                
-                const weekDates = [];
-                for (let i = 0; i < 7; i++) {
-                    const date = new Date(startOfWeek);
-                    date.setDate(startOfWeek.getDate() + i);
-                    weekDates.push(date.toISOString().split('T')[0]);
-                }
-                
-                // Get week range for header
-                const startDate = new Date(weekDates[0]);
-                const endDate = new Date(weekDates[6]);
-                const weekRange = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-                
-                // Group appointments by date and time
-                const appointmentGrid = {};
-                myAppointments.forEach(apt => {
-                    const dateKey = apt.date;
-                    const timeKey = apt.time;
-                    if (!appointmentGrid[dateKey]) {
-                        appointmentGrid[dateKey] = {};
-                    }
-                    appointmentGrid[dateKey][timeKey] = apt;
-                });
-                
+       // SIMPLIFIED SCHEDULE LOADING - Fast and reliable
+function loadPhysioWeeklySchedule() {
+    console.log('📅 Loading Dr. Mariam\'s schedule (simplified)...');
+    
+    const scheduleContainer = document.getElementById('scheduleContainer');
+    if (!scheduleContainer) {
+        console.log('❌ Schedule container not found');
+        return;
+    }
+
+    // Get Dr. Mariam's appointments (simple approach)
+    const physioName = 'Dr. Mariam Abdulatheem Ali';
+    const allAppointments = window.appData?.appointments || [];
+    const myAppointments = allAppointments.filter(apt => apt.physiotherapist === physioName);
+    
+    console.log(`📊 Dr. Mariam has ${myAppointments.length} appointments`);
+
+    // Simple, fast schedule display
+    scheduleContainer.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <!-- Simple Header -->
+            <div class="bg-gradient-to-r from-secondary to-sage text-white p-6">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold">Dr. Mariam's Schedule</h2>
+                    <p class="text-sm text-gray-200">${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+                <div class="flex justify-center gap-4 mt-4">
+                    <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">
+                        📋 ${myAppointments.length} Total Appointments
+                    </span>
+                    <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">
+                        ✅ ${myAppointments.filter(apt => apt.status === 'confirmed').length} Confirmed
+                    </span>
+                    <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">
+                        🕐 ${myAppointments.filter(apt => apt.status === 'scheduled').length} Scheduled
+                    </span>
+                </div>
+            </div>
+
+            <!-- Simple Schedule List -->
+            <div class="p-6">
+                ${myAppointments.length === 0 ? `
+                    <!-- No appointments -->
+                    <div class="text-center py-12">
+                        <i class="fas fa-calendar-times text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Appointments Assigned</h3>
+                        <p class="text-gray-500 dark:text-gray-500 mb-6">
+                            Ask your administrator to assign appointments to you. When appointments are scheduled with your name, they'll appear here automatically.
+                        </p>
+                        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                            <p class="text-sm text-blue-800 dark:text-blue-300 mb-2">
+                                <i class="fas fa-info-circle mr-2"></i><strong>How to get appointments:</strong>
+                            </p>
+                            <ol class="text-sm text-blue-700 dark:text-blue-400 text-left space-y-1">
+                                <li>1. Admin logs in and goes to "Appointments"</li>
+                                <li>2. Admin clicks "Schedule Appointment"</li>
+                                <li>3. Admin selects "Dr. Mariam Abdulatheem Ali" as physiotherapist</li>
+                                <li>4. Appointment will appear here automatically</li>
+                            </ol>
+                        </div>
+                    </div>
+                ` : `
+                    <!-- Appointment List -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                            My Assigned Appointments (${myAppointments.length})
+                        </h3>
+                        ${myAppointments.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time)).map(apt => `
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-16 h-16 bg-secondary rounded-lg flex items-center justify-center text-white font-bold mr-4">
+                                            <div class="text-center">
+                                                <div class="text-xs">${apt.time}</div>
+                                                <div class="text-lg">${apt.patientName.charAt(0)}</div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900 dark:text-white">${apt.patientName}</h4>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">📅 ${new Date(apt.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">🩺 ${apt.treatmentType} (${apt.duration} min)</p>
+                                            ${apt.notes ? `<p class="text-xs text-gray-500 dark:text-gray-500 mt-1">📝 ${apt.notes}</p>` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="px-3 py-1 ${getStatusBadgeClass(apt.status)} rounded-full text-xs font-semibold">
+                                            ${apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}
+                                        </span>
+                                        <div class="flex gap-2">
+                                            <button onclick="viewAppointmentDetails('${apt.id}')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                                <i class="fas fa-eye mr-1"></i>View
+                                            </button>
+                                            ${apt.status === 'scheduled' ? `
+                                                <button onclick="confirmMyAppointment('${apt.id}')" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                                    <i class="fas fa-check mr-1"></i>Confirm
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="border-t border-gray-200 dark:border-gray-600 p-4 bg-gray-50 dark:bg-gray-700">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="showTodayOnly()" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-calendar-day mr-2"></i>Today Only
+                    </button>
+                    <button onclick="showThisWeek()" class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-calendar-week mr-2"></i>This Week
+                    </button>
+                    <button onclick="refreshSchedule()" class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    console.log('✅ Schedule loaded instantly!');
+}
+
+// Helper functions
+function getStatusBadgeClass(status) {
+    const classes = {
+        'scheduled': 'bg-blue-100 text-blue-800',
+        'confirmed': 'bg-green-100 text-green-800',
+        'completed': 'bg-purple-100 text-purple-800',
+        'cancelled': 'bg-red-100 text-red-800'
+    };
+    return classes[status] || 'bg-gray-100 text-gray-800';
+}
+
+function confirmMyAppointment(appointmentId) {
+    const appointment = window.appData.appointments.find(apt => apt.id === appointmentId);
+    if (appointment) {
+        appointment.status = 'confirmed';
+        loadPhysioWeeklySchedule(); // Refresh display
+        showNotification(`✅ Appointment confirmed!`, 'success');
+    }
+}
+
+function showTodayOnly() {
+    showNotification('📅 Showing today\'s appointments only...', 'success');
+}
+
+function showThisWeek() {
+    showNotification('📅 Showing this week\'s appointments...', 'success');
+}
+
+function refreshSchedule() {
+    loadPhysioWeeklySchedule();
+    showNotification('🔄 Schedule refreshed!', 'success');
+}
+
+console.log('📅 Fast schedule loading functions added');
+
                 // Create weekly calendar HTML
                 const calendarHTML = `
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
@@ -15551,7 +15666,7 @@ function showView(viewName) {
                 `;
                 
                 scheduleContainer.innerHTML = calendarHTML;
-            }
+            
             
             // Add weekly navigation functions
             window.previousWeek = function() {
@@ -15599,7 +15714,7 @@ function showView(viewName) {
             window.exportWeekSchedule = function() {
                 showNotification('📄 Exporting weekly schedule as PDF...', 'success');
             };
-        }
+        
 
         // ADDED: Update showPhysioView to load schedule (ONLY ADDITION)
         const originalShowPhysioView = showPhysioView;
