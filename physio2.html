@@ -2748,6 +2748,84 @@ setTimeout(() => {
     }
 }, 2000);
 
+// MISSING FUNCTION - Add this to fix physiotherapist dashboard
+function setupPhysioNavigation() {
+    console.log('🧭 Setting up physiotherapist navigation...');
+    
+    const navButtons = document.querySelectorAll('.physio-nav-btn');
+    navButtons.forEach(btn => {
+        btn.onclick = () => {
+            const view = btn.dataset.view;
+            console.log('📍 Navigating to:', view);
+            showPhysioView(view);
+            
+            // Update active navigation
+            document.querySelectorAll('.physio-nav-btn').forEach(b => {
+                b.classList.remove('bg-secondary', 'text-white');
+            });
+            btn.classList.add('bg-secondary', 'text-white');
+        };
+    });
+    
+    console.log('✅ Physiotherapist navigation setup complete');
+}
+
+function showPhysioView(viewName) {
+    console.log('👁️ Showing physio view:', viewName);
+    
+    // Hide all physio views
+    document.querySelectorAll('.physio-view').forEach(view => {
+        view.classList.add('hidden');
+    });
+    
+    // Show target view
+    const targetView = document.getElementById(viewName);
+    if (targetView) {
+        targetView.classList.remove('hidden');
+        console.log('✅ View switched to:', viewName);
+        
+        // Load view-specific data
+        if (viewName === 'physio-patients') {
+            loadPhysioPatients();
+        } else if (viewName === 'physio-schedule') {
+            loadPhysioWeeklySchedule();
+        } else if (viewName === 'physio-complaints') {
+            updatePhysioComplaintsDisplay();
+        }
+    } else {
+        console.log('❌ View not found:', viewName);
+    }
+}
+
+// PLACEHOLDER FUNCTIONS to prevent more errors
+function loadPhysioPatients() {
+    console.log('👥 Loading physiotherapist patients...');
+    showNotification('👥 Patient management coming soon!', 'success');
+}
+
+function loadPhysioWeeklySchedule() {
+    console.log('📅 Loading physiotherapist schedule...');
+    showNotification('📅 Schedule management coming soon!', 'success');
+}
+
+function updatePhysioComplaintsDisplay() {
+    console.log('📝 Loading physiotherapist complaints...');
+    showNotification('📝 Complaints management coming soon!', 'success');
+}
+
+function loadPhysioTodayAppointments() {
+    console.log('📅 Loading today\'s appointments...');
+}
+
+function updateExerciseStatistics() {
+    console.log('📊 Exercise statistics updated');
+}
+
+function displaySharedExerciseLibrary() {
+    console.log('📚 Exercise library displayed');
+}
+
+console.log('🔧 Missing physiotherapist functions added');
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white max-w-md`;
