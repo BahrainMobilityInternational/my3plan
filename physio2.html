@@ -4964,6 +4964,183 @@ console.log('📅 Simple appointment functions loaded');
             document.getElementById('adminLoginPage').classList.remove('hidden');
         };
 
+        // MISSING FUNCTIONS - Add these after your login code
+
+function initializeDashboard() {
+    console.log('📊 Initializing admin dashboard...');
+    updateDashboardStats();
+    // Add other dashboard initialization here
+    console.log('✅ Admin dashboard initialized');
+}
+
+function setupNavigation() {
+    console.log('🧭 Setting up admin navigation...');
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(btn => {
+        btn.onclick = () => {
+            const view = btn.dataset.view;
+            showView(view);
+            // Update active nav button
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('bg-primary', 'text-white');
+            });
+            btn.classList.add('bg-primary', 'text-white');
+        };
+    });
+    console.log('✅ Admin navigation setup complete');
+}
+
+function showView(viewName) {
+    console.log('👁️ Showing view:', viewName);
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.add('hidden');
+    });
+    const targetView = document.getElementById(viewName);
+    if (targetView) {
+        targetView.classList.remove('hidden');
+    }
+}
+
+function updateDashboardStats() {
+    console.log('📊 Updating dashboard stats...');
+    const patients = window.appData.patients || [];
+    const appointments = window.appData.appointments || [];
+    
+    // Update patient count
+    const patientCountEl = document.getElementById('totalPatientsCount');
+    if (patientCountEl) {
+        patientCountEl.textContent = patients.length;
+    }
+    
+    // Update today's appointments
+    const today = new Date().toISOString().split('T')[0];
+    const todayCount = appointments.filter(apt => apt.date === today).length;
+    const todayCountEl = document.getElementById('todayAppointmentsCount');
+    if (todayCountEl) {
+        todayCountEl.textContent = todayCount;
+    }
+}
+
+function initializePhysioDashboard(physiotherapist) {
+    console.log('🏥 Initializing physiotherapist dashboard for:', physiotherapist.firstName, physiotherapist.lastName);
+    
+    // Update dashboard title
+    const titleEl = document.getElementById('physioPortalTitle');
+    if (titleEl) {
+        titleEl.textContent = `PhysioTech - Dr. ${physiotherapist.firstName} Portal`;
+    }
+    
+    // Update user name
+    const userNameEl = document.getElementById('physioUserName');
+    if (userNameEl) {
+        userNameEl.textContent = `Dr. ${physiotherapist.firstName} ${physiotherapist.lastName}`;
+    }
+    
+    // Update dashboard title
+    const dashboardTitleEl = document.getElementById('physioDashboardTitle');
+    if (dashboardTitleEl) {
+        dashboardTitleEl.textContent = `Dr. ${physiotherapist.firstName}'s Dashboard`;
+    }
+    
+    // Set up physiotherapist navigation
+    setupPhysioNavigation();
+    loadPhysioPatients();
+    loadPhysioTodayAppointments();
+    
+    console.log('✅ Physiotherapist dashboard initialized');
+}
+
+function setupPhysioNavigation() {
+    console.log('🧭 Setting up physiotherapist navigation...');
+    const navButtons = document.querySelectorAll('.physio-nav-btn');
+    navButtons.forEach(btn => {
+        btn.onclick = () => {
+            const view = btn.dataset.view;
+            showPhysioView(view);
+            // Update active nav button
+            document.querySelectorAll('.physio-nav-btn').forEach(b => {
+                b.classList.remove('bg-secondary', 'text-white');
+            });
+            btn.classList.add('bg-secondary', 'text-white');
+        };
+    });
+    console.log('✅ Physiotherapist navigation setup complete');
+}
+
+function showPhysioView(viewName) {
+    console.log('👁️ Showing physio view:', viewName);
+    document.querySelectorAll('.physio-view').forEach(view => {
+        view.classList.add('hidden');
+    });
+    const targetView = document.getElementById(viewName);
+    if (targetView) {
+        targetView.classList.remove('hidden');
+        
+        // Load view-specific data
+        if (viewName === 'physio-schedule') {
+            loadPhysioWeeklySchedule();
+        } else if (viewName === 'physio-patients') {
+            loadPhysioPatients();
+        }
+    }
+}
+
+function loadPhysioPatients() {
+    console.log('👥 Loading physiotherapist patients...');
+    const physioName = 'Dr. Mariam Abdulatheem Ali';
+    const assignedPatients = window.appData.patients.filter(p => p.assignedPhysiotherapist === physioName);
+    console.log(`👥 Dr. Mariam has ${assignedPatients.length} assigned patients`);
+    showNotification(`👥 You have ${assignedPatients.length} assigned patients`, 'success');
+}
+
+function loadPhysioTodayAppointments() {
+    console.log('📅 Loading today\'s appointments...');
+    const physioName = 'Dr. Mariam Abdulatheem Ali';
+    const today = new Date().toISOString().split('T')[0];
+    const todayAppointments = window.appData.appointments.filter(apt => 
+        apt.physiotherapist === physioName && apt.date === today
+    );
+    console.log(`📅 Dr. Mariam has ${todayAppointments.length} appointments today`);
+}
+
+function loadPhysioWeeklySchedule() {
+    console.log('📅 Loading weekly schedule...');
+    const scheduleContainer = document.getElementById('scheduleContainer');
+    if (scheduleContainer) {
+        const physioName = 'Dr. Mariam Abdulatheem Ali';
+        const myAppointments = window.appData.appointments.filter(apt => apt.physiotherapist === physioName);
+        
+        scheduleContainer.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    My Schedule (${myAppointments.length} appointments)
+                </h3>
+                ${myAppointments.length === 0 ? `
+                    <div class="text-center py-8">
+                        <i class="fas fa-calendar-times text-gray-300 text-4xl mb-4"></i>
+                        <h4 class="text-lg font-semibold text-gray-600 mb-2">No Appointments Assigned</h4>
+                        <p class="text-gray-500">Ask your administrator to assign appointments to you.</p>
+                    </div>
+                ` : `
+                    <div class="space-y-4">
+                        ${myAppointments.map(apt => `
+                            <div class="border rounded-lg p-4">
+                                <h5 class="font-bold">${apt.patientName}</h5>
+                                <p>${new Date(apt.date).toLocaleDateString()} at ${apt.time}</p>
+                                <p>${apt.treatmentType} - ${apt.duration} min</p>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">${apt.status}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            </div>
+        `;
+        console.log('✅ Schedule display updated');
+    }
+}
+
+console.log('✅ All missing functions added - login should work now!');
+
         document.getElementById('physioLoginBtn').onclick = () => {
             document.getElementById('userTypeSelection').classList.add('hidden');
             document.getElementById('physioLoginPage').classList.remove('hidden');
@@ -7873,36 +8050,7 @@ function showScheduleAppointmentModal() {
             }
         }
 
-        function initializePhysioDashboard(physiotherapist) {
-    console.log('🏥 Initializing dashboard for:', physiotherapist.firstName, physiotherapist.lastName);
-    
-    // Update dashboard title dynamically
-    const titleEl = document.getElementById('physioPortalTitle');
-    if (titleEl) {
-        titleEl.textContent = `PhysioTech - Dr. ${physiotherapist.firstName} Portal`;
-    }
-    
-    // Update user name in navigation
-    const userNameEl = document.getElementById('physioUserName');
-    if (userNameEl) {
-        userNameEl.textContent = `Dr. ${physiotherapist.firstName} ${physiotherapist.lastName}`;
-    }
-    
-    // Update the dashboard title
-    const dashboardTitleEl = document.getElementById('physioDashboardTitle');
-    if (dashboardTitleEl) {
-        dashboardTitleEl.textContent = `Dr. ${physiotherapist.firstName}'s Dashboard`;
-    }
-    
-    // Set up navigation and functionality
-    setupPhysioNavigation();
-    loadPhysioPatients();
-    updateExerciseStatistics();
-    displaySharedExerciseLibrary();
-    loadPhysioTodayAppointments();
-    
-    console.log('👩‍⚕️ Dashboard initialized for Dr.', physiotherapist.firstName);
-}
+        
 
  
         function showPhysioView(viewName) {
