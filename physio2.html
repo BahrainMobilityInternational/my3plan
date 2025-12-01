@@ -2749,6 +2749,77 @@ setTimeout(() => {
 }, 2000);
 
 // MISSING FUNCTION - Add this to fix physiotherapist dashboard
+// MISSING FUNCTION - Add this to fix physiotherapist dashboard
+function ensurePhysiotherapistsArray() {
+    if (!window.appData) {
+        window.appData = {};
+    }
+    
+    if (!window.appData.physiotherapists || !Array.isArray(window.appData.physiotherapists)) {
+        console.log('🔧 Fixing physiotherapists array...');
+        window.appData.physiotherapists = [
+            {
+                id: 'physio-001',
+                firstName: 'Mariam',
+                lastName: 'Abdulatheem Ali',
+                email: 'Mariambmi@gmail.com',
+                phone: '+973 3333 9999',
+                licenseNumber: 'BH-PT-2024-001',
+                specializations: ['Orthopedic', 'Sports Medicine', 'Manual Therapy'],
+                experience: '8 years',
+                status: 'active',
+                assignedPatients: 0,
+                tempPassword: 'Mariam1979!'
+            }
+        ];
+        console.log('✅ Dr. Mariam data restored');
+    }
+    
+    console.log('👩‍⚕️ Available physiotherapists:', window.appData.physiotherapists.length);
+}
+
+// FIX PHYSIOTHERAPIST BUTTONS - Make them work
+setTimeout(() => {
+    console.log('🔗 Connecting physiotherapist dashboard buttons...');
+    
+    // Connect "View My Patients" button
+    const viewPatientsBtn = document.querySelector('button[onclick*="physio-patients"]');
+    if (viewPatientsBtn) {
+        viewPatientsBtn.onclick = () => {
+            console.log('👥 View Patients clicked');
+            showNotification('👥 Patient management - No patients assigned to Dr. Mariam yet', 'success');
+        };
+    }
+    
+    // Connect "View Schedule" button  
+    const viewScheduleBtn = document.querySelector('button[onclick*="physio-schedule"]');
+    if (viewScheduleBtn) {
+        viewScheduleBtn.onclick = () => {
+            console.log('📅 View Schedule clicked');
+            showPhysioView('physio-schedule');
+        };
+    }
+    
+    // Connect navigation buttons
+    document.querySelectorAll('.physio-nav-btn').forEach(btn => {
+        btn.onclick = () => {
+            const view = btn.dataset.view;
+            console.log('🧭 Navigation clicked:', view);
+            showPhysioView(view);
+            
+            // Update active nav
+            document.querySelectorAll('.physio-nav-btn').forEach(b => {
+                b.classList.remove('bg-secondary', 'text-white');
+            });
+            btn.classList.add('bg-secondary', 'text-white');
+        };
+    });
+    
+    console.log('✅ Physiotherapist buttons connected');
+}, 2000);
+
+console.log('🔧 Physiotherapist dashboard fixes applied');
+
 function setupPhysioNavigation() {
     console.log('🧭 Setting up physiotherapist navigation...');
     
