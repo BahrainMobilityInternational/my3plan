@@ -2577,8 +2577,8 @@
         </div>
     </div>
 <script>
-// SINGLE CLEAN PHYSIOTECH SYSTEM
-console.log('✅ Loading clean PhysioTech system...');
+// SINGLE WORKING PHYSIOTECH SYSTEM
+console.log('✅ Loading working PhysioTech system...');
 
 // Initialize data
 window.appData = {
@@ -2590,6 +2590,11 @@ window.appData = {
         firstName: 'Mariam',
         lastName: 'Abdulatheem Ali',
         email: 'Mariambmi@gmail.com',
+        phone: '+973 3333 9999',
+        licenseNumber: 'BH-PT-2024-001',
+        specializations: ['Orthopedic', 'Sports Medicine', 'Manual Therapy'],
+        experience: '8 years',
+        status: 'active',
         tempPassword: 'Mariam1979!'
     }]
 };
@@ -2650,7 +2655,7 @@ document.getElementById('physioLoginForm').onsubmit = (e) => {
         document.getElementById('physioLoginPage').classList.add('hidden');
         document.getElementById('physioDashboard').classList.remove('hidden');
         
-        // Set up navigation after successful login
+        // Set up navigation immediately after login
         setTimeout(() => {
             setupPhysioNavigation();
         }, 100);
@@ -2662,68 +2667,73 @@ document.getElementById('physioLoginForm').onsubmit = (e) => {
     }
 };
 
-// WORKING physiotherapist navigation
+// WORKING physiotherapist navigation (based on console fix)
 function setupPhysioNavigation() {
     console.log('🔧 Setting up physiotherapist navigation...');
     
-    document.querySelectorAll('.physio-nav-btn').forEach(btn => {
-        btn.onclick = function() {
-            const view = btn.dataset.view;
-            console.log(`Switching to: ${view}`);
+    document.querySelectorAll('.physio-nav-btn').forEach((btn, index) => {
+        const view = btn.dataset.view;
+        console.log(`Fixing button ${index + 1}: ${btn.textContent.trim()} -> ${view}`);
+        
+        // Remove existing handlers
+        btn.onclick = null;
+        
+        // Add new working handler
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            // Hide all views using style.display
-            document.querySelectorAll('.physio-view').forEach(v => v.style.display = 'none');
+            console.log(`✅ Button clicked: ${btn.textContent.trim()}`);
+            
+            // Force hide all views with style.display
+            document.getElementById('physio-dashboard').style.display = 'none';
+            document.getElementById('physio-patients').style.display = 'none';
+            document.getElementById('physio-schedule').style.display = 'none';
+            document.getElementById('physio-exercises').style.display = 'none';
+            document.getElementById('physio-complaints').style.display = 'none';
             
             // Show target view
             const targetView = document.getElementById(view);
             if (targetView) {
                 targetView.style.display = 'block';
-                showNotification(`${btn.textContent.trim()} opened`, 'success');
                 
-                // Update view content
+                // Update content based on view
                 if (view === 'physio-patients') {
-                    updatePatientsView();
+                    const container = targetView.querySelector('#physioMyPatientsGrid');
+                    const emptyState = targetView.querySelector('#physioNoPatientsFound');
+                    if (container) container.innerHTML = '';
+                    if (emptyState) emptyState.style.display = 'block';
                 } else if (view === 'physio-schedule') {
-                    updateScheduleView();
+                    const container = targetView.querySelector('#scheduleContainer');
+                    if (container) {
+                        container.innerHTML = `
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                                <h3 class="text-xl font-semibold mb-4">Dr. Mariam's Schedule</h3>
+                                <div class="text-center py-8">
+                                    <i class="fas fa-calendar-check text-green-500 text-4xl mb-4"></i>
+                                    <h4 class="text-lg font-semibold text-gray-600 mb-2">Schedule Ready!</h4>
+                                    <p class="text-gray-500">No appointments assigned yet.</p>
+                                </div>
+                            </div>
+                        `;
+                    }
                 }
+                
+                showNotification(`✅ ${btn.textContent.trim()} view opened!`, 'success');
             }
             
-            // Update active button
+            // Update button styles
             document.querySelectorAll('.physio-nav-btn').forEach(b => {
                 b.classList.remove('bg-secondary', 'text-white');
             });
             btn.classList.add('bg-secondary', 'text-white');
-        };
+        });
     });
     
     console.log('✅ Navigation setup complete');
 }
 
-function updatePatientsView() {
-    const container = document.getElementById('physioMyPatientsGrid');
-    const emptyState = document.getElementById('physioNoPatientsFound');
-    
-    if (container) container.innerHTML = '';
-    if (emptyState) emptyState.style.display = 'block';
-}
-
-function updateScheduleView() {
-    const container = document.getElementById('scheduleContainer');
-    if (container) {
-        container.innerHTML = `
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h3 class="text-xl font-semibold mb-4">Dr. Mariam's Schedule</h3>
-                <div class="text-center py-8">
-                    <i class="fas fa-calendar-check text-secondary text-4xl mb-4"></i>
-                    <h4 class="text-lg font-semibold text-gray-600 mb-2">Schedule Ready</h4>
-                    <p class="text-gray-500">No appointments assigned yet.</p>
-                </div>
-            </div>
-        `;
-    }
-}
-
-// Placeholder functions
+// Placeholder functions for admin functionality
 function showScheduleAppointmentModal() {
     showNotification('📅 Appointment scheduling coming soon!', 'success');
 }
@@ -2740,11 +2750,23 @@ function announceMyDailyAppointments() {
     showNotification('🎙️ Voice announcements coming soon!', 'success');
 }
 
-console.log('🎉 Clean PhysioTech system loaded');
-console.log('📧 Dr. Mariam login: Mariambmi@gmail.com / Mariam1979!');
-</script></parameter>
-</invoke>
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📱 Page loaded - initializing...');
+    
+    // Auto-setup navigation if physiotherapist dashboard is already visible
+    const physioDashboard = document.getElementById('physioDashboard');
+    if (physioDashboard && !physioDashboard.classList.contains('hidden')) {
+        setTimeout(() => {
+            setupPhysioNavigation();
+        }, 500);
+    }
+});
 
+console.log('🎉 Working PhysioTech system loaded');
+console.log('📧 Dr. Mariam login: Mariambmi@gmail.com / Mariam1979!');
+</script>
+ 
     <script>
         
      // SIMPLE APPOINTMENT FIX - Add this anywhere in your JavaScript
