@@ -3043,6 +3043,151 @@ if (typeof window.Poe !== 'undefined' && window.Poe.registerHandler) {
 console.log('🎙️ Voice announcement system loaded');
 
 
+
+
+// ADMIN NAVIGATION FIX - Add working admin navigation
+function setupAdminNavigation() {
+    console.log('🧭 Setting up admin navigation...');
+    
+    const navButtons = document.querySelectorAll('.nav-btn');
+    console.log(`Found ${navButtons.length} admin navigation buttons`);
+    
+    if (navButtons.length === 0) {
+        console.log('❌ No admin navigation buttons found - retrying...');
+        setTimeout(setupAdminNavigation, 1000);
+        return;
+    }
+    
+    navButtons.forEach((btn, index) => {
+        const view = btn.dataset.view;
+        console.log(`Admin Button ${index + 1}: "${btn.textContent.trim()}" -> ${view}`);
+        
+        // Remove existing handlers
+        btn.onclick = null;
+        
+        // Add working click handler
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log(`🎯 Admin navigation clicked: ${btn.textContent.trim()}`);
+            
+            // Hide all admin views
+            document.querySelectorAll('.view').forEach(viewEl => {
+                viewEl.classList.add('hidden');
+                viewEl.style.display = 'none';
+            });
+            
+            // Show target view
+            const targetView = document.getElementById(view);
+            if (targetView) {
+                targetView.classList.remove('hidden');
+                targetView.style.display = 'block';
+                
+                // Load view-specific content
+                if (view === 'patients') {
+                    loadPatientsView();
+                } else if (view === 'appointments') {
+                    loadAppointmentsView();
+                } else if (view === 'physiotherapists') {
+                    loadPhysiotherapistsView();
+                } else if (view === 'users') {
+                    loadUsersView();
+                } else if (view === 'exercises') {
+                    loadExercisesView();
+                } else if (view === 'complaints') {
+                    loadComplaintsView();
+                } else if (view === 'reports') {
+                    loadReportsView();
+                } else if (view === 'settings') {
+                    loadSettingsView();
+                }
+                
+                showNotification(`✅ ${btn.textContent.trim()} view opened!`, 'success');
+            } else {
+                console.log(`❌ Target view ${view} not found`);
+                showNotification(`❌ View not found: ${view}`, 'error');
+            }
+            
+            // Update button styles
+            navButtons.forEach(b => {
+                b.classList.remove('bg-primary', 'text-white');
+                b.style.backgroundColor = '';
+                b.style.color = '';
+            });
+            btn.classList.add('bg-primary', 'text-white');
+            btn.style.backgroundColor = '#0F766E';
+            btn.style.color = 'white';
+        });
+    });
+    
+    console.log('✅ Admin navigation setup complete!');
+}
+
+// Simple view loading functions
+function loadPatientsView() {
+    console.log('👥 Loading patients view...');
+    showNotification('👥 Patients view loaded - Add patients using the buttons above', 'success');
+}
+
+function loadAppointmentsView() {
+    console.log('📅 Loading appointments view...');
+    showNotification('📅 Appointments view loaded - Schedule appointments using the buttons above', 'success');
+}
+
+function loadPhysiotherapistsView() {
+    console.log('👩‍⚕️ Loading physiotherapists view...');
+    showNotification('👩‍⚕️ Physiotherapists view loaded - Manage staff using the buttons above', 'success');
+}
+
+function loadUsersView() {
+    console.log('👥 Loading users view...');
+    showNotification('👥 Users & Admins view loaded', 'success');
+}
+
+function loadExercisesView() {
+    console.log('🏋️ Loading exercises view...');
+    showNotification('🏋️ Exercise library loaded', 'success');
+}
+
+function loadComplaintsView() {
+    console.log('📝 Loading complaints view...');
+    showNotification('📝 Complaints management loaded', 'success');
+}
+
+function loadReportsView() {
+    console.log('📊 Loading reports view...');
+    showNotification('📊 Reports & Analytics loaded', 'success');
+}
+
+function loadSettingsView() {
+    console.log('⚙️ Loading settings view...');
+    showNotification('⚙️ System settings loaded', 'success');
+}
+
+// Auto-setup admin navigation when admin dashboard becomes visible
+const adminObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const adminDashboard = document.getElementById('adminDashboard');
+            if (adminDashboard && !adminDashboard.classList.contains('hidden')) {
+                console.log('👁️ Admin dashboard became visible - setting up navigation...');
+                setTimeout(setupAdminNavigation, 100);
+            }
+        }
+    });
+});
+
+// Start observing admin dashboard
+const adminDashboard = document.getElementById('adminDashboard');
+if (adminDashboard) {
+    adminObserver.observe(adminDashboard, { attributes: true });
+}
+
+console.log('🎯 Admin navigation fix loaded');
+
+
+
 </script>
 
     <script>
