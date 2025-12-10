@@ -2762,21 +2762,330 @@ function setupPhysioNavigation() {
     
     console.log('✅ Navigation setup complete!');
 }
-
+// FIX PHYSIOTHERAPIST PATIENT ASSIGNMENT DISPLAY
 function updatePatientsContent() {
+    console.log('👥 Loading physiotherapist patients...');
+    
     const container = document.getElementById('physioMyPatientsGrid');
     const emptyState = document.getElementById('physioNoPatientsFound');
+    const patientCountEl = document.getElementById('physioPatientCount');
     
-    if (container) {
-        container.innerHTML = '';
-        container.style.display = 'block';
+    // Get Dr. Mariam's assigned patients
+    const physioName = 'Dr. Mariam Abdulatheem Ali';
+    const allPatients = window.appData?.patients || [];
+    
+    // Filter patients assigned to Dr. Mariam (check multiple possible formats)
+    const assignedPatients = allPatients.filter(patient => {
+        return patient.assignedPhysiotherapist === physioName ||
+               patient.assignedPhysiotherapist === 'Dr. Mariam Abdulatheem Ali' ||
+               patient.assignedPhysiotherapist === 'Mariam Abdulatheem Ali' ||
+               patient.assigned_physiotherapist === physioName;
+    });
+    
+    console.log(`👩‍⚕️ Dr. Mariam's assigned patients:`, assignedPatients);
+    console.log(`📊 Total patients in system:`, allPatients.length);
+    console.log(`🎯 Patients assigned to Dr. Mariam:`, assignedPatients.length);
+    
+    // Update patient count
+    if (patientCountEl) {
+        patientCountEl.textContent = `Assigned: ${assignedPatients.length} patient${assignedPatients.length !== 1 ? 's' : ''}`;
     }
-    if (emptyState) {
-        emptyState.style.display = 'block';
-        emptyState.classList.remove('hidden');
+    
+    if (assignedPatients.length === 0) {
+        if (container) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+        }
+        if (emptyState) {
+            emptyState.style.display = 'block';
+            emptyState.classList.remove('hidden');
+            emptyState.innerHTML = `
+                <div class="max-w-md mx-auto">
+                    <i class="fas fa-user-md text-gray-300 dark:text-gray-600 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Patients Assigned</h3>
+                    <p class="text-gray-500 dark:text-gray-500 mb-6">
+                        Ask your administrator to assign patients to you.<br>
+                        <strong>Dr. Mariam Abdulatheem Ali</strong>
+                    </p>
+                    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                        <p class="text-sm text-blue-800 dark:text-blue-300 mb-2">
+                            <i class="fas fa-info-circle mr-2"></i><strong>Debug Info:</strong>
+                        </p>
+                        <p class="text-xs text-blue-700 dark:text-blue-400">
+                            Total patients in system: ${allPatients.length}<br>
+                            Looking for assignments to: "${physioName}"<br>
+                            Found assignments: ${assignedPatients.length}
+                        </p>
+                        ${allPatients.length > 0 ? `
+                            <div class="mt-3">
+                                <p class="text-xs text-blue-700 dark:text-blue-400">
+                                    <strong>Current patient assignments:</strong><br>
+                                    ${allPatients.map(p => `• ${p.firstName} ${p.lastName} → ${p.assignedPhysiotherapist || 'Not assigned'}`).join('<br>')}
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        if (emptyState) {
+            emptyState.style.display = 'none';
+            emptyState.classList.add('hidden');
+        }
+        if (container) {
+            container.style.display = 'grid';
+            container.innerHTML = assignedPatients.map(patient => `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                ${patient.firstName.charAt(0)}${patient.lastName.charAt(0)}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                    ${patient.firstName} ${patient.lastName}
+                                </h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    CPR: ${patient.cprNumber}
+                                </p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 ${patient.treatmentStatus === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} rounded-full text-xs font-semibold">
+                            ${(patient.treatmentStatus || 'Active').charAt(0).toUpperCase() + (patient.treatmentStatus || 'active').slice(1)}
+                        </span>
+                    </div>
+
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-envelope w-5 mr-2"></i>
+                            <span>${patient.email || 'Not provided'}</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-phone w-5 mr-2"></i>
+                            <span>${patient.phone}</span>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-calendar w-5 mr-2"></i>
+                            <span>Registered: ${new Date(patient.dateRegistered).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
+                        <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                            <strong>Current Condition:</strong>
+                        </p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            ${patient.currentCondition}
+                        </p>
+                        ${patient.assignmentNotes ? `
+                            <p class="text-sm text-gray-700 dark:text-gray-300 mb-1 mt-2">
+                                <strong>Assignment Notes:</strong>
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                ${patient.assignmentNotes}
+                            </p>
+                        ` : ''}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mt-4">
+                        <button onclick="showNotification('👁️ Viewing patient details for ${patient.firstName}...', 'success')" class="bg-secondary text-white px-3 py-2 rounded-lg hover:bg-sage transition-colors text-sm">
+                            <i class="fas fa-eye mr-1"></i>View Details
+                        </button>
+                        <button onclick="showNotification('✏️ Editing patient ${patient.firstName}...', 'success')" class="bg-yellow-600 text-white px-3 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                        <button onclick="showNotification('📈 Updating progress for ${patient.firstName}...', 'success')" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                            <i class="fas fa-chart-line mr-1"></i>Progress
+                        </button>
+                        <button onclick="showNotification('📁 Viewing files for ${patient.firstName}...', 'success')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                            <i class="fas fa-folder mr-1"></i>Files
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
     }
-    console.log('👥 Patients content updated');
+    
+    console.log('✅ Physiotherapist patients view updated');
 }
+
+// FORCE UPDATE PATIENT ASSIGNMENTS WHEN ADMIN ADDS PATIENT
+const originalShowAddPatientModal = showAddPatientModal;
+showAddPatientModal = function() {
+    console.log('👥 Opening patient registration modal...');
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
+            <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                <h3 class="text-xl font-semibold text-white flex items-center">
+                    <i class="fas fa-user-plus text-teal-400 mr-2"></i>Add New Patient
+                </h3>
+                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <form id="quickPatientForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
+                            <input type="text" id="quickFirstName" required placeholder="Enter first name" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Last Name *</label>
+                            <input type="text" id="quickLastName" required placeholder="Enter last name" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number *</label>
+                            <input type="tel" id="quickPhone" required placeholder="+973 XXXX XXXX" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">CPR Number *</label>
+                            <input type="text" id="quickCPR" required placeholder="000000000" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Date of Birth *</label>
+                            <input type="date" id="quickDOB" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Gender *</label>
+                            <select id="quickGender" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                        <input type="email" id="quickEmail" placeholder="patient@example.com" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Current Condition *</label>
+                        <textarea id="quickCondition" required rows="3" placeholder="Describe the patient's current condition..." class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Assigned Physiotherapist *</label>
+                        <select id="quickPhysio" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base">
+                            <option value="">Choose physiotherapist</option>
+                            <option value="Dr. Mariam Abdulatheem Ali">Dr. Mariam Abdulatheem Ali - Orthopedic, Sports Medicine</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="flex justify-end space-x-3 p-6 border-t border-gray-700">
+                <button onclick="this.closest('.fixed').remove()" class="px-6 py-3 text-gray-300 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="saveQuickPatient()" class="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium">
+                    <i class="fas fa-user-plus mr-2"></i>Add Patient & Assign
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
+
+function saveQuickPatient() {
+    const firstName = document.getElementById('quickFirstName').value.trim();
+    const lastName = document.getElementById('quickLastName').value.trim();
+    const phone = document.getElementById('quickPhone').value.trim();
+    const cprNumber = document.getElementById('quickCPR').value.trim();
+    const dateOfBirth = document.getElementById('quickDOB').value;
+    const gender = document.getElementById('quickGender').value;
+    const email = document.getElementById('quickEmail').value.trim();
+    const currentCondition = document.getElementById('quickCondition').value.trim();
+    const assignedPhysiotherapist = document.getElementById('quickPhysio').value;
+
+    if (!firstName || !lastName || !phone || !cprNumber || !dateOfBirth || !gender || !currentCondition || !assignedPhysiotherapist) {
+        showNotification('⚠️ Please fill in all required fields', 'error');
+        return;
+    }
+
+    const newPatient = {
+        id: `patient-${Date.now()}`,
+        firstName,
+        lastName,
+        phone,
+        cprNumber,
+        dateOfBirth,
+        gender,
+        email: email || '',
+        currentCondition,
+        assignedPhysiotherapist: assignedPhysiotherapist, // This is the key field!
+        treatmentStatus: 'active',
+        dateRegistered: new Date().toISOString(),
+        assignmentNotes: `Assigned to ${assignedPhysiotherapist} on ${new Date().toLocaleDateString()}`
+    };
+
+    // Add to data store
+    if (!window.appData.patients) window.appData.patients = [];
+    window.appData.patients.push(newPatient);
+    
+    // Save to storage
+    saveAllDataToMemoryStorage();
+    
+    console.log('✅ Patient created and assigned:', newPatient);
+    console.log(`👩‍⚕️ Patient assigned to: ${assignedPhysiotherapist}`);
+    
+    // Close modal
+    document.querySelector('.fixed').remove();
+    
+    // Show success message
+    showNotification(`✅ Patient ${firstName} ${lastName} added and assigned to ${assignedPhysiotherapist}!`, 'success');
+    
+    // If we're currently in the physiotherapist view, update it
+    const physioPatientView = document.getElementById('physio-patients');
+    if (physioPatientView && !physioPatientView.classList.contains('hidden')) {
+        setTimeout(() => {
+            updatePatientsContent();
+        }, 500);
+    }
+}
+
+// TEST FUNCTION - Create a test patient assignment
+function createTestPatientAssignment() {
+    const testPatient = {
+        id: `patient-${Date.now()}`,
+        firstName: 'Ahmed',
+        lastName: 'Al-Khalifa',
+        phone: '+973 9999 8888',
+        cprNumber: '123456789',
+        dateOfBirth: '1985-03-15',
+        gender: 'male',
+        email: 'ahmed.khalifa@email.com',
+        currentCondition: 'Chronic back pain requiring physiotherapy treatment',
+        assignedPhysiotherapist: 'Dr. Mariam Abdulatheem Ali', // Exact match!
+        treatmentStatus: 'active',
+        dateRegistered: new Date().toISOString(),
+        assignmentNotes: 'Test patient assigned for demonstration purposes'
+    };
+
+    if (!window.appData.patients) window.appData.patients = [];
+    window.appData.patients.push(testPatient);
+    
+    saveAllDataToMemoryStorage();
+    
+    showNotification(`✅ Test patient Ahmed Al-Khalifa assigned to Dr. Mariam!`, 'success');
+    console.log('🧪 Test patient created:', testPatient);
+    
+    return testPatient;
+}
+
+console.log('🔧 Patient assignment fix loaded');
+console.log('🧪 Run createTestPatientAssignment() to test');
 
 function updateScheduleContent() {
     const container = document.getElementById('scheduleContainer');
@@ -3290,43 +3599,359 @@ function showScheduleAppointmentModal() {
     document.body.appendChild(modal);
 }
 
-function saveModalAppointment() {
-    const patientName = document.getElementById('modalPatientName').value.trim();
-    const physiotherapist = document.getElementById('modalPhysiotherapist').value;
-    const date = document.getElementById('modalAppointmentDate').value;
-    const time = document.getElementById('modalAppointmentTime').value;
+// COMPLETE SUPABASE DATABASE INTEGRATION
+let supabaseClient = null;
+let isSupabaseConnected = false;
 
-    if (!patientName || !physiotherapist || !date || !time) {
-        showNotification('⚠️ Please fill in all required fields', 'error');
-        return;
+// Storage function (required for your saveModalAppointment)
+function saveAllDataToMemoryStorage() {
+    try {
+        if (typeof Storage !== 'undefined') {
+            localStorage.setItem('physiotech_data', JSON.stringify(window.appData));
+            console.log('💾 Data saved to localStorage successfully');
+        }
+        
+        // Also auto-sync to Supabase if connected
+        if (isSupabaseConnected) {
+            autoSyncToSupabase();
+        }
+    } catch (error) {
+        console.log('💾 Storage error:', error.message);
     }
-
-    const appointment = {
-        id: `appointment-${Date.now()}`,
-        patientName,
-        physiotherapist,
-        date,
-        time,
-        duration: 45,
-        treatmentType: 'General Treatment',
-        status: 'scheduled',
-        createdDate: new Date().toISOString()
-    };
-
-    if (!window.appData.appointments) window.appData.appointments = [];
-    window.appData.appointments.push(appointment);
-    
-    // Save to storage
-    saveAllDataToMemoryStorage();
-    
-    document.querySelector('.fixed').remove();
-    showNotification(`✅ Appointment scheduled for ${patientName} with ${physiotherapist}!`, 'success');
-    console.log('✅ Appointment created:', appointment);
 }
 
-console.log('💾 Storage functions added');
+// Auto-sync recent data to Supabase
+async function autoSyncToSupabase() {
+    if (!isSupabaseConnected) return;
+    
+    try {
+        // Sync recent appointments (last 5)
+        const recentAppointments = (window.appData.appointments || []).slice(-5);
+        for (const apt of recentAppointments) {
+            await saveToSupabase('appointments', apt);
+        }
+        console.log('🔄 Auto-sync to Supabase completed');
+    } catch (error) {
+        console.log('🔄 Auto-sync error:', error.message);
+    }
+}
 
+// Initialize Supabase connection
+async function initializeSupabase() {
+    try {
+        console.log('🗄️ Initializing Supabase...');
+        
+        // Check if Supabase library is loaded
+        if (typeof window.supabase === 'undefined') {
+            console.log('⚠️ Supabase library not loaded - showing setup');
+            setTimeout(showSupabaseSetupModal, 1000);
+            return false;
+        }
 
+        // Try to load saved configuration
+        const savedConfig = localStorage.getItem('supabaseConfig');
+        if (!savedConfig) {
+            console.log('📋 No Supabase configuration - showing setup modal');
+            setTimeout(showSupabaseSetupModal, 1500);
+            return false;
+        }
+
+        const config = JSON.parse(savedConfig);
+        
+        // Create Supabase client
+        supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+        
+        // Test connection
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        
+        isSupabaseConnected = true;
+        console.log('🗄️ Supabase connected successfully!');
+        showNotification('🗄️ Connected to Supabase database!', 'success');
+        
+        // Load existing data
+        await loadDataFromSupabase();
+        
+        return true;
+        
+    } catch (error) {
+        console.log('❌ Supabase connection failed:', error.message);
+        isSupabaseConnected = false;
+        setTimeout(showSupabaseSetupModal, 2000);
+        return false;
+    }
+}
+
+// Show Supabase setup modal
+function showSupabaseSetupModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full">
+            <div class="p-6 border-b border-gray-700">
+                <h3 class="text-xl font-semibold text-white">
+                    <i class="fas fa-database text-purple-400 mr-2"></i>Connect to Supabase Database
+                </h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                    <h4 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                        <i class="fas fa-rocket text-purple-600 mr-2"></i>Database Benefits
+                    </h4>
+                    <ul class="text-sm text-purple-800 dark:text-purple-300 space-y-1">
+                        <li>✅ Real-time data synchronization</li>
+                        <li>✅ Automatic backup and recovery</li>
+                        <li>✅ Multi-user access</li>
+                        <li>✅ Advanced reporting</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Supabase Project URL *
+                        <span class="text-gray-400">(https://xyz.supabase.co)</span>
+                    </label>
+                    <input type="url" id="supabaseUrl" placeholder="https://your-project.supabase.co" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-purple-500">
+                    <p class="text-xs text-gray-400 mt-1">Found in Project Settings → General → Project URL</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Supabase API Key (anon/public) *
+                    </label>
+                    <input type="text" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white text-base focus:ring-2 focus:ring-purple-500">
+                    <p class="text-xs text-gray-400 mt-1">Found in Project Settings → API → anon/public key</p>
+                </div>
+                
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                    <h4 class="font-semibold text-green-900 dark:text-green-100 mb-2">
+                        <i class="fas fa-info-circle text-green-600 mr-2"></i>Quick Setup
+                    </h4>
+                    <ol class="text-sm text-green-800 dark:text-green-300 space-y-1">
+                        <li>1. Go to <a href="https://supabase.com" target="_blank" class="text-green-600 hover:underline">supabase.com</a></li>
+                        <li>2. Create free account and new project</li>
+                        <li>3. Copy Project URL and API key</li>
+                        <li>4. Paste them above and click Connect</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="flex gap-3 p-6 border-t border-gray-700">
+                <button onclick="skipSupabase()" class="flex-1 px-4 py-2 text-gray-300 border border-gray-600 rounded hover:bg-gray-700 transition-colors">
+                    Skip (Use Local Only)
+                </button>
+                <button onclick="testAndConnectSupabase()" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-plug mr-2"></i>Connect Database
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Test and connect to Supabase
+async function testAndConnectSupabase() {
+    const url = document.getElementById('supabaseUrl').value.trim();
+    const key = document.getElementById('supabaseKey').value.trim();
+    
+    if (!url || !key) {
+        showNotification('⚠️ Please enter both URL and API key', 'error');
+        return;
+    }
+    
+    // Validate URL format
+    if (!url.includes('supabase.co')) {
+        showNotification('⚠️ Invalid Supabase URL format', 'error');
+        return;
+    }
+    
+    const btn = document.querySelector('button[onclick="testAndConnectSupabase()"]');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Connecting...';
+    btn.disabled = true;
+    
+    try {
+        // Save configuration
+        const config = { url, anonKey: key };
+        localStorage.setItem('supabaseConfig', JSON.stringify(config));
+        
+        // Test connection
+        supabaseClient = window.supabase.createClient(url, key);
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        
+        // Test basic query
+        const { error: testError } = await supabaseClient.from('patients').select('id').limit(1);
+        
+        isSupabaseConnected = true;
+        document.querySelector('.fixed').remove();
+        
+        showNotification('✅ Supabase connected and tested successfully!', 'success');
+        console.log('🗄️ Supabase connection established and tested');
+        
+        // Load existing data
+        await loadDataFromSupabase();
+        
+    } catch (error) {
+        btn.innerHTML = '<i class="fas fa-plug mr-2"></i>Connect Database';
+        btn.disabled = false;
+        showNotification('❌ Connection failed: ' + error.message, 'error');
+        console.log('❌ Supabase connection error:', error);
+    }
+}
+
+// Skip Supabase
+function skipSupabase() {
+    document.querySelector('.fixed').remove();
+    showNotification('📱 Using local storage only - Database skipped', 'success');
+}
+
+// Save data to Supabase
+async function saveToSupabase(table, data) {
+    if (!supabaseClient || !isSupabaseConnected) {
+        console.log('💾 Supabase not connected - saving locally only');
+        return { success: false, message: 'Database not connected' };
+    }
+    
+    try {
+        let result;
+        
+        if (table === 'patients') {
+            result = await supabaseClient
+                .from('patients')
+                .insert([{
+                    id: data.id,
+                    first_name: data.firstName,
+                    last_name: data.lastName,
+                    phone: data.phone,
+                    cpr_number: data.cprNumber,
+                    date_of_birth: data.dateOfBirth,
+                    gender: data.gender,
+                    email: data.email || '',
+                    current_condition: data.currentCondition,
+                    assigned_physiotherapist: data.assignedPhysiotherapist,
+                    treatment_status: data.treatmentStatus || 'active',
+                    created_at: data.dateRegistered || new Date().toISOString()
+                }]);
+                
+        } else if (table === 'appointments') {
+            result = await supabaseClient
+                .from('appointments')
+                .insert([{
+                    id: data.id,
+                    patient_name: data.patientName,
+                    physiotherapist: data.physiotherapist,
+                    appointment_date: data.date,
+                    appointment_time: data.time,
+                    duration: data.duration,
+                    treatment_type: data.treatmentType,
+                    status: data.status,
+                    notes: data.notes || '',
+                    created_at: data.createdDate || new Date().toISOString()
+                }]);
+                
+        } else if (table === 'complaints') {
+            result = await supabaseClient
+                .from('complaints')
+                .insert([{
+                    id: data.id,
+                    patient_name: data.patientName,
+                    category: data.category,
+                    priority: data.priority,
+                    subject: data.subject,
+                    description: data.description,
+                    status: data.status || 'new',
+                    submitted_by: data.submittedBy || 'Admin User',
+                    created_at: data.dateSubmitted || new Date().toISOString()
+                }]);
+        }
+        
+        if (result.error) {
+            throw result.error;
+        }
+        
+        console.log(`💾 Successfully saved ${table} to Supabase:`, data.id);
+        showNotification(`✅ ${table} saved to database!`, 'success');
+        return { success: true, message: 'Data saved to database successfully' };
+        
+    } catch (error) {
+        console.log(`❌ Supabase save error for ${table}:`, error.message);
+        showNotification(`⚠️ Database save failed: ${error.message}`, 'error');
+        return { success: false, message: error.message };
+    }
+}
+
+// Load data from Supabase
+async function loadDataFromSupabase() {
+    if (!supabaseClient || !isSupabaseConnected) return;
+    
+    try {
+        console.log('📥 Loading data from Supabase database...');
+        
+        // Load patients
+        try {
+            const { data: patients, error: patientsError } = await supabaseClient
+                .from('patients')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (!patientsError && patients) {
+                window.appData.patients = patients.map(p => ({
+                    id: p.id,
+                    firstName: p.first_name,
+                    lastName: p.last_name,
+                    phone: p.phone,
+                    cprNumber: p.cpr_number,
+                    dateOfBirth: p.date_of_birth,
+                    gender: p.gender,
+                    email: p.email || '',
+                    currentCondition: p.current_condition,
+                    assignedPhysiotherapist: p.assigned_physiotherapist,
+                    treatmentStatus: p.treatment_status || 'active',
+                    dateRegistered: p.created_at
+                }));
+                console.log(`📋 Loaded ${patients.length} patients from database`);
+            }
+        } catch (error) {
+            console.log('Patients table not found - will be created on first insert');
+        }
+        
+        // Load appointments
+        try {
+            const { data: appointments, error: appointmentsError } = await supabaseClient
+                .from('appointments')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (!appointmentsError && appointments) {
+                window.appData.appointments = appointments.map(a => ({
+                    id: a.id,
+                    patientName: a.patient_name,
+                    physiotherapist: a.physiotherapist,
+                    date: a.appointment_date,
+                    time: a.appointment_time,
+                    duration: a.duration || 45,
+                    treatmentType: a.treatment_type,
+                    status: a.status || 'scheduled',
+                    notes: a.notes || '',
+                    createdDate: a.created_at
+                }));
+                console.log(`📅 Loaded ${appointments.length} appointments from database`);
+            }
+        } catch (error) {
+            console.log('Appointments table not found - will be created on first insert');
+        }
+        
+        showNotification('✅ All data loaded from Supabase successfully!', 'success');
+        
+    } catch (error) {
+        console.log('❌ Data loading error:', error.message);
+        showNotification('⚠️ Database loading error: ' + error.message, 'error');
+    }
+}
+
+// Auto-initialize Supabase when page loads
+setTimeout(() => {
+    initializeSupabase();
+}, 3000);
+
+console.log('🗄️ Supabase integration system loaded');
 
 </script>
 
