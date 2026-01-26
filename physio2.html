@@ -3,59 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PhysioCare Management System</title>
+  <title>PhysioCare Management System (Supabase + Local Fallback)</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Supabase (UMD build: works better in many environments) -->
+  <!-- Supabase UMD (more compatible than npm CDN build in some previews) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
     .hidden-section { display: none !important; }
 
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      padding: 0.75rem 1rem;
-      color: #4b5563;
-      border-radius: 0.5rem;
-      transition: all 0.2s;
-      margin-bottom: 0.25rem;
+    .sidebar-link{
+      display:flex;align-items:center;padding:.75rem 1rem;color:#4b5563;border-radius:.5rem;
+      transition:all .2s;margin-bottom:.25rem;
     }
-    .sidebar-link:hover { background-color: #f3f4f6; color: #111827; }
-    .sidebar-link.active { background-color: #0f766e; color: white; }
-    .sidebar-link i { width: 1.5rem; margin-right: 0.75rem; }
+    .sidebar-link:hover{background:#f3f4f6;color:#111827}
+    .sidebar-link.active{background:#0f766e;color:#fff}
+    .sidebar-link i{width:1.5rem;margin-right:.75rem}
 
-    .eval-input {
-      width: 100%;
-      border-bottom: 1px solid #d1d5db;
-      padding: 2px 0;
-      outline: none;
-      background: transparent;
-      font-size: 0.9rem;
-    }
-    .eval-input:focus { border-bottom: 2px solid #0f766e; }
-    .eval-label { font-size: 0.8rem; font-weight: 600; color: #374151; }
-    .eval-section-title {
-      font-weight: bold;
-      text-decoration: underline;
-      margin-top: 1rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
-    }
-
-    .appt-card { transition: transform 0.2s, box-shadow 0.2s; }
-    .appt-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-    }
+    .appt-card{transition:transform .2s, box-shadow .2s}
+    .appt-card:hover{transform:translateY(-2px);box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06)}
 
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
@@ -63,13 +37,12 @@
     .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
   </style>
 </head>
-
 <body class="bg-gray-100 font-sans text-gray-800 relative">
 
-  <!-- NOTIFICATION CONTAINER -->
+  <!-- NOTIFICATIONS -->
   <div id="notification-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center bg-blue-50">
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
       <div class="text-center mb-8">
@@ -83,18 +56,12 @@
       <form id="login-form" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" id="email"
-                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500"
-                 value="admin@physio.com" required>
+          <input type="email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500" value="admin@physio.com" required />
         </div>
-
         <div>
           <label class="block text-sm font-medium text-gray-700">Password</label>
-          <input type="password" id="password"
-                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500"
-                 value="admin123" required>
+          <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500" value="admin123" required />
         </div>
-
         <div>
           <label class="block text-sm font-medium text-gray-700">Role</label>
           <select id="role-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2">
@@ -102,29 +69,26 @@
             <option value="therapist">Therapist</option>
           </select>
         </div>
-
         <button type="submit" class="w-full bg-teal-700 text-white py-2 px-4 rounded hover:bg-teal-800 transition">
           Sign In
         </button>
       </form>
 
       <div class="mt-4 text-xs text-gray-500 bg-gray-50 p-3 rounded border">
-        <p class="font-bold mb-1">Login Credentials (Demo):</p>
+        <p class="font-bold mb-1">Demo Credentials (offline auth):</p>
         <p>Admin: <strong>admin@physio.com</strong> / <strong>admin123</strong></p>
         <p>Therapist: <strong>sarah@physio.com</strong> / <strong>pass123</strong></p>
       </div>
     </div>
   </div>
 
-  <!-- DASHBOARD LAYOUT -->
+  <!-- APP -->
   <div id="dashboard-layout" class="hidden-section min-h-screen flex flex-col md:flex-row">
 
-    <!-- Sidebar -->
+    <!-- SIDEBAR -->
     <aside class="w-full md:w-64 bg-white shadow-md flex-shrink-0 flex flex-col h-screen">
       <div class="p-6 border-b">
-        <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2">
-          <i class="fa-solid fa-user-doctor"></i> PhysioCare
-        </h2>
+        <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2"><i class="fa-solid fa-user-doctor"></i> PhysioCare</h2>
         <p id="user-display" class="text-sm text-gray-500 mt-1">Welcome, User</p>
       </div>
 
@@ -167,10 +131,10 @@
       </div>
     </aside>
 
-    <!-- Main -->
+    <!-- MAIN -->
     <main class="flex-1 p-6 overflow-y-auto h-screen bg-gray-50">
 
-      <!-- Dashboard -->
+      <!-- DASHBOARD -->
       <section id="admin-dashboard" class="content-section">
         <h2 class="text-2xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
 
@@ -201,7 +165,7 @@
         </div>
       </section>
 
-      <!-- Patients -->
+      <!-- PATIENTS -->
       <section id="manage-patients" class="content-section hidden-section">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-bold text-gray-800">Patients Directory</h2>
@@ -209,22 +173,23 @@
             <i class="fa-solid fa-plus mr-2"></i> Add Patient
           </button>
         </div>
+
         <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-            </tr>
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+              </tr>
             </thead>
             <tbody id="patients-table-body" class="bg-white divide-y divide-gray-200"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- Appointments -->
+      <!-- APPOINTMENTS -->
       <section id="manage-appointments" class="content-section hidden-section">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-bold text-gray-800">Appointment Management</h2>
@@ -232,6 +197,7 @@
             <i class="fa-solid fa-plus mr-2"></i> New Schedule
           </button>
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
           <div class="bg-gray-200 rounded-lg p-4 flex flex-col h-full">
             <div class="flex items-center justify-between mb-4">
@@ -240,6 +206,7 @@
             </div>
             <div id="col-scheduled" class="flex-1 overflow-y-auto space-y-3"></div>
           </div>
+
           <div class="bg-green-50 rounded-lg p-4 flex flex-col h-full border border-green-100">
             <div class="flex items-center justify-between mb-4">
               <h3 class="font-bold text-green-800">Completed</h3>
@@ -247,6 +214,7 @@
             </div>
             <div id="col-completed" class="flex-1 overflow-y-auto space-y-3"></div>
           </div>
+
           <div class="bg-red-50 rounded-lg p-4 flex flex-col h-full border border-red-100">
             <div class="flex items-center justify-between mb-4">
               <h3 class="font-bold text-red-800">Cancelled</h3>
@@ -257,62 +225,61 @@
         </div>
       </section>
 
-      <!-- Therapists -->
+      <!-- THERAPISTS -->
       <section id="manage-therapists" class="content-section hidden-section">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-bold text-gray-800">Physiotherapists</h2>
-          <button onclick="window.openNewTherapistModal()" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
-            <i class="fa-solid fa-plus mr-2"></i> Add Therapist
-          </button>
         </div>
+
         <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Email</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
-            </tr>
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Email</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+              </tr>
             </thead>
             <tbody id="therapists-table-body" class="bg-white divide-y divide-gray-200"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- Settings -->
+      <!-- SETTINGS -->
       <section id="settings-page" class="content-section hidden-section">
         <h2 class="text-2xl font-bold mb-6 text-gray-800">System Settings</h2>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div class="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 class="text-lg font-bold mb-4 text-gray-700">Storage Status</h3>
+            <h3 class="text-lg font-bold mb-2 text-gray-700">Storage Status</h3>
 
             <div id="preview-warning" class="hidden p-3 rounded border bg-yellow-50 text-yellow-900 text-sm mb-4">
-              <div class="font-bold mb-1">
-                <i class="fa-solid fa-triangle-exclamation mr-2"></i> Preview Mode Detected
-              </div>
+              <div class="font-bold mb-1"><i class="fa-solid fa-triangle-exclamation mr-2"></i> Preview Mode Detected</div>
               <div>
-                You are running inside an editor preview/iframe. Supabase requests are often blocked here and may show
-                <span class="font-mono">Failed to fetch</span>.
-                <br />
-                Fix: open using <strong>Live Server</strong> or a normal browser tab.
+                You are inside a preview/iframe. Supabase may be blocked and show <span class="font-mono">Failed to fetch</span>.
+                Use Live Server / open in a real browser tab.
               </div>
             </div>
 
-            <div class="flex items-center gap-2 text-sm">
-              <span class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700" id="storage-status-pill">
-                Storage: checking...
-              </span>
-              <button type="button" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800" onclick="window.syncFromSupabase()">
-                <i class="fa-solid fa-rotate-right mr-2"></i> Refresh from Supabase
+            <div class="flex items-center gap-2">
+              <span id="storage-status-pill" class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 text-sm">Storage: checking…</span>
+              <button type="button" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm" onclick="window.syncFromSupabase()">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Load Data Now
+              </button>
+              <button type="button" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm" onclick="window.debugSupabase()">
+                Debug Tables
               </button>
             </div>
 
+            <div class="mt-4 bg-gray-50 border rounded p-3 text-xs text-gray-700">
+              <div class="font-bold mb-2">Supabase Debug Log</div>
+              <pre id="sb-debug-log" class="whitespace-pre-wrap text-xs text-gray-800"></pre>
+            </div>
+
             <div class="mt-4 border rounded p-4 bg-gray-50 text-xs text-gray-600 space-y-2">
-              <div><span class="font-bold">Expected Supabase tables:</span> <span class="font-mono">patients</span>, <span class="font-mono">therapists</span>, <span class="font-mono">appointments</span></div>
-              <div class="text-red-700"><span class="font-bold">RLS:</span> If enabled, add policies or your anon key cannot read/write.</div>
-              <div><span class="font-bold">If you see “Failed to fetch”:</span> it’s usually preview/iframe blocked, not wrong keys.</div>
+              <div><span class="font-bold">Required tables:</span> <span class="font-mono">patients</span>, <span class="font-mono">therapists</span>, <span class="font-mono">appointments</span></div>
+              <div><span class="font-bold">If data is not showing:</span> it is usually RLS blocking SELECT or table/columns mismatch.</div>
             </div>
           </div>
 
@@ -349,18 +316,18 @@
         </div>
       </section>
 
-      <!-- Therapist pages -->
+      <!-- THERAPIST -->
       <section id="therapist-schedule" class="content-section hidden-section">
         <h2 class="text-2xl font-bold mb-6">My Schedule</h2>
         <div class="bg-white rounded-lg shadow overflow-hidden">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-            </tr>
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
             </thead>
             <tbody id="therapist-schedule-body" class="bg-white divide-y divide-gray-200"></tbody>
           </table>
@@ -373,22 +340,35 @@
           <ul id="therapist-patient-list" class="mt-4 space-y-3"></ul>
         </div>
       </section>
+
     </main>
   </div>
 
-  <!-- MODALS (minimal) -->
+  <!-- MODALS -->
   <div id="add-patient-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl flex flex-col">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl flex flex-col">
       <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
         <h3 class="text-xl font-bold text-teal-800">Add Patient</h3>
         <button onclick="window.closeModal('add-patient-modal')" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
       </div>
       <div class="p-6">
         <form id="add-patient-form" class="space-y-4">
-          <div><label class="eval-label">Name</label><input type="text" id="p-name" class="eval-input" required></div>
-          <div><label class="eval-label">Age</label><input type="number" id="p-age" class="eval-input" required></div>
-          <div><label class="eval-label">Phone</label><input type="text" id="p-phone" class="eval-input"></div>
-          <div><label class="eval-label">Condition</label><input type="text" id="p-condition" class="eval-input"></div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <input type="text" id="p-name" class="mt-1 w-full border rounded p-2" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Age</label>
+            <input type="number" id="p-age" class="mt-1 w-full border rounded p-2" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Phone</label>
+            <input type="text" id="p-phone" class="mt-1 w-full border rounded p-2">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Condition</label>
+            <input type="text" id="p-condition" class="mt-1 w-full border rounded p-2">
+          </div>
 
           <div class="flex justify-end gap-2 pt-4 border-t">
             <button type="button" onclick="window.closeModal('add-patient-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded border">Cancel</button>
@@ -401,98 +381,29 @@
 
   <div id="add-appointment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-      <h3 class="text-lg font-bold mb-4" id="appt-modal-title">Book Appointment</h3>
+      <h3 class="text-lg font-bold mb-4">Book Appointment</h3>
       <form id="add-appointment-form" class="space-y-3">
-        <input type="hidden" id="appt-id">
         <label class="block text-sm">Patient</label>
         <select id="appt-patient" class="w-full border p-2 rounded" required></select>
+
         <label class="block text-sm">Therapist</label>
         <select id="appt-therapist" class="w-full border p-2 rounded" required></select>
+
         <label class="block text-sm">Date & Time</label>
         <input type="datetime-local" id="appt-date" class="w-full border p-2 rounded" required>
 
         <div class="flex justify-end gap-2 mt-4">
           <button type="button" onclick="window.closeModal('add-appointment-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800" id="appt-submit-btn">Book</button>
+          <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800">Book</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // =========================
-    // Preview / iframe detection
-    // =========================
-    function inPreviewIframe() {
-      try { return window.self !== window.top; } catch { return true; }
-    }
-
-    function showPreviewWarningIfNeeded() {
-      const w = document.getElementById("preview-warning");
-      if (!w) return;
-      if (inPreviewIframe()) w.classList.remove("hidden");
-      else w.classList.add("hidden");
-    }
-
-    // =========================
-    // LocalStorage helper
-    // =========================
-    const SafeStorage = {
-      ok: (() => {
-        try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; } catch { return false; }
-      })(),
-      get(k, fb) {
-        if (!this.ok) return fb;
-        const v = localStorage.getItem(k);
-        try { return v ? JSON.parse(v) : fb; } catch { return fb; }
-      },
-      set(k, v) {
-        if (!this.ok) return;
-        localStorage.setItem(k, JSON.stringify(v));
-      }
-    };
-
-    // =========================
-    // Storage status UI
-    // =========================
-    function setStoragePill(text, color="gray") {
-      const pill = document.getElementById("storage-status-pill");
-      if (!pill) return;
-
-      const map = {
-        gray: "bg-gray-100 text-gray-700",
-        yellow: "bg-yellow-100 text-yellow-800",
-        green: "bg-green-100 text-green-800",
-        red: "bg-red-100 text-red-800",
-      };
-      pill.className = `inline-flex items-center px-2 py-1 rounded ${map[color] || map.gray}`;
-      pill.textContent = text;
-      setStorageBadge();
-    }
-
-    function setStorageBadge() {
-      const badge = document.getElementById("storage-mode-badge");
-      if (!badge) return;
-
-      const hasSB = !!getSupabaseClient();
-      if (hasSB) {
-        badge.textContent = "STORAGE: SUPABASE";
-        badge.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded";
-        return;
-      }
-
-      if (SafeStorage.ok) {
-        badge.textContent = inPreviewIframe() ? "STORAGE: LOCAL (preview)" : "STORAGE: LOCAL";
-        badge.className = "bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded";
-      } else {
-        badge.textContent = "STORAGE: MEMORY";
-        badge.className = "bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded";
-      }
-    }
-
-    // =========================
+    // ============
     // Notifications
-    // =========================
+    // ============
     window.notify = function(message, type = "info") {
       const container = document.getElementById("notification-container");
       const notif = document.createElement("div");
@@ -509,12 +420,61 @@
       }, 3000);
     };
 
-    // =========================
-    // UI functions
-    // =========================
-    window.openModal = (id) => document.getElementById(id).classList.remove("hidden-section");
-    window.closeModal = (id) => document.getElementById(id).classList.add("hidden-section");
+    // ============
+    // Preview check
+    // ============
+    function inPreviewIframe() {
+      try { return window.self !== window.top; } catch { return true; }
+    }
+    function showPreviewWarningIfNeeded() {
+      const w = document.getElementById("preview-warning");
+      if (!w) return;
+      if (inPreviewIframe()) w.classList.remove("hidden");
+      else w.classList.add("hidden");
+    }
 
+    // ============
+    // Local storage
+    // ============
+    const SafeStorage = {
+      ok: (() => { try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; } catch { return false; } })(),
+      get(k, fb) { if (!this.ok) return fb; const v = localStorage.getItem(k); try { return v ? JSON.parse(v) : fb; } catch { return fb; } },
+      set(k, v) { if (!this.ok) return; localStorage.setItem(k, JSON.stringify(v)); }
+    };
+
+    // ============
+    // Storage UI
+    // ============
+    function setStoragePill(text, color="gray") {
+      const pill = document.getElementById("storage-status-pill");
+      if (!pill) return;
+      const map = {
+        gray: "bg-gray-100 text-gray-700",
+        yellow: "bg-yellow-100 text-yellow-800",
+        green: "bg-green-100 text-green-800",
+        red: "bg-red-100 text-red-800",
+      };
+      pill.className = `inline-flex items-center px-2 py-1 rounded ${map[color] || map.gray} text-sm`;
+      pill.textContent = text;
+      setStorageBadge();
+    }
+
+    function setStorageBadge() {
+      const badge = document.getElementById("storage-mode-badge");
+      if (!badge) return;
+      const hasSB = !!getSupabaseClient();
+      if (hasSB) {
+        badge.textContent = "STORAGE: SUPABASE";
+        badge.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded";
+      } else {
+        badge.textContent = inPreviewIframe() ? "STORAGE: LOCAL (preview)" : "STORAGE: LOCAL";
+        badge.className = "bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded";
+      }
+    }
+
+    // ============
+    // Navigation
+    // ============
     window.showSection = function(sectionId) {
       document.querySelectorAll(".content-section").forEach(el => el.classList.add("hidden-section"));
       document.getElementById(sectionId).classList.remove("hidden-section");
@@ -525,11 +485,14 @@
         "manage-patients": "nav-patients",
         "manage-appointments": "nav-appointments",
         "manage-therapists": "nav-therapists",
-        "settings-page": "nav-settings",
+        "settings-page": "nav-settings"
       };
       const btnId = map[sectionId];
       if (btnId) document.getElementById(btnId)?.classList.add("active");
     };
+
+    window.openModal = (id) => document.getElementById(id).classList.remove("hidden-section");
+    window.closeModal = (id) => document.getElementById(id).classList.add("hidden-section");
 
     window.logout = function() {
       currentUser = null;
@@ -539,10 +502,21 @@
       setStorageBadge();
     };
 
-    // =========================
-    // Supabase key storage + client
-    // =========================
+    // ============
+    // Supabase keys
+    // ============
     const SB_KEYS_STORAGE_KEY = "physiocare_supabase_keys";
+
+    function sbLog(msg) {
+      const el = document.getElementById("sb-debug-log");
+      if (!el) return;
+      el.textContent = (el.textContent ? el.textContent + "\n" : "") + msg;
+    }
+
+    function clearSbLog() {
+      const el = document.getElementById("sb-debug-log");
+      if (el) el.textContent = "";
+    }
 
     function getSupabaseCreds() {
       const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, {}) || {};
@@ -562,7 +536,6 @@
     }
 
     async function canReachSupabase(url) {
-      // This catches "Failed to fetch" due to iframe/sandbox blocks
       const probe = url.replace(/\/$/, "") + "/rest/v1/";
       await fetch(probe, { method: "GET" });
       return true;
@@ -571,23 +544,20 @@
     window.testSupabaseConnection = async function() {
       const { url, key } = getSupabaseCreds();
       const statusDiv = document.getElementById("connection-status");
-
       showPreviewWarningIfNeeded();
+      clearSbLog();
 
-      if (!url || !key) {
-        window.notify("Please enter Supabase URL and Key.", "error");
-        return;
-      }
+      if (!url || !key) { window.notify("Please enter Supabase URL and Key.", "error"); return; }
 
       statusDiv.classList.remove("hidden", "bg-green-100", "text-green-800", "bg-red-100", "text-red-800");
       statusDiv.classList.add("bg-blue-100", "text-blue-800");
       statusDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting...';
 
       try {
-        // Reachability check
         await canReachSupabase(url);
-
         const sb = window.supabase.createClient(url, key);
+
+        // Test a simple select. If table missing or RLS blocks, you'll see a real error.
         const { error } = await sb.from("patients").select("*").limit(1);
         if (error) throw error;
 
@@ -610,34 +580,136 @@
           setStoragePill("Storage: local (Supabase failed)", "yellow");
           window.notify("Supabase failed: " + msg, "error");
         }
+        sbLog("TEST ERROR: " + msg);
       }
     };
 
-    document.getElementById("supabase-settings-form").addEventListener("submit", async (e) => {
+    document.getElementById("supabase-settings-form").addEventListener("submit", (e) => {
       e.preventDefault();
       const { url, key } = getSupabaseCreds();
-      if (!url || !key) {
-        window.notify("Enter Supabase URL and Key.", "error");
-        return;
-      }
+      if (!url || !key) { window.notify("Enter Supabase URL and Key.", "error"); return; }
       saveSupabaseCreds(url, key);
-      window.notify("Keys saved. Now click Test Connection.", "success");
+      window.notify("Keys saved. Now click Test Connection, then Load Data Now.", "success");
       setStorageBadge();
     });
 
-    // =========================
-    // Data (local fallback)
-    // =========================
+    // ============
+    // Supabase read/sync (THIS is what shows data)
+    // ============
+    async function sbSelect(table) {
+      const sb = getSupabaseClient();
+      if (!sb) return { ok: false, error: new Error("No Supabase client") };
+      const { data, error } = await sb.from(table).select("*").limit(500);
+      if (error) return { ok: false, error };
+      return { ok: true, data: data || [] };
+    }
+
+    function normalizePatients(rows) {
+      return (rows || []).map(r => ({
+        id: String(r.id),
+        full_name: r.full_name ?? r.name ?? "",
+        age: Number(r.age ?? 0),
+        condition: r.condition ?? "",
+        phone: r.phone ?? ""
+      }));
+    }
+
+    function normalizeTherapists(rows) {
+      return (rows || []).map(r => ({
+        id: String(r.id),
+        full_name: r.full_name ?? r.name ?? "",
+        specialization: r.specialization ?? "",
+        email: r.email ?? "",
+        password: r.password ?? "pass123",
+        license: r.license ?? "",
+        shift: r.shift ?? "Morning",
+      }));
+    }
+
+    function normalizeAppointments(rows) {
+      return (rows || []).map(r => ({
+        id: String(r.id),
+        patient_id: String(r.patient_id),
+        therapist_id: String(r.therapist_id),
+        date_time: r.date_time,
+        status: r.status ?? "Scheduled",
+        notes: r.notes ?? ""
+      }));
+    }
+
+    window.syncFromSupabase = async function() {
+      clearSbLog();
+      sbLog("=== Load Data From Supabase ===");
+
+      const sb = getSupabaseClient();
+      if (!sb) {
+        window.notify("Supabase not configured. Add URL/Key and Save.", "error");
+        setStoragePill(inPreviewIframe() ? "Storage: local (preview)" : "Storage: local", "yellow");
+        sbLog("No client (missing URL/KEY).");
+        return;
+      }
+
+      try {
+        sbLog("Reading tables: patients, therapists, appointments ...");
+        const [p, t, a] = await Promise.all([ sbSelect("patients"), sbSelect("therapists"), sbSelect("appointments") ]);
+
+        if (!p.ok) throw new Error("patients: " + p.error.message);
+        if (!t.ok) throw new Error("therapists: " + t.error.message);
+        if (!a.ok) throw new Error("appointments: " + a.error.message);
+
+        sbLog("patients rows: " + p.data.length);
+        sbLog("therapists rows: " + t.data.length);
+        sbLog("appointments rows: " + a.data.length);
+
+        mockPatients = normalizePatients(p.data);
+        mockTherapists = normalizeTherapists(t.data);
+        mockAppointments = normalizeAppointments(a.data);
+
+        saveLocal();
+        setStoragePill("Storage: Supabase (data loaded)", "green");
+        window.notify("Data loaded from Supabase.", "success");
+
+        if (currentUser?.role === "admin") loadAdminData();
+        if (currentUser?.role === "therapist") loadTherapistData();
+      } catch (err) {
+        const msg = String(err?.message || err);
+        sbLog("SYNC ERROR: " + msg);
+        window.notify("Supabase read failed: " + msg, "error");
+        setStoragePill(inPreviewIframe() ? "Storage: local (preview blocks Supabase)" : "Storage: local (Supabase failed)", "yellow");
+      }
+    };
+
+    window.debugSupabase = async function() {
+      clearSbLog();
+      sbLog("=== Debug Tables (limit 1) ===");
+
+      const sb = getSupabaseClient();
+      if (!sb) { sbLog("No client. Save URL/KEY first."); return; }
+
+      for (const table of ["patients","therapists","appointments"]) {
+        const { data, error } = await sb.from(table).select("*").limit(1);
+        if (error) {
+          sbLog(`${table}: ERROR -> ${error.message}`);
+        } else {
+          sbLog(`${table}: OK -> rows returned: ${data.length}`);
+          if (data[0]) sbLog(`${table}: first row keys: ${Object.keys(data[0]).join(", ")}`);
+        }
+      }
+    };
+
+    // ============
+    // Local data + render
+    // ============
     const LS_PATIENTS = "physiocare_patients";
     const LS_THERAPISTS = "physiocare_therapists";
     const LS_APPOINTMENTS = "physiocare_appointments";
 
     const defaultPatients = [
       { id: "1", full_name: "John Doe", age: 45, condition: "Back Pain", phone: "555-0101" },
-      { id: "2", full_name: "Jane Roe", age: 29, condition: "ACL Recovery", phone: "555-0102" },
+      { id: "2", full_name: "Jane Roe", age: 29, condition: "ACL Recovery", phone: "555-0102" }
     ];
     const defaultTherapists = [
-      { id: "101", full_name: "Sarah Connor", specialization: "Sports Rehab", email: "sarah@physio.com", password: "pass123", license: "NHRA-2023-001", shift: "Morning" }
+      { id: "101", full_name: "Sarah Connor", specialization: "Sports Rehab", email: "sarah@physio.com", password: "pass123", license: "NHRA-001", shift: "Morning" }
     ];
     const defaultAppointments = [
       { id: "a1", patient_id: "1", therapist_id: "101", date_time: new Date().toISOString(), status: "Scheduled", notes: "Initial assessment" }
@@ -653,109 +725,20 @@
       SafeStorage.set(LS_APPOINTMENTS, mockAppointments);
     }
 
-    // =========================
-    // Supabase sync (loads DB data)
-    // =========================
-    async function sbSelectAll(table) {
-      const sb = getSupabaseClient();
-      if (!sb) return { ok: false, reason: "no_client" };
-      const { data, error } = await sb.from(table).select("*");
-      if (error) return { ok: false, error };
-      return { ok: true, data: data || [] };
-    }
-
-    function normalizePatients(rows) {
-      return rows.map(r => ({
-        id: String(r.id),
-        full_name: r.full_name ?? "",
-        age: Number(r.age ?? 0),
-        condition: r.condition ?? "",
-        phone: r.phone ?? ""
-      }));
-    }
-
-    function normalizeTherapists(rows) {
-      return rows.map(r => ({
-        id: String(r.id),
-        full_name: r.full_name ?? "",
-        specialization: r.specialization ?? "",
-        email: r.email ?? "",
-        password: r.password ?? "pass123",
-        license: r.license ?? "",
-        shift: r.shift ?? "Morning",
-      }));
-    }
-
-    function normalizeAppointments(rows) {
-      return rows.map(r => ({
-        id: String(r.id),
-        patient_id: String(r.patient_id),
-        therapist_id: String(r.therapist_id),
-        date_time: r.date_time,
-        status: r.status ?? "Scheduled",
-        notes: r.notes ?? ""
-      }));
-    }
-
-    window.syncFromSupabase = async function() {
-      const sb = getSupabaseClient();
-      if (!sb) {
-        window.notify("Supabase not connected. Using local storage.", "error");
-        setStoragePill(inPreviewIframe() ? "Storage: local (preview)" : "Storage: local", "yellow");
-        return;
-      }
-
-      if (inPreviewIframe()) {
-        // In preview this will likely fail; warn but allow attempt.
-        window.notify("Preview mode may block Supabase (Failed to fetch). Try Live Server for real sync.", "error");
-      }
-
-      try {
-        const [p, t, a] = await Promise.all([
-          sbSelectAll("patients"),
-          sbSelectAll("therapists"),
-          sbSelectAll("appointments")
-        ]);
-
-        if (!p.ok) throw (p.error || new Error("patients read failed"));
-        if (!t.ok) throw (t.error || new Error("therapists read failed"));
-        if (!a.ok) throw (a.error || new Error("appointments read failed"));
-
-        mockPatients = normalizePatients(p.data);
-        mockTherapists = normalizeTherapists(t.data);
-        mockAppointments = normalizeAppointments(a.data);
-
-        saveLocal();
-        window.notify("Loaded data from Supabase successfully.", "success");
-        setStoragePill("Storage: Supabase connected", "green");
-
-        if (currentUser?.role === "admin") loadAdminData();
-        if (currentUser?.role === "therapist") loadTherapistData();
-      } catch (err) {
-        const msg = String(err?.message || err);
-        window.notify("Supabase sync failed: " + msg, "error");
-        setStoragePill(inPreviewIframe() ? "Storage: local (preview blocks Supabase)" : "Storage: local (Supabase failed)", "yellow");
-      }
-    };
-
-    // =========================
-    // Admin rendering
-    // =========================
-    let apptChartInstance = null;
-    let demoChartInstance = null;
-
     function isToday(iso) {
       const d = new Date(iso);
       const n = new Date();
       return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
     }
 
+    let apptChartInstance = null;
+    let demoChartInstance = null;
+
     function loadAdminData() {
       document.getElementById("stat-total-patients").textContent = mockPatients.length;
       document.getElementById("stat-total-therapists").textContent = mockTherapists.length;
       document.getElementById("stat-today-appts").textContent = mockAppointments.filter(a => isToday(a.date_time)).length;
 
-      // Patients table + selects
       const pBody = document.getElementById("patients-table-body");
       pBody.innerHTML = "";
       const pSel = document.getElementById("appt-patient");
@@ -797,34 +780,30 @@
         tSel.appendChild(opt);
       });
 
-      // Appointments columns
       const sCol = document.getElementById("col-scheduled");
       const cCol = document.getElementById("col-completed");
       const xCol = document.getElementById("col-cancelled");
       sCol.innerHTML = cCol.innerHTML = xCol.innerHTML = "";
 
       let cs=0, cc=0, cx=0;
+      mockAppointments.slice().sort((a,b)=> new Date(a.date_time)-new Date(b.date_time)).forEach(a => {
+        const pName = mockPatients.find(p=>p.id===a.patient_id)?.full_name || "Unknown";
+        const tName = mockTherapists.find(t=>t.id===a.therapist_id)?.full_name || "Unknown";
+        const dateObj = new Date(a.date_time);
 
-      mockAppointments
-        .slice()
-        .sort((a,b)=> new Date(a.date_time)-new Date(b.date_time))
-        .forEach(a => {
-          const pName = mockPatients.find(p=>p.id===a.patient_id)?.full_name || "Unknown";
-          const tName = mockTherapists.find(t=>t.id===a.therapist_id)?.full_name || "Unknown";
-          const dateObj = new Date(a.date_time);
+        const card = document.createElement("div");
+        card.className = "bg-white p-3 rounded shadow-sm border appt-card";
+        card.innerHTML = `
+          <div class="font-bold text-gray-800">${pName}</div>
+          <div class="text-xs text-gray-500">${dateObj.toLocaleString()}</div>
+          <div class="text-xs text-teal-700">${tName}</div>
+          <div class="text-xs mt-1">${a.status}</div>
+        `;
 
-          const card = document.createElement("div");
-          card.className = "bg-white p-3 rounded shadow-sm border appt-card";
-          card.innerHTML = `
-            <div class="font-bold text-gray-800">${pName}</div>
-            <div class="text-xs text-gray-500">${dateObj.toLocaleString()}</div>
-            <div class="text-xs text-teal-700">${tName}</div>
-          `;
-
-          if (a.status === "Scheduled") { sCol.appendChild(card); cs++; }
-          else if (a.status === "Completed") { cCol.appendChild(card); cc++; }
-          else { xCol.appendChild(card); cx++; }
-        });
+        if (a.status === "Scheduled") { sCol.appendChild(card); cs++; }
+        else if (a.status === "Completed") { cCol.appendChild(card); cc++; }
+        else { xCol.appendChild(card); cx++; }
+      });
 
       document.getElementById("count-scheduled").textContent = cs;
       document.getElementById("count-completed").textContent = cc;
@@ -869,7 +848,6 @@
       });
     }
 
-    // Therapist rendering (simple)
     function loadTherapistData() {
       const tbody = document.getElementById("therapist-schedule-body");
       const list = document.getElementById("therapist-patient-list");
@@ -877,10 +855,7 @@
       list.innerHTML = "";
       const seen = new Set();
 
-      const my = mockAppointments
-        .filter(a => a.therapist_id === currentUser.id)
-        .sort((a,b)=> new Date(a.date_time)-new Date(b.date_time));
-
+      const my = mockAppointments.filter(a => a.therapist_id === currentUser.id).sort((a,b)=> new Date(a.date_time)-new Date(b.date_time));
       my.forEach(a => {
         const p = mockPatients.find(x => x.id === a.patient_id);
         const pName = p?.full_name || "Unknown";
@@ -898,9 +873,9 @@
       });
     }
 
-    // =========================
-    // Forms (local only in preview; Supabase sync via button)
-    // =========================
+    // ============
+    // Forms (local only; Supabase shows by sync button)
+    // ============
     document.getElementById("add-patient-form").addEventListener("submit", (e) => {
       e.preventDefault();
       const newP = {
@@ -912,11 +887,16 @@
       };
       mockPatients.push(newP);
       saveLocal();
-      window.notify("Saved locally. (Use Supabase sync in a real browser tab)", "success");
+      window.notify("Saved locally. To see Supabase data, use Settings → Load Data Now.", "success");
       window.closeModal("add-patient-modal");
       e.target.reset();
       if (currentUser?.role === "admin") loadAdminData();
     });
+
+    window.openNewAppointmentModal = function() {
+      document.getElementById("add-appointment-form").reset();
+      window.openModal("add-appointment-modal");
+    };
 
     document.getElementById("add-appointment-form").addEventListener("submit", (e) => {
       e.preventDefault();
@@ -930,24 +910,15 @@
       };
       mockAppointments.push(newA);
       saveLocal();
-      window.notify("Saved locally. (Use Supabase sync in a real browser tab)", "success");
+      window.notify("Saved locally. Use Settings → Load Data Now to fetch Supabase.", "success");
       window.closeModal("add-appointment-modal");
       e.target.reset();
       if (currentUser?.role === "admin") loadAdminData();
     });
 
-    window.openNewAppointmentModal = function() {
-      document.getElementById("add-appointment-form").reset();
-      window.openModal("add-appointment-modal");
-    };
-
-    window.openNewTherapistModal = function() {
-      window.notify("Therapist add form not included in this minimal redo. (Can add next)", "error");
-    };
-
-    // =========================
-    // Login
-    // =========================
+    // ============
+    // Auth (demo)
+    // ============
     let currentUser = null;
 
     document.getElementById("login-form").addEventListener("submit", (e) => {
@@ -989,23 +960,22 @@
         loadTherapistData();
       }
 
-      // Set status
       showPreviewWarningIfNeeded();
-      if (inPreviewIframe()) setStoragePill("Storage: local (preview mode)", "yellow");
-      else setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
+      setStoragePill(getSupabaseClient() ? "Storage: Supabase (connected)" : (inPreviewIframe() ? "Storage: local (preview)" : "Storage: local"), getSupabaseClient() ? "green" : "yellow");
     }
 
-    // Boot
+    // ============
+    // Boot: prefill keys + show preview warning
+    // ============
     document.addEventListener("DOMContentLoaded", () => {
       showPreviewWarningIfNeeded();
-      setStorageBadge();
 
-      // Prefill keys if stored
       const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, null);
       if (stored?.url) document.getElementById("sb-url").value = stored.url;
       if (stored?.key) document.getElementById("sb-key").value = stored.key;
 
-      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : (inPreviewIframe() ? "Storage: local (preview mode)" : "Storage: local"), getSupabaseClient() ? "green" : "yellow");
+      setStorageBadge();
+      setStoragePill(getSupabaseClient() ? "Storage: Supabase (connected)" : (inPreviewIframe() ? "Storage: local (preview)" : "Storage: local"), getSupabaseClient() ? "green" : "yellow");
     });
   </script>
 </body>
