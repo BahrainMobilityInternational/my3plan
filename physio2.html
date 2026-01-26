@@ -1,1061 +1,1433 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhysioCare Management System</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Chart.js for Reports -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhysioCare Management System</title>
 
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <style>
-        .hidden-section { display: none !important; }
-        .active-section { display: block; }
-        
-        /* Sidebar Styling */
-        .sidebar-link {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            color: #4b5563; /* gray-600 */
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-            margin-bottom: 0.25rem;
-        }
-        .sidebar-link:hover {
-            background-color: #f3f4f6; /* gray-100 */
-            color: #111827; /* gray-900 */
-        }
-        .sidebar-link.active {
-            background-color: #0f766e; /* teal-700 */
-            color: white;
-        }
-        .sidebar-link i {
-            width: 1.5rem;
-            margin-right: 0.75rem;
-        }
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        /* Form Styling */
-        .eval-input {
-            width: 100%;
-            border-bottom: 1px solid #d1d5db;
-            padding: 2px 0;
-            outline: none;
-            background: transparent;
-            font-size: 0.9rem;
-        }
-        .eval-input:focus { border-bottom: 2px solid #0f766e; }
-        .eval-label { font-size: 0.8rem; font-weight: 600; color: #374151; }
-        .eval-section-title { 
-            font-weight: bold; 
-            text-decoration: underline; 
-            margin-top: 1rem; 
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        /* Appointment Cards */
-        .appt-card {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .appt-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        /* Custom Notification Animations */
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        .toast-enter { animation: slideIn 0.3s ease-out forwards; }
-        .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
-    </style>
+  <style>
+    .hidden-section { display: none !important; }
+    .active-section { display: block; }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      color: #4b5563;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+    }
+    .sidebar-link:hover { background-color: #f3f4f6; color: #111827; }
+    .sidebar-link.active { background-color: #0f766e; color: white; }
+    .sidebar-link i { width: 1.5rem; margin-right: 0.75rem; }
+
+    .eval-input {
+      width: 100%;
+      border-bottom: 1px solid #d1d5db;
+      padding: 2px 0;
+      outline: none;
+      background: transparent;
+      font-size: 0.9rem;
+    }
+    .eval-input:focus { border-bottom: 2px solid #0f766e; }
+    .eval-label { font-size: 0.8rem; font-weight: 600; color: #374151; }
+    .eval-section-title {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .appt-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .appt-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    }
+
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    .toast-enter { animation: slideIn 0.3s ease-out forwards; }
+    .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
+  </style>
 </head>
+
 <body class="bg-gray-100 font-sans text-gray-800 relative">
 
-    <!-- NOTIFICATION CONTAINER -->
-    <div id="notification-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+  <!-- NOTIFICATION CONTAINER -->
+  <div id="notification-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-blue-50">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-            <div class="text-center mb-8">
-                <i class="fa-solid fa-heart-pulse text-4xl text-teal-700 mb-2"></i>
-                <h1 class="text-2xl font-bold text-gray-800">PhysioCare Login</h1>
-                <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded">OFFLINE DEMO MODE</span>
-            </div>
-            
-            <form id="login-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500" value="admin@physio.com" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500" value="admin123" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Role</label>
-                    <select id="role-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2">
-                        <option value="admin">Administrator</option>
-                        <option value="therapist">Therapist</option>
-                    </select>
-                </div>
-                <button type="submit" class="w-full bg-teal-700 text-white py-2 px-4 rounded hover:bg-teal-800 transition">Sign In</button>
-            </form>
-            <div class="mt-4 text-xs text-gray-500 bg-gray-50 p-3 rounded border">
-                <p class="font-bold mb-1">Login Credentials:</p>
-                <p>Admin: <strong>admin@physio.com</strong> / <strong>admin123</strong></p>
-                <p>Therapist: <strong>sarah@physio.com</strong> / <strong>pass123</strong></p>
-            </div>
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center bg-blue-50">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+      <div class="text-center mb-8">
+        <i class="fa-solid fa-heart-pulse text-4xl text-teal-700 mb-2"></i>
+        <h1 class="text-2xl font-bold text-gray-800">PhysioCare Login</h1>
+        <span id="storage-mode-badge" class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+          STORAGE: CHECKING...
+        </span>
+      </div>
+
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" id="email"
+                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500"
+                 value="admin@physio.com" required>
         </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="password"
+                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-teal-500 focus:ring-teal-500"
+                 value="admin123" required>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Role</label>
+          <select id="role-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2">
+            <option value="admin">Administrator</option>
+            <option value="therapist">Therapist</option>
+          </select>
+        </div>
+
+        <button type="submit" class="w-full bg-teal-700 text-white py-2 px-4 rounded hover:bg-teal-800 transition">
+          Sign In
+        </button>
+      </form>
+
+      <div class="mt-4 text-xs text-gray-500 bg-gray-50 p-3 rounded border">
+        <p class="font-bold mb-1">Login Credentials (Demo):</p>
+        <p>Admin: <strong>admin@physio.com</strong> / <strong>admin123</strong></p>
+        <p>Therapist: <strong>sarah@physio.com</strong> / <strong>pass123</strong></p>
+      </div>
     </div>
+  </div>
 
-    <!-- DASHBOARD LAYOUT (Hidden by default) -->
-    <div id="dashboard-layout" class="hidden-section min-h-screen flex flex-col md:flex-row">
-        
-        <!-- Sidebar -->
-        <aside class="w-full md:w-64 bg-white shadow-md flex-shrink-0 flex flex-col h-screen">
-            <div class="p-6 border-b">
-                <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2">
-                    <i class="fa-solid fa-user-doctor"></i> PhysioCare
-                </h2>
-                <p id="user-display" class="text-sm text-gray-500 mt-1">Welcome, User</p>
+  <!-- DASHBOARD LAYOUT -->
+  <div id="dashboard-layout" class="hidden-section min-h-screen flex flex-col md:flex-row">
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-white shadow-md flex-shrink-0 flex flex-col h-screen">
+      <div class="p-6 border-b">
+        <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2">
+          <i class="fa-solid fa-user-doctor"></i> PhysioCare
+        </h2>
+        <p id="user-display" class="text-sm text-gray-500 mt-1">Welcome, User</p>
+      </div>
+
+      <nav class="p-4 flex-1 overflow-y-auto">
+        <div id="admin-nav" class="hidden-section">
+          <button onclick="window.showSection('admin-dashboard')" class="sidebar-link w-full text-left active" id="nav-dashboard">
+            <i class="fa-solid fa-gauge-high"></i> Dashboard
+          </button>
+          <button onclick="window.showSection('manage-patients')" class="sidebar-link w-full text-left" id="nav-patients">
+            <i class="fa-solid fa-users"></i> Patients
+          </button>
+          <button onclick="window.showSection('manage-appointments')" class="sidebar-link w-full text-left" id="nav-appointments">
+            <i class="fa-solid fa-calendar-check"></i> Appointments
+          </button>
+          <button onclick="window.showSection('manage-therapists')" class="sidebar-link w-full text-left" id="nav-therapists">
+            <i class="fa-solid fa-user-nurse"></i> Physiotherapists
+          </button>
+          <button onclick="window.showSection('manage-users')" class="sidebar-link w-full text-left" id="nav-users">
+            <i class="fa-solid fa-users-gear"></i> Users & Admins
+          </button>
+          <button onclick="window.showSection('manage-exercises')" class="sidebar-link w-full text-left" id="nav-exercises">
+            <i class="fa-solid fa-dumbbell"></i> Exercises
+          </button>
+          <button onclick="window.showSection('manage-complaints')" class="sidebar-link w-full text-left" id="nav-complaints">
+            <i class="fa-solid fa-triangle-exclamation"></i> Complaints
+          </button>
+          <button onclick="window.showSection('manage-reports')" class="sidebar-link w-full text-left" id="nav-reports">
+            <i class="fa-solid fa-chart-pie"></i> Reports
+          </button>
+          <button onclick="window.showSection('settings-page')" class="sidebar-link w-full text-left" id="nav-settings">
+            <i class="fa-solid fa-gear"></i> Settings
+          </button>
+        </div>
+
+        <div id="therapist-nav" class="hidden-section">
+          <button onclick="window.showSection('therapist-schedule')" class="sidebar-link w-full text-left active">
+            <i class="fa-solid fa-calendar-day"></i> My Schedule
+          </button>
+          <button onclick="window.showSection('therapist-patients')" class="sidebar-link w-full text-left">
+            <i class="fa-solid fa-clipboard-user"></i> My Patients
+          </button>
+          <button onclick="window.showSection('settings-page')" class="sidebar-link w-full text-left">
+            <i class="fa-solid fa-gear"></i> Settings
+          </button>
+        </div>
+      </nav>
+
+      <div class="p-4 border-t">
+        <button onclick="window.logout()" class="w-full text-left px-4 py-2 rounded text-red-600 hover:bg-red-50 flex items-center">
+          <i class="fa-solid fa-sign-out-alt w-6 mr-2"></i> Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-6 overflow-y-auto h-screen bg-gray-50">
+
+      <!-- Dashboard -->
+      <section id="admin-dashboard" class="content-section">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-teal-600">
+            <h3 class="text-gray-500 text-sm font-medium">Total Patients</h3>
+            <p id="stat-total-patients" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
+            <h3 class="text-gray-500 text-sm font-medium">Appointments Today</h3>
+            <p id="stat-today-appts" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
+            <h3 class="text-gray-500 text-sm font-medium">Physiotherapists</h3>
+            <p id="stat-total-therapists" class="text-3xl font-bold text-gray-800">0</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-orange-500">
+            <h3 class="text-gray-500 text-sm font-medium">Pending Complaints</h3>
+            <p class="text-3xl font-bold text-gray-800">2</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div class="bg-white p-6 rounded-lg shadow-sm border col-span-2">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-bold text-gray-800">Today's Appointments</h3>
+              <button onclick="window.showSection('manage-appointments')" class="text-sm text-teal-700 hover:underline">View All</button>
             </div>
-            
-            <!-- Scrollable Nav Area -->
-            <nav class="p-4 flex-1 overflow-y-auto">
-                <div id="admin-nav" class="hidden-section">
-                    <button onclick="window.showSection('admin-dashboard')" class="sidebar-link w-full text-left active" id="nav-dashboard">
-                        <i class="fa-solid fa-gauge-high"></i> Dashboard
-                    </button>
-                    <button onclick="window.showSection('manage-patients')" class="sidebar-link w-full text-left" id="nav-patients">
-                        <i class="fa-solid fa-users"></i> Patients
-                    </button>
-                    <button onclick="window.showSection('manage-appointments')" class="sidebar-link w-full text-left" id="nav-appointments">
-                        <i class="fa-solid fa-calendar-check"></i> Appointments
-                    </button>
-                    <button onclick="window.showSection('manage-therapists')" class="sidebar-link w-full text-left" id="nav-therapists">
-                        <i class="fa-solid fa-user-nurse"></i> Physiotherapists
-                    </button>
-                    <button onclick="window.showSection('manage-users')" class="sidebar-link w-full text-left" id="nav-users">
-                        <i class="fa-solid fa-users-gear"></i> Users & Admins
-                    </button>
-                    <button onclick="window.showSection('manage-exercises')" class="sidebar-link w-full text-left" id="nav-exercises">
-                        <i class="fa-solid fa-dumbbell"></i> Exercises
-                    </button>
-                    <button onclick="window.showSection('manage-complaints')" class="sidebar-link w-full text-left" id="nav-complaints">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Complaints
-                    </button>
-                    <button onclick="window.showSection('manage-reports')" class="sidebar-link w-full text-left" id="nav-reports">
-                        <i class="fa-solid fa-chart-pie"></i> Reports
-                    </button>
-                    <button onclick="window.showSection('settings-page')" class="sidebar-link w-full text-left" id="nav-settings">
-                        <i class="fa-solid fa-gear"></i> Settings
-                    </button>
-                </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                  <th class="px-4 py-3">Time</th>
+                  <th class="px-4 py-3">Patient</th>
+                  <th class="px-4 py-3">Therapist</th>
+                  <th class="px-4 py-3">Status</th>
+                </tr>
+                </thead>
+                <tbody id="dashboard-today-appts-body"></tbody>
+              </table>
+            </div>
+          </div>
 
-                <div id="therapist-nav" class="hidden-section">
-                    <button onclick="window.showSection('therapist-schedule')" class="sidebar-link w-full text-left active">
-                        <i class="fa-solid fa-calendar-day"></i> My Schedule
-                    </button>
-                    <button onclick="window.showSection('therapist-patients')" class="sidebar-link w-full text-left">
-                        <i class="fa-solid fa-clipboard-user"></i> My Patients
-                    </button>
-                </div>
-            </nav>
+          <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Therapist Schedule</h3>
+            <div class="mb-4">
+              <label class="text-xs text-gray-500 uppercase">Select Therapist</label>
+              <select id="dashboard-therapist-select" class="w-full border p-2 rounded mt-1 text-sm" onchange="window.updateDashboardTherapistView()"></select>
+            </div>
+            <div id="dashboard-therapist-schedule-list" class="space-y-3 max-h-64 overflow-y-auto">
+              <p class="text-sm text-gray-400 italic">Select a therapist to view today's schedule.</p>
+            </div>
+          </div>
+        </div>
 
-            <div class="p-4 border-t">
-                <button onclick="window.logout()" class="w-full text-left px-4 py-2 rounded text-red-600 hover:bg-red-50 flex items-center">
-                    <i class="fa-solid fa-sign-out-alt w-6 mr-2"></i> Logout
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">Appointments Overview</h3>
+            <canvas id="appointmentsChart"></canvas>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">Patient Demographics (Age)</h3>
+            <canvas id="demographicsChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Patients -->
+      <section id="manage-patients" class="content-section hidden-section">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">Patients Directory</h2>
+          <button onclick="window.openModal('add-patient-modal')" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
+            <i class="fa-solid fa-plus mr-2"></i> Add Patient (Evaluation)
+          </button>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+            </tr>
+            </thead>
+            <tbody id="patients-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Appointments -->
+      <section id="manage-appointments" class="content-section hidden-section">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">Appointment Management</h2>
+          <button onclick="window.openNewAppointmentModal()" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
+            <i class="fa-solid fa-plus mr-2"></i> New Schedule
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+          <div class="bg-gray-200 rounded-lg p-4 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-gray-700">Scheduled</h3>
+              <span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full" id="count-scheduled">0</span>
+            </div>
+            <div id="col-scheduled" class="flex-1 overflow-y-auto space-y-3"></div>
+          </div>
+          <div class="bg-green-50 rounded-lg p-4 flex flex-col h-full border border-green-100">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-green-800">Completed</h3>
+              <span class="bg-green-200 text-green-800 text-xs px-2 py-1 rounded-full" id="count-completed">0</span>
+            </div>
+            <div id="col-completed" class="flex-1 overflow-y-auto space-y-3"></div>
+          </div>
+          <div class="bg-red-50 rounded-lg p-4 flex flex-col h-full border border-red-100">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-red-800">Cancelled</h3>
+              <span class="bg-red-200 text-red-800 text-xs px-2 py-1 rounded-full" id="count-cancelled">0</span>
+            </div>
+            <div id="col-cancelled" class="flex-1 overflow-y-auto space-y-3"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Therapists -->
+      <section id="manage-therapists" class="content-section hidden-section">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">Physiotherapists & Schedule</h2>
+          <button onclick="window.openNewTherapistModal()" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
+            <i class="fa-solid fa-plus mr-2"></i> Add Therapist
+          </button>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Email</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NHRA License</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift / Hours</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            </tr>
+            </thead>
+            <tbody id="therapists-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Placeholders -->
+      <section id="manage-users" class="content-section hidden-section"><h2 class="text-2xl font-bold mb-6 text-gray-800">Users & Admins Management</h2></section>
+      <section id="manage-exercises" class="content-section hidden-section"><h2 class="text-2xl font-bold mb-6 text-gray-800">Exercise Library</h2></section>
+      <section id="manage-complaints" class="content-section hidden-section"><h2 class="text-2xl font-bold mb-6 text-gray-800">Complaints & Feedback</h2></section>
+      <section id="manage-reports" class="content-section hidden-section"><h2 class="text-2xl font-bold mb-6 text-gray-800">Detailed Reports</h2></section>
+
+      <!-- SETTINGS -->
+      <section id="settings-page" class="content-section hidden-section">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">System Settings</h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h3 class="text-lg font-bold mb-4 text-gray-700">Storage</h3>
+            <p class="text-sm text-gray-600 mb-4">
+              Choose where data is saved. If Supabase is connected, data will be saved and loaded from Supabase.
+              If not connected, the app uses localStorage as fallback.
+            </p>
+
+            <div class="flex items-center gap-2 text-sm">
+              <span class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700" id="storage-status-pill">Checking…</span>
+              <button type="button" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800" onclick="window.syncFromSupabase()">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Refresh from Supabase
+              </button>
+            </div>
+
+            <div class="mt-4 border rounded p-4 bg-gray-50 text-xs text-gray-600 space-y-2">
+              <div><span class="font-bold">Tables expected in Supabase:</span> <span class="font-mono">patients</span>, <span class="font-mono">therapists</span>, <span class="font-mono">appointments</span></div>
+              <div><span class="font-bold">Columns expected:</span> use <span class="font-mono">id</span> (text/uuid), and fields like <span class="font-mono">full_name</span>, <span class="font-mono">age</span>, etc.</div>
+              <div class="text-red-700"><span class="font-bold">Important:</span> If RLS is enabled, add policies or the anon key cannot read/write.</div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-lg shadow-sm border border-teal-100">
+            <div class="flex items-center gap-2 mb-4">
+              <i class="fa-solid fa-database text-teal-600 text-xl"></i>
+              <h3 class="text-lg font-bold text-gray-700">Supabase Connection</h3>
+            </div>
+
+            <form id="supabase-settings-form" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Project URL</label>
+                <input type="text" id="sb-url" placeholder="https://xyzcompany.supabase.co"
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">API Key (anon/public)</label>
+                <input type="password" id="sb-key" placeholder="eyJhbGciOi..."
+                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm">
+              </div>
+
+              <div id="connection-status" class="hidden p-2 rounded text-sm text-center font-medium"></div>
+
+              <div class="flex gap-2 pt-2">
+                <button type="button" onclick="window.testSupabaseConnection()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                  <i class="fa-solid fa-plug mr-2"></i> Test Connection
                 </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="flex-1 p-6 overflow-y-auto h-screen bg-gray-50">
-            
-            <!-- 1. DASHBOARD -->
-            <section id="admin-dashboard" class="content-section">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-teal-600">
-                        <h3 class="text-gray-500 text-sm font-medium">Total Patients</h3>
-                        <p id="stat-total-patients" class="text-3xl font-bold text-gray-800">0</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
-                        <h3 class="text-gray-500 text-sm font-medium">Appointments Today</h3>
-                        <p id="stat-today-appts" class="text-3xl font-bold text-gray-800">0</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
-                        <h3 class="text-gray-500 text-sm font-medium">Physiotherapists</h3>
-                        <p id="stat-total-therapists" class="text-3xl font-bold text-gray-800">0</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-orange-500">
-                        <h3 class="text-gray-500 text-sm font-medium">Pending Complaints</h3>
-                        <p class="text-3xl font-bold text-gray-800">2</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border col-span-2">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-gray-800">Today's Appointments</h3>
-                            <button onclick="window.showSection('manage-appointments')" class="text-sm text-teal-700 hover:underline">View All</button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full text-sm text-left text-gray-500">
-                                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3">Time</th>
-                                        <th class="px-4 py-3">Patient</th>
-                                        <th class="px-4 py-3">Therapist</th>
-                                        <th class="px-4 py-3">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dashboard-today-appts-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">Therapist Schedule</h3>
-                        <div class="mb-4">
-                            <label class="text-xs text-gray-500 uppercase">Select Therapist</label>
-                            <select id="dashboard-therapist-select" class="w-full border p-2 rounded mt-1 text-sm" onchange="window.updateDashboardTherapistView()"></select>
-                        </div>
-                        <div id="dashboard-therapist-schedule-list" class="space-y-3 max-h-64 overflow-y-auto">
-                            <p class="text-sm text-gray-400 italic">Select a therapist to view today's schedule.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border">
-                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Appointments Overview</h3>
-                        <canvas id="appointmentsChart"></canvas>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border">
-                        <h3 class="text-lg font-semibold mb-4 text-gray-700">Patient Demographics (Age)</h3>
-                        <canvas id="demographicsChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 2. PATIENTS -->
-            <section id="manage-patients" class="content-section hidden-section">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Patients Directory</h2>
-                    <button onclick="window.openModal('add-patient-modal')" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
-                        <i class="fa-solid fa-plus mr-2"></i> Add Patient (Evaluation)
-                    </button>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patients-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- 3. APPOINTMENTS -->
-            <section id="manage-appointments" class="content-section hidden-section">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Appointment Management</h2>
-                    <button onclick="window.openNewAppointmentModal()" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
-                        <i class="fa-solid fa-plus mr-2"></i> New Schedule
-                    </button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-                    <div class="bg-gray-200 rounded-lg p-4 flex flex-col h-full">
-                        <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-gray-700">Scheduled</h3><span class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full" id="count-scheduled">0</span></div>
-                        <div id="col-scheduled" class="flex-1 overflow-y-auto space-y-3"></div>
-                    </div>
-                    <div class="bg-green-50 rounded-lg p-4 flex flex-col h-full border border-green-100">
-                        <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-green-800">Completed</h3><span class="bg-green-200 text-green-800 text-xs px-2 py-1 rounded-full" id="count-completed">0</span></div>
-                        <div id="col-completed" class="flex-1 overflow-y-auto space-y-3"></div>
-                    </div>
-                    <div class="bg-red-50 rounded-lg p-4 flex flex-col h-full border border-red-100">
-                        <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-red-800">Cancelled</h3><span class="bg-red-200 text-red-800 text-xs px-2 py-1 rounded-full" id="count-cancelled">0</span></div>
-                        <div id="col-cancelled" class="flex-1 overflow-y-auto space-y-3"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 4. PHYSIOTHERAPISTS (UPDATED) -->
-            <section id="manage-therapists" class="content-section hidden-section">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Physiotherapists & Schedule</h2>
-                    <button onclick="window.openNewTherapistModal()" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
-                        <i class="fa-solid fa-plus mr-2"></i> Add Therapist
-                    </button>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NHRA License</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift / Hours</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="therapists-table-body" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- 5-8. OTHER SECTIONS (Placeholders) -->
-            <section id="manage-users" class="content-section hidden-section">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Users & Admins Management</h2>
-                <div class="bg-white p-8 rounded-lg shadow-sm border text-center">
-                    <i class="fa-solid fa-users-gear text-5xl text-gray-300 mb-4"></i>
-                    <p class="text-gray-500">Manage system access, roles, and permissions here.</p>
-                </div>
-            </section>
-            <section id="manage-exercises" class="content-section hidden-section">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Exercise Library</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border">
-                        <div class="h-32 bg-gray-100 rounded mb-3 flex items-center justify-center"><i class="fa-solid fa-image text-gray-300 text-3xl"></i></div>
-                        <h3 class="font-bold">Knee Extension</h3>
-                    </div>
-                </div>
-            </section>
-            <section id="manage-complaints" class="content-section hidden-section">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Complaints & Feedback</h2>
-                <div class="bg-white rounded-lg shadow-sm overflow-hidden border p-4">
-                    <p class="text-gray-500">No new complaints.</p>
-                </div>
-            </section>
-            <section id="manage-reports" class="content-section hidden-section">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Detailed Reports</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border"><h3 class="font-bold mb-2">Financial Report</h3></div>
-                </div>
-            </section>
-
-            <!-- 9. SETTINGS -->
-            <section id="settings-page" class="content-section hidden-section">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">System Settings</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border">
-                        <h3 class="text-lg font-bold mb-4 text-gray-700">General Configuration</h3>
-                        <form class="space-y-4">
-                            <div><label class="block text-sm font-medium text-gray-700">Clinic Name</label><input type="text" value="PhysioCare Clinic" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">Admin Email</label><input type="email" value="admin@physio.com" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2"></div>
-                            <div class="flex items-center"><input type="checkbox" checked class="h-4 w-4 text-teal-600 border-gray-300 rounded"><label class="ml-2 block text-sm text-gray-900">Enable Email Notifications</label></div>
-                            <button type="button" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800">Save General Settings</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-teal-100">
-                        <div class="flex items-center gap-2 mb-4"><i class="fa-solid fa-database text-teal-600 text-xl"></i><h3 class="text-lg font-bold text-gray-700">Supabase Connection</h3></div>
-                        <p class="text-sm text-gray-500 mb-4">Connect your application to a live Supabase backend database.</p>
-                        <form id="supabase-settings-form" class="space-y-4">
-                            <div><label class="block text-sm font-medium text-gray-700">Project URL</label><input type="text" id="sb-url" placeholder="https://xyzcompany.supabase.co" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700">API Key (anon/public)</label><input type="password" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI..." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm"></div>
-                            <div id="connection-status" class="hidden p-2 rounded text-sm text-center font-medium"></div>
-                            <div class="flex gap-2 pt-2">
-                                <button type="button" onclick="window.testSupabaseConnection()" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"><i class="fa-solid fa-plug mr-2"></i> Test Connection</button>
-                                <button type="submit" class="flex-1 bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800"><i class="fa-solid fa-save mr-2"></i> Save Keys</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <!-- THERAPIST SECTIONS -->
-            <section id="therapist-schedule" class="content-section hidden-section">
-                <h2 class="text-2xl font-bold mb-6">My Schedule</h2>
-                <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="therapist-schedule-body" class="bg-white divide-y divide-gray-200"></tbody>
-                    </table>
-                </div>
-            </section>
-             <section id="therapist-patients" class="content-section hidden-section">
-                <h2 class="text-2xl font-bold mb-6">My Assigned Patients</h2>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <ul id="therapist-patient-list" class="mt-4 space-y-3"></ul>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <!-- MODALS -->
-
-    <!-- Add Patient Modal -->
-    <div id="add-patient-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg w-full max-w-6xl h-[90vh] flex flex-col">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold text-teal-800">Physical Therapy Evaluation</h3>
-                <button onclick="window.closeModal('add-patient-modal')" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-            </div>
-            <div class="p-8 overflow-y-auto flex-1 bg-white">
-                <form id="add-patient-form">
-                    <div class="flex justify-end mb-4"><div class="w-48"><label class="eval-label">Date:</label><input type="date" class="eval-input" required></div></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-                        <div class="space-y-3">
-                            <div><label class="eval-label">Name:</label><input type="text" id="p-name" class="eval-input" required></div>
-                            <div class="flex gap-4"><div class="flex-1"><label class="eval-label">Age:</label><input type="number" id="p-age" class="eval-input" required></div><div class="flex-1"><label class="eval-label">Gender:</label><select id="p-gender" class="eval-input"><option>Male</option><option>Female</option></select></div></div>
-                            <div><label class="eval-label">C.P.R (ID):</label><input type="text" id="p-cpr" class="eval-input"></div>
-                            <div><label class="eval-label">Contact No:</label><input type="text" id="p-phone" class="eval-input"></div>
-                        </div>
-                        <div class="space-y-3">
-                            <div><label class="eval-label">Chief Complaint:</label><textarea id="p-condition" class="eval-input" rows="1"></textarea></div>
-                            <div><label class="eval-label">History:</label><textarea class="eval-input" rows="1"></textarea></div>
-                            <div><label class="eval-label">Medical History:</label><textarea class="eval-input" rows="1"></textarea></div>
-                            <div><label class="eval-label">Surgical History:</label><textarea class="eval-input" rows="1"></textarea></div>
-                        </div>
-                    </div>
-                    <div class="mb-6 border p-4 rounded bg-gray-50">
-                        <div class="eval-section-title mt-0">Observation:</div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="flex items-center gap-4"><span class="eval-label">Behavior:</span><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Alert</label><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Irritable</label><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Fearful</label></div>
-                            <div class="flex items-center gap-4"><span class="eval-label">Locomotion:</span><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Wheelchair</label><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Walking aid</label><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Other</label></div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-                        <div class="space-y-4">
-                            <div><div class="eval-section-title">Visible Deformity</div><div class="flex gap-2 mb-2"><label class="eval-label w-24">Upper Limb:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Lower Limb:</label><input type="text" class="eval-input"></div></div>
-                            <div><div class="eval-section-title">Functional Motor Control (Head Control):</div><div class="space-y-1"><div class="flex gap-2"><label class="eval-label w-24">Prone:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Supine:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Sitting:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Trunk:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Upper Limbs:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Lower Limbs:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Rolling:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Crawling:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Lying to Sit:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Sit to Stand:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Standing:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Walking:</label><input type="text" class="eval-input"></div></div></div>
-                        </div>
-                        <div class="space-y-4">
-                            <div><div class="eval-section-title">Sensitivity Test:</div><div class="space-y-1"><div class="flex gap-2"><label class="eval-label w-16">Touch:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-16">Smell:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-16">Grasp:</label><input type="text" class="eval-input"></div></div></div>
-                            <div><div class="eval-section-title">Gait Analysis</div><div class="flex gap-4"><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Normal</label><label class="flex items-center gap-1 text-sm"><input type="checkbox"> Abnormal</label></div></div>
-                            <div><div class="eval-section-title">R.O.M</div><div class="flex gap-2 mb-2"><label class="eval-label w-24">Upper Limbs:</label><input type="text" class="eval-input"></div><div class="flex gap-2"><label class="eval-label w-24">Lower Limbs:</label><input type="text" class="eval-input"></div></div>
-                        </div>
-                    </div>
-                    <div class="space-y-4 mb-6">
-                        <div><div class="eval-section-title">Treatment Program:</div><textarea class="eval-input" rows="2"></textarea></div>
-                        <div><div class="eval-section-title">Goals:</div><textarea class="eval-input" rows="2"></textarea></div>
-                        <div><div class="eval-section-title">Progress Report:</div><textarea class="eval-input" rows="2"></textarea></div>
-                        <div><div class="eval-section-title">Recommendations:</div><textarea class="eval-input" rows="2"></textarea></div>
-                    </div>
-                    <div class="mb-6">
-                        <div class="eval-section-title">Attachments (X-Rays / Documents):</div>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer" onclick="document.getElementById('p-files').click()">
-                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
-                            <p class="text-sm text-gray-500">Click to upload or drag and drop</p>
-                            <p class="text-xs text-gray-400 mt-1">SVG, PNG, JPG or PDF</p>
-                            <input type="file" id="p-files" class="hidden" multiple onchange="window.displayFileNames(this)">
-                        </div>
-                        <ul id="file-list" class="mt-2 text-sm text-gray-600 space-y-1"></ul>
-                    </div>
-                    <div class="flex justify-end mt-8"><div class="w-64"><label class="eval-label">Signature:</label><input type="text" class="eval-input"></div></div>
-                    <div class="flex justify-end gap-4 mt-8 pt-4 border-t sticky bottom-0 bg-white">
-                        <button type="button" onclick="window.closeModal('add-patient-modal')" class="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded border">Cancel</button>
-                        <button type="submit" class="px-6 py-2 bg-teal-700 text-white rounded hover:bg-teal-800">Save Evaluation</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- UPDATED: Add/Edit Therapist Modal -->
-    <div id="add-therapist-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-[600px] max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-bold mb-4" id="therapist-modal-title">Add New Therapist</h3>
-            <form id="add-therapist-form" class="space-y-4">
-                <input type="hidden" id="t-id">
-                
-                <!-- Personal Info -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Full Name</label><input type="text" id="t-name" class="w-full border p-2 rounded text-sm" required></div>
-                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Email</label><input type="email" id="t-email" class="w-full border p-2 rounded text-sm" required></div>
-                </div>
-
-                <!-- Professional Info -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Specialization</label><input type="text" id="t-spec" class="w-full border p-2 rounded text-sm" placeholder="e.g. Sports Rehab" required></div>
-                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">NHRA License No.</label><input type="text" id="t-license" class="w-full border p-2 rounded text-sm" placeholder="e.g. 12345-PT"></div>
-                </div>
-
-                <div class="border-t pt-4">
-                    <h4 class="text-sm font-bold text-teal-800 mb-2">Work Schedule & Shifts</h4>
-                    
-                    <div class="grid grid-cols-2 gap-4 mb-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Shift Type</label>
-                            <select id="t-shift" class="w-full border p-2 rounded text-sm">
-                                <option value="Morning">Morning Shift</option>
-                                <option value="Evening">Evening Shift</option>
-                                <option value="Split">Split Shift</option>
-                                <option value="Night">Night Shift</option>
-                            </select>
-                        </div>
-                        <div class="flex gap-2">
-                            <div class="flex-1"><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Start</label><input type="time" id="t-start" class="w-full border p-2 rounded text-sm"></div>
-                            <div class="flex-1"><label class="block text-xs font-bold text-gray-600 uppercase mb-1">End</label><input type="time" id="t-end" class="w-full border p-2 rounded text-sm"></div>
-                        </div>
-                    </div>
-
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Working Days</label>
-                    <div class="flex flex-wrap gap-3">
-                        <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Mon" class="form-checkbox text-teal-600"> <span>Mon</span></label>
-                        <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Tue" class="form-checkbox text-teal-600"> <span>Tue</span></label>
-                        <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Wed" class="form-checkbox text-teal-600"> <span>Wed</span></label>
-                        <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Thu" class="form-checkbox text-teal-600"> <span>Thu</span></label>
-                        <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Fri" class="form-checkbox text-teal-600"> <span>Fri</span></label>
-                        <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Sat" class="form-checkbox text-teal-600"> <span>Sat</span></label>
-                        <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Sun" class="form-checkbox text-teal-600"> <span>Sun</span></label>
-                    </div>
-                </div>
-
-                <div class="pt-2">
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Password</label>
-                    <input type="password" id="t-pass" class="w-full border p-2 rounded text-sm" placeholder="Set login password">
-                </div>
-
-                <div class="flex justify-end gap-2 mt-4">
-                    <button type="button" onclick="window.closeModal('add-therapist-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800" id="t-submit-btn">Save</button>
-                </div>
+                <button type="submit" class="flex-1 bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800">
+                  <i class="fa-solid fa-save mr-2"></i> Save Keys
+                </button>
+              </div>
             </form>
+          </div>
         </div>
-    </div>
+      </section>
 
-    <!-- Add/Reschedule Appointment Modal -->
-    <div id="add-appointment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 class="text-lg font-bold mb-4" id="appt-modal-title">Book Appointment</h3>
-            <form id="add-appointment-form" class="space-y-3">
-                <input type="hidden" id="appt-id">
-                <label class="block text-sm">Patient</label>
-                <select id="appt-patient" class="w-full border p-2 rounded" required></select>
-                <label class="block text-sm">Therapist</label>
-                <select id="appt-therapist" class="w-full border p-2 rounded" required></select>
-                <label class="block text-sm">Date & Time</label>
-                <input type="datetime-local" id="appt-date" class="w-full border p-2 rounded" required>
-                <div class="flex justify-end gap-2 mt-4">
-                    <button type="button" onclick="window.closeModal('add-appointment-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800" id="appt-submit-btn">Book</button>
-                </div>
-            </form>
+      <!-- Therapist pages -->
+      <section id="therapist-schedule" class="content-section hidden-section">
+        <h2 class="text-2xl font-bold mb-6">My Schedule</h2>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            </tr>
+            </thead>
+            <tbody id="therapist-schedule-body" class="bg-white divide-y divide-gray-200"></tbody>
+          </table>
         </div>
+      </section>
+
+      <section id="therapist-patients" class="content-section hidden-section">
+        <h2 class="text-2xl font-bold mb-6">My Assigned Patients</h2>
+        <div class="bg-white rounded-lg shadow p-6">
+          <ul id="therapist-patient-list" class="mt-4 space-y-3"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODALS -->
+  <!-- Add Patient Modal -->
+  <div id="add-patient-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-6xl h-[90vh] flex flex-col">
+      <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 class="text-xl font-bold text-teal-800">Physical Therapy Evaluation</h3>
+        <button onclick="window.closeModal('add-patient-modal')" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+      <div class="p-8 overflow-y-auto flex-1 bg-white">
+        <form id="add-patient-form">
+          <div class="flex justify-end mb-4">
+            <div class="w-48"><label class="eval-label">Date:</label><input type="date" class="eval-input" required></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+            <div class="space-y-3">
+              <div><label class="eval-label">Name:</label><input type="text" id="p-name" class="eval-input" required></div>
+              <div class="flex gap-4">
+                <div class="flex-1"><label class="eval-label">Age:</label><input type="number" id="p-age" class="eval-input" required></div>
+                <div class="flex-1"><label class="eval-label">Gender:</label><select id="p-gender" class="eval-input"><option>Male</option><option>Female</option></select></div>
+              </div>
+              <div><label class="eval-label">C.P.R (ID):</label><input type="text" id="p-cpr" class="eval-input"></div>
+              <div><label class="eval-label">Contact No:</label><input type="text" id="p-phone" class="eval-input"></div>
+            </div>
+            <div class="space-y-3">
+              <div><label class="eval-label">Chief Complaint:</label><textarea id="p-condition" class="eval-input" rows="1"></textarea></div>
+              <div><label class="eval-label">History:</label><textarea class="eval-input" rows="1"></textarea></div>
+              <div><label class="eval-label">Medical History:</label><textarea class="eval-input" rows="1"></textarea></div>
+              <div><label class="eval-label">Surgical History:</label><textarea class="eval-input" rows="1"></textarea></div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <div class="eval-section-title">Attachments (X-Rays / Documents):</div>
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer"
+                 onclick="document.getElementById('p-files').click()">
+              <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
+              <p class="text-sm text-gray-500">Click to upload or drag and drop</p>
+              <input type="file" id="p-files" class="hidden" multiple onchange="window.displayFileNames(this)">
+            </div>
+            <ul id="file-list" class="mt-2 text-sm text-gray-600 space-y-1"></ul>
+          </div>
+
+          <div class="flex justify-end gap-4 mt-8 pt-4 border-t sticky bottom-0 bg-white">
+            <button type="button" onclick="window.closeModal('add-patient-modal')" class="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded border">Cancel</button>
+            <button type="submit" class="px-6 py-2 bg-teal-700 text-white rounded hover:bg-teal-800">Save Evaluation</button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // ==========================================
-        // CUSTOM NOTIFICATION SYSTEM
-        // ==========================================
-        window.notify = function(message, type = 'info') {
-            const container = document.getElementById('notification-container');
-            const notif = document.createElement('div');
-            let bgClass = 'bg-blue-600';
-            if(type === 'error') bgClass = 'bg-red-500';
-            if(type === 'success') bgClass = 'bg-green-500';
-            notif.className = `${bgClass} text-white px-6 py-3 rounded shadow-lg toast-enter pointer-events-auto flex items-center gap-2`;
-            notif.innerHTML = `<span>${message}</span>`;
-            container.appendChild(notif);
-            setTimeout(() => {
-                notif.classList.remove('toast-enter');
-                notif.classList.add('toast-exit');
-                setTimeout(() => notif.remove(), 300);
-            }, 3000);
-        };
+  <!-- Add/Edit Therapist Modal -->
+  <div id="add-therapist-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-[600px] max-h-[90vh] overflow-y-auto">
+      <h3 class="text-lg font-bold mb-4" id="therapist-modal-title">Add New Therapist</h3>
+      <form id="add-therapist-form" class="space-y-4">
+        <input type="hidden" id="t-id">
 
-        // ==========================================
-        // SUPABASE CONNECTION TESTER
-        // ==========================================
-        window.testSupabaseConnection = async function() {
-            const url = document.getElementById('sb-url').value;
-            const key = document.getElementById('sb-key').value;
-            const statusDiv = document.getElementById('connection-status');
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Full Name</label><input type="text" id="t-name" class="w-full border p-2 rounded text-sm" required></div>
+          <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Email</label><input type="email" id="t-email" class="w-full border p-2 rounded text-sm" required></div>
+        </div>
 
-            if(!url || !key) {
-                window.notify('Please enter both URL and Key', 'error');
-                return;
-            }
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Specialization</label><input type="text" id="t-spec" class="w-full border p-2 rounded text-sm" required></div>
+          <div><label class="block text-xs font-bold text-gray-600 uppercase mb-1">NHRA License No.</label><input type="text" id="t-license" class="w-full border p-2 rounded text-sm"></div>
+        </div>
 
-            statusDiv.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-            statusDiv.classList.add('bg-blue-100', 'text-blue-800');
-            statusDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting...';
+        <div class="border-t pt-4">
+          <h4 class="text-sm font-bold text-teal-800 mb-2">Work Schedule</h4>
+          <div class="grid grid-cols-2 gap-4 mb-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Shift Type</label>
+              <select id="t-shift" class="w-full border p-2 rounded text-sm">
+                <option value="Morning">Morning</option>
+                <option value="Evening">Evening</option>
+                <option value="Split">Split</option>
+                <option value="Night">Night</option>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <div class="flex-1"><label class="block text-xs font-bold text-gray-600 uppercase mb-1">Start</label><input type="time" id="t-start" class="w-full border p-2 rounded text-sm"></div>
+              <div class="flex-1"><label class="block text-xs font-bold text-gray-600 uppercase mb-1">End</label><input type="time" id="t-end" class="w-full border p-2 rounded text-sm"></div>
+            </div>
+          </div>
 
-            try {
-                const tempClient = window.supabase.createClient(url, key);
-                const { data, error } = await tempClient.from('patients').select('count', { count: 'exact', head: true });
-                statusDiv.classList.remove('bg-blue-100', 'text-blue-800');
-                statusDiv.classList.add('bg-green-100', 'text-green-800');
-                statusDiv.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i> Connection Successful!';
-                window.notify('Supabase Connection Verified', 'success');
-            } catch (err) {
-                statusDiv.classList.remove('bg-blue-100', 'text-blue-800');
-                statusDiv.classList.add('bg-red-100', 'text-red-800');
-                statusDiv.innerHTML = `<i class="fa-solid fa-times-circle mr-2"></i> Failed: ${err.message}`;
-            }
-        };
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Working Days</label>
+          <div class="flex flex-wrap gap-3">
+            <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Mon"> <span>Mon</span></label>
+            <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Tue"> <span>Tue</span></label>
+            <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Wed"> <span>Wed</span></label>
+            <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Thu"> <span>Thu</span></label>
+            <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Fri"> <span>Fri</span></label>
+            <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Sat"> <span>Sat</span></label>
+            <label class="flex items-center space-x-1 text-sm"><input type="checkbox" name="workday" value="Sun"> <span>Sun</span></label>
+          </div>
+        </div>
 
-        document.getElementById('supabase-settings-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            window.notify('Settings Saved Successfully', 'success');
+        <div class="pt-2">
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Password</label>
+          <input type="password" id="t-pass" class="w-full border p-2 rounded text-sm" placeholder="Set login password">
+        </div>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" onclick="window.closeModal('add-therapist-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800" id="t-submit-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add/Reschedule Appointment Modal -->
+  <div id="add-appointment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h3 class="text-lg font-bold mb-4" id="appt-modal-title">Book Appointment</h3>
+      <form id="add-appointment-form" class="space-y-3">
+        <input type="hidden" id="appt-id">
+        <label class="block text-sm">Patient</label>
+        <select id="appt-patient" class="w-full border p-2 rounded" required></select>
+        <label class="block text-sm">Therapist</label>
+        <select id="appt-therapist" class="w-full border p-2 rounded" required></select>
+        <label class="block text-sm">Date & Time</label>
+        <input type="datetime-local" id="appt-date" class="w-full border p-2 rounded" required>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" onclick="window.closeModal('add-appointment-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800" id="appt-submit-btn">Book</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // 1) Local persistence (fallback)
+    // ============================================================
+    const SafeStorage = {
+      isAvailable: (() => {
+        try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return true; } catch { return false; }
+      })(),
+      get(key, fallback) {
+        if (!this.isAvailable) return fallback;
+        const v = localStorage.getItem(key);
+        try { return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+      },
+      set(key, val) {
+        if (!this.isAvailable) return;
+        localStorage.setItem(key, JSON.stringify(val));
+      }
+    };
+
+    // ============================================================
+    // 2) Supabase credentials + client
+    // ============================================================
+    const SUPABASE_CONFIG = { URL: "", KEY: "" }; // optional hardcode
+    const SB_KEYS_STORAGE_KEY = "physiocare_supabase_keys";
+
+    function getSupabaseCreds() {
+      const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, null) || {};
+      const urlEl = document.getElementById("sb-url");
+      const keyEl = document.getElementById("sb-key");
+
+      const url = (urlEl?.value || stored.url || SUPABASE_CONFIG.URL || "").trim();
+      const key = (keyEl?.value || stored.key || SUPABASE_CONFIG.KEY || "").trim();
+      return { url, key };
+    }
+
+    function setSupabaseCreds(url, key) {
+      SafeStorage.set(SB_KEYS_STORAGE_KEY, { url, key });
+    }
+
+    function getSupabaseClient() {
+      const { url, key } = getSupabaseCreds();
+      if (!url || !key) return null;
+      return window.supabase.createClient(url, key);
+    }
+
+    // ============================================================
+    // 3) Notifications
+    // ============================================================
+    window.notify = function(message, type = 'info') {
+      const container = document.getElementById('notification-container');
+      const notif = document.createElement('div');
+      let bgClass = 'bg-blue-600';
+      if(type === 'error') bgClass = 'bg-red-500';
+      if(type === 'success') bgClass = 'bg-green-500';
+      notif.className = `${bgClass} text-white px-6 py-3 rounded shadow-lg toast-enter pointer-events-auto flex items-center gap-2`;
+      notif.innerHTML = `<span>${message}</span>`;
+      container.appendChild(notif);
+      setTimeout(() => {
+        notif.classList.remove('toast-enter');
+        notif.classList.add('toast-exit');
+        setTimeout(() => notif.remove(), 300);
+      }, 3000);
+    };
+
+    // ============================================================
+    // 4) UI helpers
+    // ============================================================
+    window.openModal = (id) => document.getElementById(id).classList.remove('hidden-section');
+    window.closeModal = (id) => document.getElementById(id).classList.add('hidden-section');
+
+    window.showSection = function(sectionId) {
+      document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden-section'));
+      document.getElementById(sectionId).classList.remove('hidden-section');
+      document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+      const btnMap = {
+        'admin-dashboard': 'nav-dashboard',
+        'manage-patients': 'nav-patients',
+        'manage-appointments': 'nav-appointments',
+        'manage-therapists': 'nav-therapists',
+        'manage-users': 'nav-users',
+        'manage-exercises': 'nav-exercises',
+        'manage-complaints': 'nav-complaints',
+        'manage-reports': 'nav-reports',
+        'settings-page': 'nav-settings'
+      };
+      const btnId = btnMap[sectionId];
+      if(btnId) document.getElementById(btnId)?.classList.add('active');
+    };
+
+    window.logout = function() {
+      currentUser = null;
+      document.getElementById('dashboard-layout').classList.add('hidden-section');
+      document.getElementById('login-screen').classList.remove('hidden-section');
+      document.getElementById('login-form').reset();
+    };
+
+    window.displayFileNames = function(input) {
+      const list = document.getElementById('file-list');
+      list.innerHTML = '';
+      if (input.files && input.files.length > 0) {
+        for (let i = 0; i < input.files.length; i++) {
+          const li = document.createElement('li');
+          li.innerHTML = `<i class="fa-solid fa-paperclip mr-2 text-teal-600"></i> ${input.files[i].name}`;
+          list.appendChild(li);
+        }
+      }
+    };
+
+    // ============================================================
+    // 5) Data model + persistence
+    // ============================================================
+    const LS_PATIENTS = "physiocare_patients";
+    const LS_THERAPISTS = "physiocare_therapists";
+    const LS_APPOINTMENTS = "physiocare_appointments";
+
+    // Defaults (used if nothing stored and no Supabase)
+    const defaultPatients = [
+      { id: '1', full_name: 'John Doe', age: 45, condition: 'Back Pain', phone: '555-0101' },
+      { id: '2', full_name: 'Jane Roe', age: 29, condition: 'ACL Recovery', phone: '555-0102' },
+      { id: '3', full_name: 'Robert Smith', age: 62, condition: 'Arthritis', phone: '555-0103' }
+    ];
+
+    const defaultTherapists = [
+      { id: '101', full_name: 'Sarah Connor', specialization: 'Sports Rehab', email: 'sarah@physio.com', password: 'pass123', license: 'NHRA-2023-001', shift: 'Morning', work_days: ['Mon','Tue','Wed','Thu','Fri'], work_start: '08:00', work_end: '16:00' },
+      { id: '102', full_name: 'Dr. Mike Ross', specialization: 'Neurology', email: 'mike@physio.com', password: 'pass123', license: 'NHRA-2023-055', shift: 'Evening', work_days: ['Sun','Mon','Tue','Wed','Thu'], work_start: '14:00', work_end: '22:00' }
+    ];
+
+    const defaultAppointments = [
+      { id: 'a1', patient_id: '1', therapist_id: '101', date_time: new Date().toISOString(), status: 'Scheduled', notes: 'Initial assessment' },
+      { id: 'a2', patient_id: '2', therapist_id: '101', date_time: new Date(Date.now() - 86400000).toISOString(), status: 'Completed', notes: 'Leg exercises' }
+    ];
+
+    // In-memory state
+    let mockPatients = SafeStorage.get(LS_PATIENTS, defaultPatients);
+    let mockTherapists = SafeStorage.get(LS_THERAPISTS, defaultTherapists);
+    let mockAppointments = SafeStorage.get(LS_APPOINTMENTS, defaultAppointments);
+
+    function saveLocal() {
+      SafeStorage.set(LS_PATIENTS, mockPatients);
+      SafeStorage.set(LS_THERAPISTS, mockTherapists);
+      SafeStorage.set(LS_APPOINTMENTS, mockAppointments);
+    }
+
+    // ============================================================
+    // 6) Supabase API (CRUD + load back data)
+    // ============================================================
+    async function sbUpsert(table, row) {
+      const sb = getSupabaseClient();
+      if (!sb) return { ok: false, reason: "no_client" };
+
+      const { error } = await sb.from(table).upsert(row, { onConflict: "id" });
+      if (error) return { ok: false, error };
+      return { ok: true };
+    }
+
+    async function sbUpdate(table, id, patch) {
+      const sb = getSupabaseClient();
+      if (!sb) return { ok: false, reason: "no_client" };
+      const { error } = await sb.from(table).update(patch).eq("id", id);
+      if (error) return { ok: false, error };
+      return { ok: true };
+    }
+
+    async function sbSelectAll(table) {
+      const sb = getSupabaseClient();
+      if (!sb) return { ok: false, reason: "no_client", data: null };
+
+      // Note: if you use UUID ids, order by created_at if you have it.
+      const { data, error } = await sb.from(table).select("*");
+      if (error) return { ok: false, error, data: null };
+      return { ok: true, data };
+    }
+
+    async function sbEnsureRoundTrip() {
+      // Minimal "make sure it's giving back data": read tables after connect.
+      const [p, t, a] = await Promise.all([
+        sbSelectAll("patients"),
+        sbSelectAll("therapists"),
+        sbSelectAll("appointments")
+      ]);
+
+      if (!p.ok) return { ok: false, where: "patients", error: p.error || p.reason };
+      if (!t.ok) return { ok: false, where: "therapists", error: t.error || t.reason };
+      if (!a.ok) return { ok: false, where: "appointments", error: a.error || a.reason };
+
+      return { ok: true, patients: p.data || [], therapists: t.data || [], appointments: a.data || [] };
+    }
+
+    window.syncFromSupabase = async function() {
+      const sb = getSupabaseClient();
+      if (!sb) {
+        window.notify("Supabase is not connected. Add URL/Key in Settings.", "error");
+        setStoragePill(false);
+        return;
+      }
+
+      const res = await sbEnsureRoundTrip();
+      if (!res.ok) {
+        window.notify(`Supabase read failed (${res.where}): ${res.error?.message || res.error}`, "error");
+        setStoragePill(false);
+        return;
+      }
+
+      // Replace local/in-memory state with Supabase truth
+      mockPatients = normalizePatients(res.patients);
+      mockTherapists = normalizeTherapists(res.therapists);
+      mockAppointments = normalizeAppointments(res.appointments);
+
+      saveLocal(); // keep a cached copy locally too
+      window.notify("Data loaded from Supabase successfully.", "success");
+      setStoragePill(true);
+
+      // Refresh UI
+      if (currentUser?.role === "admin") loadAdminData();
+      if (currentUser?.role === "therapist") loadTherapistData();
+    };
+
+    // ============================================================
+    // 7) Normalizers (handles JSON columns, etc.)
+    // ============================================================
+    function normalizePatients(rows) {
+      return (rows || []).map(r => ({
+        id: String(r.id),
+        full_name: r.full_name ?? "",
+        age: Number(r.age ?? 0),
+        condition: r.condition ?? "",
+        phone: r.phone ?? ""
+      }));
+    }
+
+    function normalizeTherapists(rows) {
+      return (rows || []).map(r => ({
+        id: String(r.id),
+        full_name: r.full_name ?? "",
+        specialization: r.specialization ?? "",
+        email: r.email ?? "",
+        password: r.password ?? "pass123",
+        license: r.license ?? "",
+        shift: r.shift ?? "Morning",
+        work_days: Array.isArray(r.work_days) ? r.work_days : (typeof r.work_days === "string" ? safeJsonParse(r.work_days, []) : []),
+        work_start: r.work_start ?? "",
+        work_end: r.work_end ?? ""
+      }));
+    }
+
+    function normalizeAppointments(rows) {
+      return (rows || []).map(r => ({
+        id: String(r.id),
+        patient_id: String(r.patient_id),
+        therapist_id: String(r.therapist_id),
+        date_time: r.date_time,
+        status: r.status ?? "Scheduled",
+        notes: r.notes ?? ""
+      }));
+    }
+
+    function safeJsonParse(s, fallback) {
+      try { return JSON.parse(s); } catch { return fallback; }
+    }
+
+    // ============================================================
+    // 8) Supabase connection UI (Test + Save Keys)
+    // ============================================================
+    function setStorageBadge() {
+      const badge = document.getElementById("storage-mode-badge");
+      const hasLS = SafeStorage.isAvailable;
+      const hasSB = !!getSupabaseClient();
+
+      if (hasSB) {
+        badge.textContent = "STORAGE: SUPABASE";
+        badge.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded";
+      } else if (hasLS) {
+        badge.textContent = "STORAGE: LOCAL (offline)";
+        badge.className = "bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded";
+      } else {
+        badge.textContent = "STORAGE: MEMORY (no localStorage)";
+        badge.className = "bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded";
+      }
+    }
+
+    function setStoragePill(connected) {
+      const pill = document.getElementById("storage-status-pill");
+      if (!pill) return;
+      if (connected) {
+        pill.textContent = "Supabase connected";
+        pill.className = "inline-flex items-center px-2 py-1 rounded bg-green-100 text-green-800";
+      } else {
+        pill.textContent = "Using localStorage fallback";
+        pill.className = "inline-flex items-center px-2 py-1 rounded bg-yellow-100 text-yellow-800";
+      }
+      setStorageBadge();
+    }
+
+    window.testSupabaseConnection = async function() {
+      const { url, key } = getSupabaseCreds();
+      const statusDiv = document.getElementById('connection-status');
+
+      if(!url || !key) {
+        window.notify('Please enter Supabase URL and Key.', 'error');
+        return;
+      }
+
+      statusDiv.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+      statusDiv.classList.add('bg-blue-100', 'text-blue-800');
+      statusDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting...';
+
+      try {
+        const tempClient = window.supabase.createClient(url, key);
+
+        // This confirms Supabase is reachable + anon key works on at least one table.
+        const { error } = await tempClient.from('patients').select('*').limit(1);
+        if (error) throw error;
+
+        statusDiv.classList.remove('bg-blue-100', 'text-blue-800');
+        statusDiv.classList.add('bg-green-100', 'text-green-800');
+        statusDiv.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i> Connection Successful!';
+
+        window.notify('Supabase Connection Verified', 'success');
+        setStoragePill(true);
+      } catch (err) {
+        statusDiv.classList.remove('bg-blue-100', 'text-blue-800');
+        statusDiv.classList.add('bg-red-100', 'text-red-800');
+        statusDiv.innerHTML = `<i class="fa-solid fa-times-circle mr-2"></i> Failed: ${err.message}`;
+        window.notify('Supabase connection failed: ' + err.message, 'error');
+        setStoragePill(false);
+      }
+    };
+
+    document.getElementById('supabase-settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const { url, key } = getSupabaseCreds();
+      if (!url || !key) {
+        window.notify("Please enter Supabase URL and Key.", "error");
+        return;
+      }
+
+      setSupabaseCreds(url, key);
+      window.notify("Supabase keys saved. Loading data from Supabase...", "success");
+
+      // Prefill inputs from stored keys
+      document.getElementById("sb-url").value = url;
+      document.getElementById("sb-key").value = key;
+
+      await window.syncFromSupabase();
+    });
+
+    // ============================================================
+    // 9) App Logic (Admin + Therapist views)
+    // ============================================================
+    let currentUser = null;
+    let apptChartInstance = null;
+    let demoChartInstance = null;
+
+    function isTodayISO(isoStr) {
+      const d = new Date(isoStr);
+      const now = new Date();
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    }
+
+    function loadAdminData() {
+      fetchStats();
+      fetchPatients();
+      fetchTherapists();
+      fetchAppointments();
+      renderCharts();
+      populateDashboardWidgets();
+    }
+
+    function fetchStats() {
+      document.getElementById('stat-total-patients').innerText = mockPatients.length;
+      document.getElementById('stat-total-therapists').innerText = mockTherapists.length;
+      const todayCount = mockAppointments.filter(a => isTodayISO(a.date_time)).length;
+      document.getElementById('stat-today-appts').innerText = todayCount;
+    }
+
+    function fetchPatients() {
+      const tbody = document.getElementById('patients-table-body');
+      tbody.innerHTML = '';
+      const pSelect = document.getElementById('appt-patient');
+      pSelect.innerHTML = '<option value="">Select Patient</option>';
+
+      mockPatients.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">${p.full_name}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${p.age}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${p.condition || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${p.phone || '-'}</td>
+          </tr>`;
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.text = p.full_name;
+        pSelect.appendChild(opt);
+      });
+    }
+
+    function fetchTherapists() {
+      const tbody = document.getElementById('therapists-table-body');
+      tbody.innerHTML = '';
+      const tSelect = document.getElementById('appt-therapist');
+      tSelect.innerHTML = '<option value="">Select Therapist</option>';
+
+      mockTherapists.forEach(t => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="font-bold text-gray-900">${t.full_name}</div>
+              <div class="text-xs text-gray-500">${t.email}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${t.specialization}</span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${t.license || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">${t.shift || 'General'}</div>
+              <div class="text-xs text-gray-500">${t.work_start || ''} - ${t.work_end || ''}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <button onclick="window.openEditTherapist('${t.id}')" class="text-teal-600 hover:text-teal-900 font-bold text-sm">Edit</button>
+            </td>
+          </tr>
+        `;
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.text = t.full_name;
+        tSelect.appendChild(opt);
+      });
+    }
+
+    function fetchAppointments() {
+      const colScheduled = document.getElementById('col-scheduled');
+      const colCompleted = document.getElementById('col-completed');
+      const colCancelled = document.getElementById('col-cancelled');
+      colScheduled.innerHTML = ''; colCompleted.innerHTML = ''; colCancelled.innerHTML = '';
+
+      let countS = 0, countC = 0, countX = 0;
+      const sorted = [...mockAppointments].sort((a,b) => new Date(a.date_time) - new Date(b.date_time));
+
+      sorted.forEach(a => {
+        const dateObj = new Date(a.date_time);
+        const pName = mockPatients.find(p => p.id === a.patient_id)?.full_name || 'Unknown';
+        const tName = mockTherapists.find(t => t.id === a.therapist_id)?.full_name || 'Unknown';
+
+        const card = document.createElement('div');
+        card.className = 'bg-white p-3 rounded shadow-sm border appt-card flex flex-col gap-2';
+
+        let actionButtons = '';
+        if(a.status === 'Scheduled') {
+          actionButtons = `<div class="flex gap-2 mt-2 pt-2 border-t">
+            <button onclick="window.cancelAppointment('${a.id}')" class="text-xs text-red-600 hover:text-red-800 font-semibold flex-1 text-center">Cancel</button>
+          </div>`;
+        } else if(a.status === 'Cancelled') {
+          actionButtons = `<div class="flex gap-2 mt-2 pt-2 border-t">
+            <button onclick="window.openReschedule('${a.id}')" class="text-xs text-teal-600 hover:text-teal-800 font-semibold flex-1 text-center">Reschedule</button>
+          </div>`;
+        }
+
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <span class="font-bold text-gray-800">${pName}</span>
+            <span class="text-xs text-gray-500">${dateObj.toLocaleDateString()}</span>
+          </div>
+          <div class="text-sm text-gray-600"><i class="fa-regular fa-clock mr-1"></i> ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+          <div class="text-sm text-teal-700"><i class="fa-solid fa-user-nurse mr-1"></i> ${tName}</div>
+          ${actionButtons}
+        `;
+
+        if(a.status === 'Scheduled') { colScheduled.appendChild(card); countS++; }
+        else if(a.status === 'Completed') { colCompleted.appendChild(card); countC++; }
+        else { colCancelled.appendChild(card); countX++; }
+      });
+
+      document.getElementById('count-scheduled').innerText = countS;
+      document.getElementById('count-completed').innerText = countC;
+      document.getElementById('count-cancelled').innerText = countX;
+    }
+
+    function populateDashboardWidgets() {
+      const todayAppts = mockAppointments.filter(a => isTodayISO(a.date_time));
+      const dashboardTbody = document.getElementById('dashboard-today-appts-body');
+      dashboardTbody.innerHTML = '';
+
+      if(todayAppts.length === 0) {
+        dashboardTbody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-400">No appointments today</td></tr>';
+      } else {
+        todayAppts.forEach(a => {
+          const dateObj = new Date(a.date_time);
+          const pName = mockPatients.find(p => p.id === a.patient_id)?.full_name || 'Unknown';
+          const tName = mockTherapists.find(t => t.id === a.therapist_id)?.full_name || 'Unknown';
+          dashboardTbody.innerHTML += `
+            <tr class="border-b">
+              <td class="px-4 py-3 font-medium text-gray-900">${dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+              <td class="px-4 py-3">${pName}</td>
+              <td class="px-4 py-3">${tName}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-1 text-xs font-semibold rounded-full ${a.status === 'Completed' ? 'bg-green-100 text-green-800' : (a.status === 'Cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')}">${a.status}</span>
+              </td>
+            </tr>`;
         });
+      }
 
-        // ==========================================
-        // FILE UPLOAD HANDLER
-        // ==========================================
-        window.displayFileNames = function(input) {
-            const list = document.getElementById('file-list');
-            list.innerHTML = ''; 
-            if (input.files && input.files.length > 0) {
-                for (let i = 0; i < input.files.length; i++) {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<i class="fa-solid fa-paperclip mr-2 text-teal-600"></i> ${input.files[i].name}`;
-                    list.appendChild(li);
-                }
-            }
-        };
+      const tSelect = document.getElementById('dashboard-therapist-select');
+      tSelect.innerHTML = '<option value="">-- Select Therapist --</option>';
+      mockTherapists.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.text = t.full_name;
+        tSelect.appendChild(opt);
+      });
+    }
 
-        // ==========================================
-        // MOCK DATABASE
-        // ==========================================
-        let mockPatients = [
-            { id: '1', full_name: 'John Doe', age: 45, condition: 'Back Pain', phone: '555-0101' },
-            { id: '2', full_name: 'Jane Roe', age: 29, condition: 'ACL Recovery', phone: '555-0102' },
-            { id: '3', full_name: 'Robert Smith', age: 62, condition: 'Arthritis', phone: '555-0103' }
-        ];
-        // Updated Therapist Data Structure
-        let mockTherapists = [
-            { id: '101', full_name: 'Sarah Connor', specialization: 'Sports Rehab', email: 'sarah@physio.com', password: 'pass123', license: 'NHRA-2023-001', shift: 'Morning', work_days: ['Mon','Tue','Wed','Thu','Fri'], work_start: '08:00', work_end: '16:00' },
-            { id: '102', full_name: 'Dr. Mike Ross', specialization: 'Neurology', email: 'mike@physio.com', password: 'pass123', license: 'NHRA-2023-055', shift: 'Evening', work_days: ['Sun','Mon','Tue','Wed','Thu'], work_start: '14:00', work_end: '22:00' }
-        ];
-        let mockAppointments = [
-            { id: 'a1', patient_id: '1', therapist_id: '101', date_time: new Date().toISOString(), status: 'Scheduled', notes: 'Initial assessment' },
-            { id: 'a2', patient_id: '2', therapist_id: '101', date_time: new Date(Date.now() - 86400000).toISOString(), status: 'Completed', notes: 'Leg exercises' }
-        ];
+    window.updateDashboardTherapistView = function() {
+      const tId = document.getElementById('dashboard-therapist-select').value;
+      const container = document.getElementById('dashboard-therapist-schedule-list');
+      container.innerHTML = '';
+      if(!tId) return;
 
-        // ==========================================
-        // INITIALIZATION
-        // ==========================================
-        let currentUser = null; 
-        let apptChartInstance = null;
-        let demoChartInstance = null;
+      const tAppts = mockAppointments
+        .filter(a => a.therapist_id === tId && isTodayISO(a.date_time))
+        .sort((a,b) => new Date(a.date_time) - new Date(b.date_time));
 
-        // ==========================================
-        // GLOBAL UI FUNCTIONS
-        // ==========================================
-        window.openModal = function(id) { document.getElementById(id).classList.remove('hidden-section'); };
-        window.closeModal = function(id) { document.getElementById(id).classList.add('hidden-section'); };
-
-        window.showSection = function(sectionId) {
-            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden-section'));
-            document.getElementById(sectionId).classList.remove('hidden-section');
-            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-            const btnMap = {
-                'admin-dashboard': 'nav-dashboard', 'manage-patients': 'nav-patients', 'manage-appointments': 'nav-appointments', 'manage-therapists': 'nav-therapists',
-                'manage-users': 'nav-users', 'manage-exercises': 'nav-exercises', 'manage-complaints': 'nav-complaints', 'manage-reports': 'nav-reports', 'settings-page': 'nav-settings'
-            };
-            const btnId = btnMap[sectionId];
-            if(btnId) { const btn = document.getElementById(btnId); if(btn) btn.classList.add('active'); }
-        };
-
-        window.logout = function() {
-            currentUser = null;
-            document.getElementById('dashboard-layout').classList.add('hidden-section');
-            document.getElementById('login-screen').classList.remove('hidden-section');
-            document.getElementById('login-form').reset();
-        };
-
-        window.completeAppointment = function(id) {
-            const appt = mockAppointments.find(a => a.id === id);
-            if(appt) {
-                appt.status = 'Completed';
-                window.notify('Appointment marked as complete', 'success');
-                loadTherapistData();
-                loadAdminData();
-            }
-        };
-
-        window.cancelAppointment = function(id) {
-            const appt = mockAppointments.find(a => a.id === id);
-            if(appt) {
-                appt.status = 'Cancelled';
-                window.notify('Appointment Cancelled', 'error');
-                loadAdminData(); 
-            }
-        };
-
-        window.openNewAppointmentModal = function() {
-            document.getElementById('add-appointment-form').reset();
-            document.getElementById('appt-id').value = ''; 
-            document.getElementById('appt-modal-title').innerText = 'Book Appointment';
-            document.getElementById('appt-submit-btn').innerText = 'Book';
-            window.openModal('add-appointment-modal');
-        };
-
-        window.openReschedule = function(id) {
-            const appt = mockAppointments.find(a => a.id === id);
-            if(!appt) return;
-            document.getElementById('appt-patient').value = appt.patient_id;
-            document.getElementById('appt-therapist').value = appt.therapist_id;
-            document.getElementById('appt-date').value = ''; 
-            document.getElementById('appt-id').value = id;
-            document.getElementById('appt-modal-title').innerText = 'Reschedule Appointment';
-            document.getElementById('appt-submit-btn').innerText = 'Reschedule';
-            window.openModal('add-appointment-modal');
-        };
-
-        // NEW: Open Therapist Modal for Create
-        window.openNewTherapistModal = function() {
-            document.getElementById('add-therapist-form').reset();
-            document.getElementById('t-id').value = '';
-            document.getElementById('therapist-modal-title').innerText = 'Add New Therapist';
-            document.getElementById('t-submit-btn').innerText = 'Save';
-            // Uncheck boxes
-            document.querySelectorAll('input[name="workday"]').forEach(cb => cb.checked = false);
-            window.openModal('add-therapist-modal');
-        };
-
-        // NEW: Open Therapist Modal for Edit
-        window.openEditTherapist = function(id) {
-            const t = mockTherapists.find(th => th.id === id);
-            if(!t) return;
-
-            document.getElementById('t-id').value = t.id;
-            document.getElementById('t-name').value = t.full_name;
-            document.getElementById('t-email').value = t.email;
-            document.getElementById('t-spec').value = t.specialization;
-            document.getElementById('t-license').value = t.license || '';
-            document.getElementById('t-shift').value = t.shift || 'Morning';
-            document.getElementById('t-start').value = t.work_start || '';
-            document.getElementById('t-end').value = t.work_end || '';
-            document.getElementById('t-pass').value = t.password;
-
-            // Check boxes
-            const days = t.work_days || [];
-            document.querySelectorAll('input[name="workday"]').forEach(cb => {
-                cb.checked = days.includes(cb.value);
-            });
-
-            document.getElementById('therapist-modal-title').innerText = 'Edit Therapist Details';
-            document.getElementById('t-submit-btn').innerText = 'Update';
-            window.openModal('add-therapist-modal');
-        };
-
-        // ==========================================
-        // AUTH LOGIC
-        // ==========================================
-        const loginForm = document.getElementById('login-form');
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role-select').value;
-
-            if (role === 'admin' && email === 'admin@physio.com' && password === 'admin123') {
-                currentUser = { role: 'admin', name: 'Administrator', id: 'admin-id' };
-                window.notify('Welcome Administrator', 'success');
-                initDashboard();
-            } else if (role === 'therapist') {
-                const user = mockTherapists.find(t => t.email === email && t.password === password);
-                if (user) {
-                    currentUser = { role: 'therapist', name: user.full_name, id: user.id };
-                    window.notify(`Welcome ${user.full_name}`, 'success');
-                    initDashboard();
-                } else { window.notify('Invalid Therapist Credentials', 'error'); }
-            } else { window.notify('Invalid Credentials', 'error'); }
+      if(tAppts.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-500">No appointments for this therapist today.</p>';
+      } else {
+        tAppts.forEach(a => {
+          const dateObj = new Date(a.date_time);
+          const pName = mockPatients.find(p => p.id === a.patient_id)?.full_name || 'Unknown';
+          container.innerHTML += `
+            <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
+              <div>
+                <p class="text-sm font-bold text-gray-800">${dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                <p class="text-xs text-gray-600">${pName}</p>
+              </div>
+              <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">${a.status}</span>
+            </div>`;
         });
+      }
+    };
 
-        // ==========================================
-        // DASHBOARD LOGIC
-        // ==========================================
-        function initDashboard() {
-            document.getElementById('login-screen').classList.add('hidden-section');
-            document.getElementById('dashboard-layout').classList.remove('hidden-section');
-            document.getElementById('user-display').textContent = `Welcome, ${currentUser.name}`;
+    function renderCharts() {
+      if(typeof Chart === 'undefined') return;
 
-            if (currentUser.role === 'admin') {
-                document.getElementById('admin-nav').classList.remove('hidden-section');
-                document.getElementById('therapist-nav').classList.add('hidden-section');
-                window.showSection('admin-dashboard');
-                loadAdminData();
-            } else {
-                document.getElementById('admin-nav').classList.add('hidden-section');
-                document.getElementById('therapist-nav').classList.remove('hidden-section');
-                window.showSection('therapist-schedule');
-                loadTherapistData();
-            }
+      const statusCounts = { Scheduled: 0, Completed: 0, Cancelled: 0 };
+      mockAppointments.forEach(a => { if(statusCounts[a.status] !== undefined) statusCounts[a.status]++; });
+
+      const ctx1 = document.getElementById('appointmentsChart').getContext('2d');
+      if(apptChartInstance) apptChartInstance.destroy();
+      apptChartInstance = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(statusCounts),
+          datasets: [{ data: Object.values(statusCounts), backgroundColor: ['#FCD34D', '#10B981', '#EF4444'] }]
         }
+      });
 
-        // ==========================================
-        // ADMIN FUNCTIONS
-        // ==========================================
-        function loadAdminData() {
-            fetchStats(); fetchPatients(); fetchTherapists(); fetchAppointments(); renderCharts(); populateDashboardWidgets();
+      const ageGroups = { '0-18': 0, '19-40': 0, '41-60': 0, '60+': 0 };
+      mockPatients.forEach(p => {
+        if(p.age <= 18) ageGroups['0-18']++;
+        else if(p.age <= 40) ageGroups['19-40']++;
+        else if(p.age <= 60) ageGroups['41-60']++;
+        else ageGroups['60+']++;
+      });
+
+      const ctx2 = document.getElementById('demographicsChart').getContext('2d');
+      if(demoChartInstance) demoChartInstance.destroy();
+      demoChartInstance = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(ageGroups),
+          datasets: [{ label: 'Number of Patients', data: Object.values(ageGroups), backgroundColor: '#0f766e' }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    // Therapist
+    function loadTherapistData() {
+      const tbody = document.getElementById('therapist-schedule-body');
+      const pList = document.getElementById('therapist-patient-list');
+      tbody.innerHTML = ''; pList.innerHTML = '';
+
+      const uniquePatients = new Set();
+      const myAppts = mockAppointments
+        .filter(a => a.therapist_id === currentUser.id)
+        .sort((a,b) => new Date(a.date_time) - new Date(b.date_time));
+
+      myAppts.forEach(a => {
+        const dateObj = new Date(a.date_time);
+        const patient = mockPatients.find(p => p.id === a.patient_id);
+        const pName = patient?.full_name || 'Unknown';
+
+        tbody.innerHTML += `
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">${dateObj.toLocaleString()}</td>
+            <td class="px-6 py-4 whitespace-nowrap font-bold">${pName}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${a.notes || 'No notes'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              ${a.status !== 'Completed'
+                ? `<button onclick="window.completeAppointment('${a.id}')" class="text-green-600 hover:text-green-900 font-bold">Mark Complete</button>`
+                : '<span class="text-gray-400">Completed</span>'}
+            </td>
+          </tr>`;
+
+        if(patient && !uniquePatients.has(pName)) {
+          uniquePatients.add(pName);
+          pList.innerHTML += `
+            <li class="border-b pb-2">
+              <div class="font-bold text-teal-800">${pName}</div>
+              <div class="text-sm text-gray-600">Condition: ${patient.condition || 'N/A'}</div>
+            </li>`;
         }
+      });
+    }
 
-        function populateDashboardWidgets() {
-            const today = new Date().toISOString().split('T')[0];
-            const todayAppts = mockAppointments.filter(a => a.date_time.startsWith(today));
-            const dashboardTbody = document.getElementById('dashboard-today-appts-body');
-            dashboardTbody.innerHTML = '';
+    // Appointment actions (now persist to Supabase if connected)
+    window.completeAppointment = async function(id) {
+      const appt = mockAppointments.find(a => a.id === id);
+      if(!appt) return;
+      appt.status = 'Completed';
+      saveLocal();
+      const res = await sbUpdate("appointments", appt.id, { status: "Completed" });
+      if (res.ok) window.notify("Appointment marked as complete (saved to Supabase).", "success");
+      else window.notify("Completed locally. Supabase save failed.", "error");
+      if (currentUser?.role === "therapist") loadTherapistData();
+      if (currentUser?.role === "admin") loadAdminData();
+    };
 
-            if(todayAppts.length === 0) {
-                dashboardTbody.innerHTML = '<tr><td colspan="4" class="px-4 py-3 text-center text-gray-400">No appointments today</td></tr>';
-            } else {
-                todayAppts.forEach(a => {
-                    const dateObj = new Date(a.date_time);
-                    const pName = mockPatients.find(p => p.id === a.patient_id)?.full_name || 'Unknown';
-                    const tName = mockTherapists.find(t => t.id === a.therapist_id)?.full_name || 'Unknown';
-                    const tr = `<tr class="border-b"><td class="px-4 py-3 font-medium text-gray-900">${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td><td class="px-4 py-3">${pName}</td><td class="px-4 py-3">${tName}</td><td class="px-4 py-3"><span class="px-2 py-1 text-xs font-semibold rounded-full ${a.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${a.status}</span></td></tr>`;
-                    dashboardTbody.innerHTML += tr;
-                });
-            }
+    window.cancelAppointment = async function(id) {
+      const appt = mockAppointments.find(a => a.id === id);
+      if(!appt) return;
+      appt.status = 'Cancelled';
+      saveLocal();
+      const res = await sbUpdate("appointments", appt.id, { status: "Cancelled" });
+      if (res.ok) window.notify("Appointment cancelled (saved to Supabase).", "success");
+      else window.notify("Cancelled locally. Supabase save failed.", "error");
+      if (currentUser?.role === "admin") loadAdminData();
+    };
 
-            const tSelect = document.getElementById('dashboard-therapist-select');
-            tSelect.innerHTML = '<option value="">-- Select Therapist --</option>';
-            mockTherapists.forEach(t => { const opt = document.createElement('option'); opt.value = t.id; opt.text = t.full_name; tSelect.appendChild(opt); });
+    window.openNewAppointmentModal = function() {
+      document.getElementById('add-appointment-form').reset();
+      document.getElementById('appt-id').value = '';
+      document.getElementById('appt-modal-title').innerText = 'Book Appointment';
+      document.getElementById('appt-submit-btn').innerText = 'Book';
+      window.openModal('add-appointment-modal');
+    };
+
+    window.openReschedule = function(id) {
+      const appt = mockAppointments.find(a => a.id === id);
+      if(!appt) return;
+      document.getElementById('appt-patient').value = appt.patient_id;
+      document.getElementById('appt-therapist').value = appt.therapist_id;
+      document.getElementById('appt-date').value = '';
+      document.getElementById('appt-id').value = id;
+      document.getElementById('appt-modal-title').innerText = 'Reschedule Appointment';
+      document.getElementById('appt-submit-btn').innerText = 'Reschedule';
+      window.openModal('add-appointment-modal');
+    };
+
+    // Therapist modal helpers
+    window.openNewTherapistModal = function() {
+      document.getElementById('add-therapist-form').reset();
+      document.getElementById('t-id').value = '';
+      document.getElementById('therapist-modal-title').innerText = 'Add New Therapist';
+      document.getElementById('t-submit-btn').innerText = 'Save';
+      document.querySelectorAll('input[name="workday"]').forEach(cb => cb.checked = false);
+      window.openModal('add-therapist-modal');
+    };
+
+    window.openEditTherapist = function(id) {
+      const t = mockTherapists.find(th => th.id === id);
+      if(!t) return;
+      document.getElementById('t-id').value = t.id;
+      document.getElementById('t-name').value = t.full_name;
+      document.getElementById('t-email').value = t.email;
+      document.getElementById('t-spec').value = t.specialization;
+      document.getElementById('t-license').value = t.license || '';
+      document.getElementById('t-shift').value = t.shift || 'Morning';
+      document.getElementById('t-start').value = t.work_start || '';
+      document.getElementById('t-end').value = t.work_end || '';
+      document.getElementById('t-pass').value = t.password || '';
+
+      const days = t.work_days || [];
+      document.querySelectorAll('input[name="workday"]').forEach(cb => cb.checked = days.includes(cb.value));
+
+      document.getElementById('therapist-modal-title').innerText = 'Edit Therapist Details';
+      document.getElementById('t-submit-btn').innerText = 'Update';
+      window.openModal('add-therapist-modal');
+    };
+
+    // ============================================================
+    // 10) Forms: save to local + Supabase (and then reload from Supabase)
+    // ============================================================
+    document.getElementById('add-patient-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const newP = {
+        id: String(Date.now()),
+        full_name: document.getElementById('p-name').value,
+        age: parseInt(document.getElementById('p-age').value || "0", 10),
+        phone: document.getElementById('p-phone').value,
+        condition: document.getElementById('p-condition').value
+      };
+
+      mockPatients.push(newP);
+      saveLocal();
+
+      // Save to Supabase
+      const res = await sbUpsert("patients", newP);
+      if (res.ok) {
+        window.notify("Patient saved to Supabase.", "success");
+        await window.syncFromSupabase(); // ensure Supabase is giving back stored data
+      } else {
+        window.notify("Saved locally. Supabase save failed (check RLS/tables).", "error");
+      }
+
+      window.closeModal('add-patient-modal');
+      e.target.reset();
+      if (currentUser?.role === "admin") loadAdminData();
+    });
+
+    document.getElementById('add-therapist-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById('t-id').value || String(Date.now());
+      const days = Array.from(document.querySelectorAll('input[name="workday"]:checked')).map(cb => cb.value);
+
+      const tData = {
+        id,
+        full_name: document.getElementById('t-name').value,
+        email: document.getElementById('t-email').value,
+        specialization: document.getElementById('t-spec').value,
+        license: document.getElementById('t-license').value,
+        shift: document.getElementById('t-shift').value,
+        work_start: document.getElementById('t-start').value,
+        work_end: document.getElementById('t-end').value,
+        work_days: days,
+        password: document.getElementById('t-pass').value || 'pass123'
+      };
+
+      const idx = mockTherapists.findIndex(t => t.id === id);
+      if (idx >= 0) mockTherapists[idx] = { ...mockTherapists[idx], ...tData };
+      else mockTherapists.push(tData);
+
+      saveLocal();
+
+      const res = await sbUpsert("therapists", tData);
+      if (res.ok) {
+        window.notify("Therapist saved to Supabase.", "success");
+        await window.syncFromSupabase();
+      } else {
+        window.notify("Saved locally. Supabase save failed.", "error");
+      }
+
+      window.closeModal('add-therapist-modal');
+      e.target.reset();
+      if (currentUser?.role === "admin") loadAdminData();
+    });
+
+    document.getElementById('add-appointment-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const editId = document.getElementById('appt-id').value;
+      if (editId) {
+        const appt = mockAppointments.find(a => a.id === editId);
+        if(appt) {
+          appt.patient_id = document.getElementById('appt-patient').value;
+          appt.therapist_id = document.getElementById('appt-therapist').value;
+          appt.date_time = document.getElementById('appt-date').value;
+          appt.status = 'Scheduled';
         }
+        saveLocal();
 
-        window.updateDashboardTherapistView = function() {
-            const tId = document.getElementById('dashboard-therapist-select').value;
-            const container = document.getElementById('dashboard-therapist-schedule-list');
-            container.innerHTML = '';
-            if(!tId) return;
-            const today = new Date().toISOString().split('T')[0];
-            const tAppts = mockAppointments.filter(a => a.therapist_id === tId && a.date_time.startsWith(today));
-
-            if(tAppts.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500">No appointments for this therapist today.</p>';
-            } else {
-                tAppts.sort((a,b) => new Date(a.date_time) - new Date(b.date_time));
-                tAppts.forEach(a => {
-                    const dateObj = new Date(a.date_time);
-                    const pName = mockPatients.find(p => p.id === a.patient_id)?.full_name || 'Unknown';
-                    const item = `<div class="flex items-center justify-between p-2 bg-gray-50 rounded border"><div><p class="text-sm font-bold text-gray-800">${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p><p class="text-xs text-gray-600">${pName}</p></div><span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">${a.status}</span></div>`;
-                    container.innerHTML += item;
-                });
-            }
+        const res = await sbUpsert("appointments", mockAppointments.find(a => a.id === editId));
+        if (res.ok) {
+          window.notify("Appointment rescheduled (saved to Supabase).", "success");
+          await window.syncFromSupabase();
+        } else {
+          window.notify("Rescheduled locally. Supabase save failed.", "error");
+        }
+      } else {
+        const newA = {
+          id: String(Date.now()),
+          patient_id: document.getElementById('appt-patient').value,
+          therapist_id: document.getElementById('appt-therapist').value,
+          date_time: document.getElementById('appt-date').value,
+          status: 'Scheduled',
+          notes: 'New Booking'
         };
 
-        function fetchStats() {
-            document.getElementById('stat-total-patients').innerText = mockPatients.length;
-            document.getElementById('stat-total-therapists').innerText = mockTherapists.length;
-            const today = new Date().toISOString().split('T')[0];
-            const todayCount = mockAppointments.filter(a => a.date_time.startsWith(today)).length;
-            document.getElementById('stat-today-appts').innerText = todayCount;
+        mockAppointments.push(newA);
+        saveLocal();
+
+        const res = await sbUpsert("appointments", newA);
+        if (res.ok) {
+          window.notify("Appointment booked (saved to Supabase).", "success");
+          await window.syncFromSupabase();
+        } else {
+          window.notify("Booked locally. Supabase save failed.", "error");
         }
+      }
 
-        function fetchPatients() {
-            const tbody = document.getElementById('patients-table-body');
-            tbody.innerHTML = '';
-            const pSelect = document.getElementById('appt-patient');
-            pSelect.innerHTML = '<option value="">Select Patient</option>';
-            mockPatients.forEach(p => {
-                const tr = `<tr><td class="px-6 py-4 whitespace-nowrap">${p.full_name}</td><td class="px-6 py-4 whitespace-nowrap">${p.age}</td><td class="px-6 py-4 whitespace-nowrap">${p.condition || '-'}</td><td class="px-6 py-4 whitespace-nowrap">${p.phone || '-'}</td></tr>`;
-                tbody.innerHTML += tr;
-                const opt = document.createElement('option'); opt.value = p.id; opt.text = p.full_name; pSelect.appendChild(opt);
-            });
+      window.closeModal('add-appointment-modal');
+      e.target.reset();
+      if (currentUser?.role === "admin") loadAdminData();
+      if (currentUser?.role === "therapist") loadTherapistData();
+    });
+
+    // ============================================================
+    // 11) Login (demo auth) + initial boot
+    // ============================================================
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role-select').value;
+
+      if (role === 'admin' && email === 'admin@physio.com' && password === 'admin123') {
+        currentUser = { role: 'admin', name: 'Administrator', id: 'admin-id' };
+        window.notify('Welcome Administrator', 'success');
+        initDashboard();
+      } else if (role === 'therapist') {
+        const user = mockTherapists.find(t => t.email === email && t.password === password);
+        if (user) {
+          currentUser = { role: 'therapist', name: user.full_name, id: user.id };
+          window.notify(`Welcome ${user.full_name}`, 'success');
+          initDashboard();
+        } else {
+          window.notify('Invalid Therapist Credentials', 'error');
         }
+      } else {
+        window.notify('Invalid Credentials', 'error');
+      }
+    });
 
-        function fetchTherapists() {
-            const tbody = document.getElementById('therapists-table-body');
-            tbody.innerHTML = '';
-            const tSelect = document.getElementById('appt-therapist');
-            tSelect.innerHTML = '<option value="">Select Therapist</option>';
-            
-            mockTherapists.forEach(t => {
-                // Populate Table
-                const tr = `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="font-bold text-gray-900">${t.full_name}</div>
-                            <div class="text-xs text-gray-500">${t.email}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${t.specialization}</span></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${t.license || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">${t.shift || 'General'}</div>
-                            <div class="text-xs text-gray-500">${t.work_start || ''} - ${t.work_end || ''}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button onclick="window.openEditTherapist('${t.id}')" class="text-teal-600 hover:text-teal-900 font-bold text-sm">Edit</button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += tr;
+    async function initDashboard() {
+      document.getElementById('login-screen').classList.add('hidden-section');
+      document.getElementById('dashboard-layout').classList.remove('hidden-section');
+      document.getElementById('user-display').textContent = `Welcome, ${currentUser.name}`;
 
-                // Populate Dropdown
-                const opt = document.createElement('option'); opt.value = t.id; opt.text = t.full_name; tSelect.appendChild(opt);
-            });
-        }
+      if (currentUser.role === 'admin') {
+        document.getElementById('admin-nav').classList.remove('hidden-section');
+        document.getElementById('therapist-nav').classList.add('hidden-section');
+        window.showSection('admin-dashboard');
+      } else {
+        document.getElementById('admin-nav').classList.add('hidden-section');
+        document.getElementById('therapist-nav').classList.remove('hidden-section');
+        window.showSection('therapist-schedule');
+      }
 
-        function fetchAppointments() {
-            const colScheduled = document.getElementById('col-scheduled');
-            const colCompleted = document.getElementById('col-completed');
-            const colCancelled = document.getElementById('col-cancelled');
-            colScheduled.innerHTML = ''; colCompleted.innerHTML = ''; colCancelled.innerHTML = '';
-            let countS = 0, countC = 0, countX = 0;
-            const sorted = [...mockAppointments].sort((a,b) => new Date(a.date_time) - new Date(b.date_time));
+      // If Supabase keys exist, load from Supabase automatically
+      if (getSupabaseClient()) {
+        await window.syncFromSupabase();
+      } else {
+        setStoragePill(false);
+      }
 
-            sorted.forEach(a => {
-                const dateObj = new Date(a.date_time);
-                const pName = mockPatients.find(p => p.id === a.patient_id)?.full_name || 'Unknown';
-                const tName = mockTherapists.find(t => t.id === a.therapist_id)?.full_name || 'Unknown';
-                const card = document.createElement('div');
-                card.className = 'bg-white p-3 rounded shadow-sm border appt-card flex flex-col gap-2';
-                
-                let actionButtons = '';
-                if(a.status === 'Scheduled') {
-                    actionButtons = `<div class="flex gap-2 mt-2 pt-2 border-t"><button onclick="window.cancelAppointment('${a.id}')" class="text-xs text-red-600 hover:text-red-800 font-semibold flex-1 text-center">Cancel</button></div>`;
-                } else if(a.status === 'Cancelled') {
-                    actionButtons = `<div class="flex gap-2 mt-2 pt-2 border-t"><button onclick="window.openReschedule('${a.id}')" class="text-xs text-teal-600 hover:text-teal-800 font-semibold flex-1 text-center">Reschedule</button></div>`;
-                }
+      // Render according to role
+      if (currentUser.role === "admin") loadAdminData();
+      else loadTherapistData();
+    }
 
-                card.innerHTML = `<div class="flex justify-between items-start"><span class="font-bold text-gray-800">${pName}</span><span class="text-xs text-gray-500">${dateObj.toLocaleDateString()}</span></div><div class="text-sm text-gray-600"><i class="fa-regular fa-clock mr-1"></i> ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div><div class="text-sm text-teal-700"><i class="fa-solid fa-user-nurse mr-1"></i> ${tName}</div>${actionButtons}`;
+    // Boot: prefill Supabase inputs from stored keys
+    document.addEventListener("DOMContentLoaded", () => {
+      const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, null);
+      if (stored?.url) document.getElementById("sb-url").value = stored.url;
+      if (stored?.key) document.getElementById("sb-key").value = stored.key;
 
-                if(a.status === 'Scheduled') { colScheduled.appendChild(card); countS++; }
-                else if(a.status === 'Completed') { colCompleted.appendChild(card); countC++; }
-                else { colCancelled.appendChild(card); countX++; }
-            });
-
-            document.getElementById('count-scheduled').innerText = countS;
-            document.getElementById('count-completed').innerText = countC;
-            document.getElementById('count-cancelled').innerText = countX;
-        }
-
-        function renderCharts() {
-            if(typeof Chart === 'undefined') return;
-            const statusCounts = { Scheduled: 0, Completed: 0, Cancelled: 0 };
-            mockAppointments.forEach(a => { if(statusCounts[a.status] !== undefined) statusCounts[a.status]++ });
-
-            const ctx1 = document.getElementById('appointmentsChart').getContext('2d');
-            if(apptChartInstance) apptChartInstance.destroy();
-            apptChartInstance = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(statusCounts), datasets: [{ data: Object.values(statusCounts), backgroundColor: ['#FCD34D', '#10B981', '#EF4444'] }] } });
-
-            const ageGroups = { '0-18': 0, '19-40': 0, '41-60': 0, '60+': 0 };
-            mockPatients.forEach(p => { if(p.age <= 18) ageGroups['0-18']++; else if(p.age <= 40) ageGroups['19-40']++; else if(p.age <= 60) ageGroups['41-60']++; else ageGroups['60+']++; });
-
-            const ctx2 = document.getElementById('demographicsChart').getContext('2d');
-            if(demoChartInstance) demoChartInstance.destroy();
-            demoChartInstance = new Chart(ctx2, { type: 'bar', data: { labels: Object.keys(ageGroups), datasets: [{ label: 'Number of Patients', data: Object.values(ageGroups), backgroundColor: '#0f766e' }] }, options: { scales: { y: { beginAtZero: true } } } });
-        }
-
-        // ==========================================
-        // THERAPIST FUNCTIONS
-        // ==========================================
-        function loadTherapistData() {
-            const tbody = document.getElementById('therapist-schedule-body');
-            const pList = document.getElementById('therapist-patient-list');
-            tbody.innerHTML = ''; pList.innerHTML = '';
-            const uniquePatients = new Set();
-            const myAppts = mockAppointments.filter(a => a.therapist_id === currentUser.id).sort((a,b) => new Date(a.date_time) - new Date(b.date_time));
-
-            myAppts.forEach(a => {
-                const dateObj = new Date(a.date_time);
-                const patient = mockPatients.find(p => p.id === a.patient_id);
-                const pName = patient?.full_name || 'Unknown';
-                const tr = `<tr><td class="px-6 py-4 whitespace-nowrap text-sm">${dateObj.toLocaleString()}</td><td class="px-6 py-4 whitespace-nowrap font-bold">${pName}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${a.notes || 'No notes'}</td><td class="px-6 py-4 whitespace-nowrap">${a.status !== 'Completed' ? `<button onclick="window.completeAppointment('${a.id}')" class="text-green-600 hover:text-green-900 font-bold">Mark Complete</button>` : '<span class="text-gray-400">Completed</span>'}</td></tr>`;
-                tbody.innerHTML += tr;
-                if(patient && !uniquePatients.has(pName)) { uniquePatients.add(pName); const li = `<li class="border-b pb-2"><div class="font-bold text-teal-800">${pName}</div><div class="text-sm text-gray-600">Condition: ${patient.condition || 'N/A'}</div></li>`; pList.innerHTML += li; }
-            });
-        }
-
-        // ==========================================
-        // FORM SUBMISSIONS
-        // ==========================================
-        document.getElementById('add-patient-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newP = { id: Date.now().toString(), full_name: document.getElementById('p-name').value, age: parseInt(document.getElementById('p-age').value), phone: document.getElementById('p-phone').value, condition: document.getElementById('p-condition').value };
-            mockPatients.push(newP); window.closeModal('add-patient-modal'); window.notify('Patient Evaluation Saved Successfully', 'success'); e.target.reset(); loadAdminData();
-        });
-        
-        // UPDATED: Therapist Form Handler (Create & Update)
-        document.getElementById('add-therapist-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const id = document.getElementById('t-id').value;
-            const days = Array.from(document.querySelectorAll('input[name="workday"]:checked')).map(cb => cb.value);
-
-            const tData = {
-                full_name: document.getElementById('t-name').value,
-                email: document.getElementById('t-email').value,
-                specialization: document.getElementById('t-spec').value,
-                license: document.getElementById('t-license').value,
-                shift: document.getElementById('t-shift').value,
-                work_start: document.getElementById('t-start').value,
-                work_end: document.getElementById('t-end').value,
-                work_days: days,
-                password: document.getElementById('t-pass').value || 'pass123'
-            };
-
-            if(id) {
-                // Update
-                const index = mockTherapists.findIndex(t => t.id === id);
-                if(index !== -1) {
-                    mockTherapists[index] = { ...mockTherapists[index], ...tData };
-                    window.notify('Therapist Updated Successfully', 'success');
-                }
-            } else {
-                // Create
-                tData.id = Date.now().toString();
-                mockTherapists.push(tData);
-                window.notify('Therapist Added Successfully', 'success');
-            }
-
-            window.closeModal('add-therapist-modal');
-            e.target.reset();
-            loadAdminData();
-        });
-        
-        document.getElementById('add-appointment-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const editId = document.getElementById('appt-id').value;
-            if (editId) {
-                const appt = mockAppointments.find(a => a.id === editId);
-                if(appt) {
-                    appt.patient_id = document.getElementById('appt-patient').value;
-                    appt.therapist_id = document.getElementById('appt-therapist').value;
-                    appt.date_time = document.getElementById('appt-date').value;
-                    appt.status = 'Scheduled'; 
-                    window.notify('Appointment Rescheduled Successfully', 'success');
-                }
-            } else {
-                const newA = {
-                    id: Date.now().toString(),
-                    patient_id: document.getElementById('appt-patient').value,
-                    therapist_id: document.getElementById('appt-therapist').value,
-                    date_time: document.getElementById('appt-date').value,
-                    status: 'Scheduled',
-                    notes: 'New Booking'
-                };
-                mockAppointments.push(newA);
-                window.notify('Appointment Booked Successfully', 'success');
-            }
-            window.closeModal('add-appointment-modal');
-            e.target.reset();
-            loadAdminData();
-        });
-    </script>
+      // show storage badge on login screen
+      setStorageBadge();
+      setStoragePill(!!getSupabaseClient());
+    });
+  </script>
 </body>
 </html>
