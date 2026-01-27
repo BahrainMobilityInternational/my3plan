@@ -3,41 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PhysioCare Management System (Supabase Cross-Device Fix)</title>
+  <title>PhysioCare (Supabase Tables Configurable)</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Supabase UMD -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
   <style>
-    .hidden-section { display: none !important; }
-    .sidebar-link{
-      display:flex;align-items:center;padding:.75rem 1rem;color:#4b5563;border-radius:.5rem;
-      transition:all .2s;margin-bottom:.25rem;
-    }
+    .hidden-section{display:none!important}
+    .sidebar-link{display:flex;align-items:center;padding:.75rem 1rem;color:#4b5563;border-radius:.5rem;transition:all .2s;margin-bottom:.25rem}
     .sidebar-link:hover{background:#f3f4f6;color:#111827}
     .sidebar-link.active{background:#0f766e;color:#fff}
     .sidebar-link i{width:1.5rem;margin-right:.75rem}
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-    .toast-enter { animation: slideIn 0.3s ease-out forwards; }
-    .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes fadeOut{from{opacity:1}to{opacity:0}}
+    .toast-enter{animation:slideIn .3s ease-out forwards}
+    .toast-exit{animation:fadeOut .3s ease-out forwards}
   </style>
 </head>
-
 <body class="bg-gray-100 font-sans text-gray-800 relative">
-  <!-- Notifications -->
   <div id="notification-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
-  <!-- Login -->
+  <!-- LOGIN -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center bg-blue-50">
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
       <div class="text-center mb-8">
@@ -75,24 +63,21 @@
     </div>
   </div>
 
-  <!-- App -->
+  <!-- APP -->
   <div id="dashboard-layout" class="hidden-section min-h-screen flex flex-col md:flex-row">
-    <!-- Sidebar -->
     <aside class="w-full md:w-64 bg-white shadow-md flex-shrink-0 flex flex-col h-screen">
       <div class="p-6 border-b">
-        <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2">
-          <i class="fa-solid fa-user-doctor"></i> PhysioCare
-        </h2>
+        <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2"><i class="fa-solid fa-user-doctor"></i> PhysioCare</h2>
         <p id="user-display" class="text-sm text-gray-500 mt-1">Welcome, User</p>
       </div>
 
       <nav class="p-4 flex-1 overflow-y-auto">
         <div id="admin-nav" class="hidden-section">
-          <button class="sidebar-link w-full text-left active" data-target="admin-dashboard" id="nav-dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
-          <button class="sidebar-link w-full text-left" data-target="manage-patients" id="nav-patients"><i class="fa-solid fa-users"></i> Patients</button>
-          <button class="sidebar-link w-full text-left" data-target="manage-appointments" id="nav-appointments"><i class="fa-solid fa-calendar-check"></i> Appointments</button>
-          <button class="sidebar-link w-full text-left" data-target="manage-therapists" id="nav-therapists"><i class="fa-solid fa-user-nurse"></i> Physiotherapists</button>
-          <button class="sidebar-link w-full text-left" data-target="settings-page" id="nav-settings"><i class="fa-solid fa-gear"></i> Settings</button>
+          <button class="sidebar-link w-full text-left active" data-target="admin-dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
+          <button class="sidebar-link w-full text-left" data-target="manage-patients"><i class="fa-solid fa-users"></i> Patients</button>
+          <button class="sidebar-link w-full text-left" data-target="manage-appointments"><i class="fa-solid fa-calendar-check"></i> Appointments</button>
+          <button class="sidebar-link w-full text-left" data-target="manage-therapists"><i class="fa-solid fa-user-nurse"></i> Physiotherapists</button>
+          <button class="sidebar-link w-full text-left" data-target="settings-page"><i class="fa-solid fa-gear"></i> Settings</button>
         </div>
 
         <div id="therapist-nav" class="hidden-section">
@@ -109,12 +94,9 @@
       </div>
     </aside>
 
-    <!-- Main -->
     <main class="flex-1 p-6 overflow-y-auto h-screen bg-gray-50">
-      <!-- Dashboard -->
       <section id="admin-dashboard" class="content-section">
         <h2 class="text-2xl font-bold mb-6 text-gray-800">Dashboard Overview</h2>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-teal-600">
             <h3 class="text-gray-500 text-sm font-medium">Total Patients</h3>
@@ -142,39 +124,25 @@
         </div>
       </section>
 
-      <!-- Patients -->
       <section id="manage-patients" class="content-section hidden-section">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-gray-800">Patients Directory</h2>
-          <button id="btn-add-patient" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
-            <i class="fa-solid fa-plus mr-2"></i> Add Patient
-          </button>
-        </div>
-
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Patients Directory</h2>
         <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-              </tr>
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condition</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+            </tr>
             </thead>
-            <tbody id="patients-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+            <tbody id="patients-table-body"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- Appointments -->
       <section id="manage-appointments" class="content-section hidden-section">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-gray-800">Appointment Management</h2>
-          <button id="btn-add-appointment" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
-            <i class="fa-solid fa-plus mr-2"></i> New Appointment
-          </button>
-        </div>
-
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Appointment Management</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
           <div class="bg-gray-200 rounded-lg p-4 flex flex-col h-full">
             <div class="flex items-center justify-between mb-4"><h3 class="font-bold text-gray-700">Scheduled</h3><span id="count-scheduled" class="bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full">0</span></div>
@@ -191,40 +159,42 @@
         </div>
       </section>
 
-      <!-- Therapists -->
       <section id="manage-therapists" class="content-section hidden-section">
         <h2 class="text-2xl font-bold mb-6 text-gray-800">Physiotherapists</h2>
         <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Email</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
-              </tr>
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name / Email</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+            </tr>
             </thead>
-            <tbody id="therapists-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+            <tbody id="therapists-table-body"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- Settings -->
+      <!-- SETTINGS (TABLE NAMES FIX) -->
       <section id="settings-page" class="content-section hidden-section">
         <h2 class="text-2xl font-bold mb-6 text-gray-800">Settings</h2>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div class="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 class="text-lg font-bold mb-2 text-gray-700">Status</h3>
-
-            <div class="flex items-center gap-2 flex-wrap">
-              <span id="storage-status-pill" class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 text-sm">Storage: local</span>
-              <button type="button" id="btn-load-supabase" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm">
-                <i class="fa-solid fa-rotate-right mr-2"></i> Load Data
-              </button>
-              <button type="button" id="btn-test-supabase" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm">
-                <i class="fa-solid fa-plug mr-2"></i> Test
-              </button>
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <div class="text-sm font-bold text-gray-700">Status</div>
+                <div id="storage-status-pill" class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 text-sm mt-2">Storage: local</div>
+              </div>
+              <div class="flex gap-2 flex-wrap justify-end">
+                <button type="button" id="btn-load" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm">
+                  <i class="fa-solid fa-rotate-right mr-2"></i> Load Data
+                </button>
+                <button type="button" id="btn-debug" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm">
+                  Debug
+                </button>
+              </div>
             </div>
 
             <div class="mt-4 bg-gray-50 border rounded p-3 text-xs text-gray-700">
@@ -232,13 +202,30 @@
               <pre id="sb-debug-log" class="whitespace-pre-wrap text-xs text-gray-800"></pre>
             </div>
 
-            <div class="mt-4 text-xs text-gray-600">
-              <div class="font-bold mb-1">Fix for Laptop vs PC</div>
-              <div>
-                Keys are saved per device. Use <strong>Copy Share Link</strong> and open it on the other computer.
-                This link stores keys in the URL <strong>hash (#)</strong> so GitHub Pages keeps it.
+            <div class="mt-5 border rounded p-4">
+              <div class="font-bold text-gray-800 mb-2">Table Names (Fix “therapists table not found”)</div>
+              <p class="text-xs text-gray-500 mb-3">Set these to match your Supabase table names.</p>
+              <div class="grid grid-cols-1 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Patients table</label>
+                  <input id="tbl-patients" class="w-full border p-2 rounded font-mono text-sm" value="patients" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Therapists table</label>
+                  <input id="tbl-therapists" class="w-full border p-2 rounded font-mono text-sm" value="therapists" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Appointments table</label>
+                  <input id="tbl-appointments" class="w-full border p-2 rounded font-mono text-sm" value="appointments" />
+                </div>
+                <button id="btn-save-tables" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 text-sm" type="button">
+                  <i class="fa-solid fa-save mr-2"></i> Save Table Names
+                </button>
               </div>
-              <div class="text-red-700 mt-2">This will expose the anon key in the URL. Don’t share publicly.</div>
+              <div class="text-xs text-red-700 mt-3">
+                Your screenshot shows: <span class="font-mono">public.therapists</span> not found.
+                That means your therapists table is named differently or not created.
+              </div>
             </div>
           </div>
 
@@ -248,7 +235,7 @@
               <h3 class="text-lg font-bold text-gray-700">Supabase Connection</h3>
             </div>
 
-            <form id="supabase-settings-form" class="space-y-4">
+            <form id="sb-form" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700">Project URL</label>
                 <input type="text" id="sb-url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm" placeholder="https://xxxx.supabase.co" />
@@ -258,24 +245,26 @@
                 <input type="password" id="sb-key" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm" placeholder="eyJhbGciOi..." />
               </div>
 
+              <div id="connection-status" class="hidden p-2 rounded text-sm text-center font-medium"></div>
+
               <div class="flex gap-2 pt-2">
+                <button type="button" id="btn-test" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                  <i class="fa-solid fa-plug mr-2"></i> Test
+                </button>
                 <button type="submit" class="flex-1 bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800">
                   <i class="fa-solid fa-save mr-2"></i> Save Keys
                 </button>
-                <button type="button" id="btn-copy-share" class="flex-1 bg-gray-900 text-white px-4 py-2 rounded hover:bg-black">
-                  <i class="fa-solid fa-link mr-2"></i> Copy Share Link
-                </button>
               </div>
 
-              <p class="text-xs text-gray-500">
-                Open the share link on your other computer to auto-load the keys.
-              </p>
+              <button type="button" id="btn-copy-link" class="w-full bg-gray-900 text-white px-4 py-2 rounded hover:bg-black">
+                <i class="fa-solid fa-link mr-2"></i> Copy Share Link
+              </button>
+              <p class="text-xs text-gray-500">Open the copied link on your laptop to auto-load keys + table names.</p>
             </form>
           </div>
         </div>
       </section>
 
-      <!-- Therapist schedule -->
       <section id="therapist-schedule" class="content-section hidden-section">
         <h2 class="text-2xl font-bold mb-6">My Schedule</h2>
         <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -288,7 +277,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody id="therapist-schedule-body" class="bg-white divide-y divide-gray-200"></tbody>
+            <tbody id="therapist-schedule-body"></tbody>
           </table>
         </div>
       </section>
@@ -299,615 +288,440 @@
           <ul id="therapist-patient-list" class="mt-4 space-y-3"></ul>
         </div>
       </section>
+
     </main>
-  </div>
-
-  <!-- Add Patient Modal -->
-  <div id="add-patient-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl flex flex-col">
-      <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-        <h3 class="text-xl font-bold text-teal-800">Add Patient</h3>
-        <button type="button" id="btn-close-patient" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-      </div>
-      <div class="p-6">
-        <form id="add-patient-form" class="space-y-4">
-          <div><label class="block text-sm font-medium text-gray-700">Name</label><input type="text" id="p-name" class="mt-1 w-full border rounded p-2" required></div>
-          <div><label class="block text-sm font-medium text-gray-700">Age</label><input type="number" id="p-age" class="mt-1 w-full border rounded p-2" required></div>
-          <div><label class="block text-sm font-medium text-gray-700">Phone</label><input type="text" id="p-phone" class="mt-1 w-full border rounded p-2"></div>
-          <div><label class="block text-sm font-medium text-gray-700">Condition</label><input type="text" id="p-condition" class="mt-1 w-full border rounded p-2"></div>
-
-          <div class="flex justify-end gap-2 pt-4 border-t">
-            <button type="button" id="btn-cancel-patient" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded border">Cancel</button>
-            <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800">Save</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Appointment Modal -->
-  <div id="add-appointment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-      <h3 class="text-lg font-bold mb-4">Book Appointment</h3>
-      <form id="add-appointment-form" class="space-y-3">
-        <label class="block text-sm">Patient</label>
-        <select id="appt-patient" class="w-full border p-2 rounded" required></select>
-
-        <label class="block text-sm">Therapist</label>
-        <select id="appt-therapist" class="w-full border p-2 rounded" required></select>
-
-        <label class="block text-sm">Date & Time</label>
-        <input type="datetime-local" id="appt-date" class="w-full border p-2 rounded" required>
-
-        <div class="flex justify-end gap-2 mt-4">
-          <button type="button" id="btn-cancel-appt" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800">Book</button>
-        </div>
-      </form>
-    </div>
   </div>
 
   <script>
     "use strict";
 
-    // ================
-    // Helpers
-    // ================
+    // ----- DOM helpers -----
     const $ = (id) => document.getElementById(id);
-    const setText = (id, text) => { const el = $(id); if (el) el.textContent = text; };
-    const setHTML = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
+    const setText = (id, t) => { const el=$(id); if(el) el.textContent = t; };
+    const setHTML = (id, h) => { const el=$(id); if(el) el.innerHTML = h; };
 
-    function escapeHtml(s) {
-      return String(s ?? "")
-        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
-
-    // ================
-    // Notifications
-    // ================
-    function notify(message, type="info") {
-      const container = $("notification-container");
-      if (!container) return;
-      const div = document.createElement("div");
-      let bg = "bg-blue-600";
-      if (type === "success") bg = "bg-green-500";
-      if (type === "error") bg = "bg-red-500";
-      div.className = `${bg} text-white px-6 py-3 rounded shadow-lg toast-enter pointer-events-auto`;
-      div.textContent = message;
-      container.appendChild(div);
-      setTimeout(() => {
-        div.classList.remove("toast-enter");
-        div.classList.add("toast-exit");
-        setTimeout(() => div.remove(), 300);
-      }, 3000);
+    // ----- Toast -----
+    function notify(msg, type="info"){
+      const c = $("notification-container");
+      if(!c) return;
+      const d = document.createElement("div");
+      const bg = type==="success" ? "bg-green-500" : (type==="error" ? "bg-red-500" : "bg-blue-600");
+      d.className = `${bg} text-white px-6 py-3 rounded shadow-lg toast-enter pointer-events-auto`;
+      d.textContent = msg;
+      c.appendChild(d);
+      setTimeout(()=>{ d.classList.add("toast-exit"); setTimeout(()=>d.remove(), 300); }, 2800);
     }
     window.notify = notify;
 
-    // ================
-    // Storage (local)
-    // ================
+    // ----- Local Storage -----
     const SafeStorage = {
-      ok: (() => { try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; } catch { return false; } })(),
-      get(k, fb) { if (!this.ok) return fb; const v = localStorage.getItem(k); try { return v ? JSON.parse(v) : fb; } catch { return fb; } },
-      set(k, v) { if (!this.ok) return; localStorage.setItem(k, JSON.stringify(v)); }
+      ok: (()=>{ try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; }catch{ return false; }})(),
+      get(k, fb){ if(!this.ok) return fb; const v=localStorage.getItem(k); try{ return v?JSON.parse(v):fb; }catch{ return fb; } },
+      set(k, v){ if(!this.ok) return; localStorage.setItem(k, JSON.stringify(v)); }
     };
 
-    // ================
-    // Supabase keys: localStorage + URL HASH token (cross-device)
-    // ================
+    // ----- Supabase keys + table config -----
     const SB_KEYS_STORAGE_KEY = "physiocare_supabase_keys_v2";
+    const SB_TABLES_STORAGE_KEY = "physiocare_supabase_tables_v2";
 
-    function getSupabaseCreds() {
+    function getTables(){
+      const stored = SafeStorage.get(SB_TABLES_STORAGE_KEY, null);
+      return stored || {
+        patients: ($("tbl-patients")?.value || "patients").trim(),
+        therapists: ($("tbl-therapists")?.value || "therapists").trim(),
+        appointments: ($("tbl-appointments")?.value || "appointments").trim(),
+      };
+    }
+    function setTablesUI(t){
+      if($("tbl-patients")) $("tbl-patients").value = t.patients || "patients";
+      if($("tbl-therapists")) $("tbl-therapists").value = t.therapists || "therapists";
+      if($("tbl-appointments")) $("tbl-appointments").value = t.appointments || "appointments";
+    }
+    function saveTables(t){
+      SafeStorage.set(SB_TABLES_STORAGE_KEY, t);
+    }
+
+    function getSupabaseCreds(){
       const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, {}) || {};
       const url = (($("sb-url")?.value) || stored.url || "").trim();
       const key = (($("sb-key")?.value) || stored.key || "").trim();
       return { url, key };
     }
-
-    function saveSupabaseCreds(url, key) {
+    function saveSupabaseCreds(url, key){
       SafeStorage.set(SB_KEYS_STORAGE_KEY, { url, key });
     }
-
-    function getSupabaseClient() {
+    function getSupabaseClient(){
       const { url, key } = getSupabaseCreds();
-      if (!url || !key) return null;
+      if(!url || !key) return null;
       return window.supabase.createClient(url, key);
     }
 
-    // Base64 JSON token stored in location.hash as: #sb=<token>
-    function b64encode(str) { return btoa(unescape(encodeURIComponent(str))); }
-    function b64decode(str) { return decodeURIComponent(escape(atob(str))); }
+    // ----- Share link includes keys + table names -----
+    function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+    function b64decode(str){ return decodeURIComponent(escape(atob(str))); }
 
-    function makeHashToken(url, key) {
-      return b64encode(JSON.stringify({ url, key }));
-    }
-
-    function readHashToken() {
-      // hash example: #sb=XXXX
-      const h = (location.hash || "").replace(/^#/, "");
-      if (!h) return null;
-      const params = new URLSearchParams(h);
+    function readShareToken(){
+      const params = new URLSearchParams(location.search);
       const token = params.get("sb");
-      if (!token) return null;
+      if(!token) return null;
       try { return JSON.parse(b64decode(token)); } catch { return null; }
     }
-
-    function setHashToken(url, key) {
-      const token = makeHashToken(url, key);
-      // keep other hash params if you want; here we replace for clarity
-      location.hash = `sb=${encodeURIComponent(token)}`;
+    function makeShareToken(payload){
+      return b64encode(JSON.stringify(payload));
     }
-
-    async function copyShareLink() {
+    async function copyShareLink(){
       const { url, key } = getSupabaseCreds();
-      if (!url || !key) { notify("Enter Supabase URL and Key first.", "error"); return; }
-      // Use HASH link so GitHub Pages keeps it.
-      const token = makeHashToken(url, key);
-      const shareUrl = `${location.origin}${location.pathname}#sb=${encodeURIComponent(token)}`;
-
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        notify("Share link copied! Open it on the other computer.", "success");
-      } catch {
-        prompt("Copy this link:", shareUrl);
-      }
+      const tables = getTables();
+      if(!url || !key) { notify("Enter Supabase URL and Key first.", "error"); return; }
+      const token = makeShareToken({ url, key, tables });
+      const shareUrl = `${location.origin}${location.pathname}?sb=${encodeURIComponent(token)}`;
+      try { await navigator.clipboard.writeText(shareUrl); notify("Share link copied!", "success"); }
+      catch { prompt("Copy this link:", shareUrl); }
     }
 
-    // ================
-    // Storage UI
-    // ================
-    function setStorageBadge() {
-      const badge = $("storage-mode-badge");
-      if (!badge) return;
+    // ----- Storage UI -----
+    function setStorageBadge(){
+      const b = $("storage-mode-badge");
+      if(!b) return;
       const hasSB = !!getSupabaseClient();
-      if (hasSB) {
-        badge.textContent = "STORAGE: SUPABASE";
-        badge.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded";
+      if(hasSB){
+        b.textContent = "STORAGE: SUPABASE";
+        b.className = "bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded";
       } else {
-        badge.textContent = "STORAGE: LOCAL";
-        badge.className = "bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded";
+        b.textContent = "STORAGE: LOCAL";
+        b.className = "bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded";
       }
     }
-
-    function setStoragePill(text, color="gray") {
+    function setStoragePill(text, ok){
       const pill = $("storage-status-pill");
-      if (!pill) return;
-      const map = {
-        gray: "bg-gray-100 text-gray-700",
-        yellow: "bg-yellow-100 text-yellow-800",
-        green: "bg-green-100 text-green-800",
-        red: "bg-red-100 text-red-800"
-      };
-      pill.className = `inline-flex items-center px-2 py-1 rounded ${map[color] || map.gray} text-sm`;
+      if(!pill) return;
       pill.textContent = text;
+      pill.className = `inline-flex items-center px-2 py-1 rounded text-sm ${ok ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`;
       setStorageBadge();
     }
 
-    // ================
-    // Data (local defaults)
-    // ================
-    const LS_PATIENTS = "physiocare_patients";
-    const LS_THERAPISTS = "physiocare_therapists";
-    const LS_APPOINTMENTS = "physiocare_appointments";
-
-    const defaultPatients = [
-      { id: "1", full_name: "John Doe", age: 45, condition: "Back Pain", phone: "555-0101" },
-      { id: "2", full_name: "Jane Roe", age: 29, condition: "ACL Recovery", phone: "555-0102" }
-    ];
-    const defaultTherapists = [
-      { id: "101", full_name: "Sarah Connor", specialization: "Sports Rehab", email: "sarah@physio.com", password: "pass123", license: "NHRA-001", shift: "Morning" }
-    ];
-    const defaultAppointments = [];
-
-    let patients = SafeStorage.get(LS_PATIENTS, defaultPatients);
-    let therapists = SafeStorage.get(LS_THERAPISTS, defaultTherapists);
-    let appointments = SafeStorage.get(LS_APPOINTMENTS, defaultAppointments);
-
-    function saveLocal() {
-      SafeStorage.set(LS_PATIENTS, patients);
-      SafeStorage.set(LS_THERAPISTS, therapists);
-      SafeStorage.set(LS_APPOINTMENTS, appointments);
-    }
-
-    // ================
-    // Supabase: debug + load
-    // ================
-    function sbLog(msg) {
+    // ----- Debug log -----
+    function sbClear(){ setText("sb-debug-log", ""); }
+    function sbLog(msg){
       const el = $("sb-debug-log");
-      if (!el) return;
+      if(!el) return;
       el.textContent = (el.textContent ? el.textContent + "\n" : "") + msg;
     }
-    function sbClear() { setText("sb-debug-log", ""); }
 
-    async function sbSelect(table) {
+    // ----- Local demo data -----
+    const LS_PAT = "physiocare_patients_local";
+    const LS_TH = "physiocare_therapists_local";
+    const LS_AP = "physiocare_appointments_local";
+
+    const defaultPatients = [
+      { id:"1", full_name:"John Doe", age:45, condition:"Back Pain", phone:"555-0101" },
+      { id:"2", full_name:"Jane Roe", age:29, condition:"ACL Recovery", phone:"555-0102" }
+    ];
+    const defaultTherapists = [
+      { id:"101", full_name:"Sarah Connor", specialization:"Sports Rehab", email:"sarah@physio.com", password:"pass123", license:"NHRA-001", shift:"Morning" }
+    ];
+    const defaultAppointments = [
+      { id:"a1", patient_id:"1", therapist_id:"101", date_time:new Date().toISOString(), status:"Scheduled", notes:"Initial assessment" }
+    ];
+
+    let patients = SafeStorage.get(LS_PAT, defaultPatients);
+    let therapists = SafeStorage.get(LS_TH, defaultTherapists);
+    let appointments = SafeStorage.get(LS_AP, defaultAppointments);
+
+    function saveLocal(){
+      SafeStorage.set(LS_PAT, patients);
+      SafeStorage.set(LS_TH, therapists);
+      SafeStorage.set(LS_AP, appointments);
+    }
+
+    // ----- Supabase select -----
+    async function sbSelect(table){
       const sb = getSupabaseClient();
-      if (!sb) return { ok: false, error: new Error("No Supabase client") };
-      const { data, error } = await sb.from(table).select("*").limit(1000);
-      if (error) return { ok: false, error };
-      return { ok: true, data: data || [] };
+      if(!sb) return { ok:false, error:new Error("No Supabase client") };
+      const { data, error } = await sb.from(table).select("*").limit(500);
+      if(error) return { ok:false, error };
+      return { ok:true, data:data||[] };
     }
 
-    function normalizePatients(rows) {
-      return (rows || []).map(r => ({
-        id: String(r.id),
-        full_name: r.full_name ?? r.name ?? "",
-        age: Number(r.age ?? 0),
-        condition: r.condition ?? "",
-        phone: r.phone ?? ""
-      }));
+    function normPatients(rows){
+      return (rows||[]).map(r=>({ id:String(r.id), full_name:r.full_name ?? r.name ?? "", age:Number(r.age ?? 0), condition:r.condition ?? "", phone:r.phone ?? "" }));
     }
-    function normalizeTherapists(rows) {
-      return (rows || []).map(r => ({
-        id: String(r.id),
-        full_name: r.full_name ?? r.name ?? "",
-        specialization: r.specialization ?? "",
-        email: r.email ?? "",
-        password: r.password ?? "pass123",
-        license: r.license ?? "",
-        shift: r.shift ?? "Morning"
-      }));
+    function normTherapists(rows){
+      return (rows||[]).map(r=>({ id:String(r.id), full_name:r.full_name ?? r.name ?? "", specialization:r.specialization ?? "", email:r.email ?? "", password:r.password ?? "pass123", license:r.license ?? "", shift:r.shift ?? "Morning" }));
     }
-    function normalizeAppointments(rows) {
-      return (rows || []).map(r => ({
-        id: String(r.id),
-        patient_id: String(r.patient_id),
-        therapist_id: String(r.therapist_id),
-        date_time: r.date_time,
-        status: r.status ?? "Scheduled",
-        notes: r.notes ?? ""
-      }));
+    function normAppointments(rows){
+      return (rows||[]).map(r=>({ id:String(r.id), patient_id:String(r.patient_id), therapist_id:String(r.therapist_id), date_time:r.date_time, status:r.status ?? "Scheduled", notes:r.notes ?? "" }));
     }
 
-    async function testSupabase() {
-      const { url, key } = getSupabaseCreds();
-      if (!url || !key) { notify("Enter Supabase URL and Key.", "error"); return; }
-      sbClear();
-      sbLog("Testing Supabase...");
-
-      try {
-        const sb = window.supabase.createClient(url, key);
-        const { error } = await sb.from("patients").select("*").limit(1);
-        if (error) throw error;
-        notify("Supabase connected.", "success");
-        setStoragePill("Storage: Supabase connected", "green");
-        sbLog("OK: select patients limit 1 succeeded.");
-      } catch (err) {
-        const msg = String(err?.message || err);
-        notify("Supabase error: " + msg, "error");
-        setStoragePill("Storage: local (Supabase failed)", "yellow");
-        sbLog("ERROR: " + msg);
-      }
-    }
-
-    async function loadFromSupabase() {
+    async function loadFromSupabase(){
       sbClear();
       sbLog("Loading data from Supabase...");
-
       const sb = getSupabaseClient();
-      if (!sb) {
-        notify("Supabase not configured.", "error");
-        setStoragePill("Storage: local (no keys)", "yellow");
-        sbLog("No client.");
-        return;
+      if(!sb){ setStoragePill("Storage: local (no keys)", false); notify("No Supabase keys.", "error"); return; }
+
+      const tables = getTables();
+      sbLog(`Using tables: patients=${tables.patients}, therapists=${tables.therapists}, appointments=${tables.appointments}`);
+
+      const [p,t,a] = await Promise.all([sbSelect(tables.patients), sbSelect(tables.therapists), sbSelect(tables.appointments)]);
+      if(!p.ok) throw new Error(`patients: ${p.error.message}`);
+      if(!t.ok) throw new Error(`therapists: ${t.error.message}`);
+      if(!a.ok) throw new Error(`appointments: ${a.error.message}`);
+
+      patients = normPatients(p.data);
+      therapists = normTherapists(t.data);
+      appointments = normAppointments(a.data);
+
+      saveLocal();
+      setStoragePill("Storage: Supabase (data loaded)", true);
+      notify("Supabase data loaded.", "success");
+      renderAll();
+    }
+
+    async function debugSupabase(){
+      sbClear();
+      sbLog("Debug tables (limit 1)...");
+      const sb = getSupabaseClient();
+      if(!sb){ sbLog("No client. Save keys first."); return; }
+
+      const tables = getTables();
+      for(const [label, table] of Object.entries(tables)){
+        const { data, error } = await sb.from(table).select("*").limit(1);
+        if(error) sbLog(`${label}(${table}): ERROR -> ${error.message}`);
+        else {
+          sbLog(`${label}(${table}): OK -> rows: ${data.length}`);
+          if(data[0]) sbLog(`${label} keys -> ${Object.keys(data[0]).join(", ")}`);
+        }
+      }
+    }
+
+    async function testSupabase(){
+      const { url, key } = getSupabaseCreds();
+      const statusDiv = $("connection-status");
+      if(!url || !key){ notify("Enter URL + Key", "error"); return; }
+
+      if(statusDiv){
+        statusDiv.classList.remove("hidden","bg-green-100","text-green-800","bg-red-100","text-red-800");
+        statusDiv.classList.add("bg-blue-100","text-blue-800");
+        statusDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting...';
       }
 
-      try {
-        const [p, t, a] = await Promise.all([sbSelect("patients"), sbSelect("therapists"), sbSelect("appointments")]);
-        if (!p.ok) throw new Error("patients: " + p.error.message);
-        if (!t.ok) throw new Error("therapists: " + t.error.message);
-        if (!a.ok) throw new Error("appointments: " + a.error.message);
+      try{
+        const sb = window.supabase.createClient(url, key);
+        // use whichever patients table is set
+        const tables = getTables();
+        const { error } = await sb.from(tables.patients).select("*").limit(1);
+        if(error) throw error;
 
-        sbLog("patients rows: " + p.data.length);
-        sbLog("therapists rows: " + t.data.length);
-        sbLog("appointments rows: " + a.data.length);
-
-        patients = normalizePatients(p.data);
-        therapists = normalizeTherapists(t.data);
-        appointments = normalizeAppointments(a.data);
-        saveLocal();
-
-        setStoragePill("Storage: Supabase (data loaded)", "green");
-        notify("Supabase data loaded.", "success");
-        refreshUI();
-      } catch (err) {
-        const msg = String(err?.message || err);
-        setStoragePill("Storage: local (Supabase failed)", "yellow");
-        notify("Load failed: " + msg, "error");
-        sbLog("ERROR: " + msg);
+        if(statusDiv){
+          statusDiv.classList.remove("bg-blue-100","text-blue-800");
+          statusDiv.classList.add("bg-green-100","text-green-800");
+          statusDiv.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i> Connected!';
+        }
+        setStoragePill("Storage: Supabase connected", true);
+        notify("Supabase connected.", "success");
+      }catch(err){
+        if(statusDiv){
+          statusDiv.classList.remove("bg-blue-100","text-blue-800");
+          statusDiv.classList.add("bg-red-100","text-red-800");
+          statusDiv.textContent = "Failed: " + err.message;
+        }
+        setStoragePill("Storage: local (Supabase failed)", false);
+        notify("Supabase test failed: " + err.message, "error");
       }
     }
 
-    // ================
-    // Rendering
-    // ================
-    let apptChart = null;
-    let demoChart = null;
-
-    function isToday(iso) {
-      const d = new Date(iso);
-      const n = new Date();
-      return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+    // ----- Simple render (patients + therapists only, appointments columns) -----
+    function isToday(iso){
+      const d=new Date(iso), n=new Date();
+      return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth() && d.getDate()===n.getDate();
     }
 
-    function populateAppointmentSelects() {
-      const pSel = $("appt-patient");
-      const tSel = $("appt-therapist");
-      if (pSel) pSel.innerHTML = "";
-      if (tSel) tSel.innerHTML = "";
-
-      patients.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p.id;
-        opt.textContent = p.full_name;
-        pSel?.appendChild(opt);
-      });
-
-      therapists.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.id;
-        opt.textContent = t.full_name;
-        tSel?.appendChild(opt);
-      });
-    }
-
-    function renderCharts() {
-      const c1 = $("appointmentsChart");
-      const c2 = $("demographicsChart");
-      if (!c1 || !c2 || typeof Chart === "undefined") return;
-
-      const statusCounts = { Scheduled: 0, Completed: 0, Cancelled: 0 };
-      appointments.forEach(a => { if (statusCounts[a.status] != null) statusCounts[a.status]++; });
-
-      if (apptChart) apptChart.destroy();
-      apptChart = new Chart(c1.getContext("2d"), {
-        type: "doughnut",
-        data: { labels: Object.keys(statusCounts), datasets: [{ data: Object.values(statusCounts), backgroundColor: ["#FCD34D","#10B981","#EF4444"] }] }
-      });
-
-      const ageGroups = { "0-18":0, "19-40":0, "41-60":0, "60+":0 };
-      patients.forEach(p => {
-        if (p.age <= 18) ageGroups["0-18"]++;
-        else if (p.age <= 40) ageGroups["19-40"]++;
-        else if (p.age <= 60) ageGroups["41-60"]++;
-        else ageGroups["60+"]++;
-      });
-
-      if (demoChart) demoChart.destroy();
-      demoChart = new Chart(c2.getContext("2d"), {
-        type: "bar",
-        data: { labels: Object.keys(ageGroups), datasets: [{ label: "Patients", data: Object.values(ageGroups), backgroundColor: "#0f766e" }] },
-        options: { scales: { y: { beginAtZero: true } } }
-      });
-    }
-
-    function renderAdmin() {
+    function renderAll(){
+      // stats
       setText("stat-total-patients", String(patients.length));
       setText("stat-total-therapists", String(therapists.length));
-      setText("stat-today-appts", String(appointments.filter(a => isToday(a.date_time)).length));
+      setText("stat-today-appts", String(appointments.filter(a=>isToday(a.date_time)).length));
 
-      // Patients table
-      const pBody = $("patients-table-body");
-      if (pBody) pBody.innerHTML = "";
-      patients.forEach(p => {
-        pBody?.insertAdjacentHTML("beforeend", `
-          <tr>
-            <td class="px-6 py-4">${escapeHtml(p.full_name)}</td>
-            <td class="px-6 py-4">${escapeHtml(String(p.age))}</td>
-            <td class="px-6 py-4">${escapeHtml(p.condition || "-")}</td>
-            <td class="px-6 py-4">${escapeHtml(p.phone || "-")}</td>
-          </tr>
-        `);
-      });
-
-      // Therapists table
-      const tBody = $("therapists-table-body");
-      if (tBody) tBody.innerHTML = "";
-      therapists.forEach(t => {
-        tBody?.insertAdjacentHTML("beforeend", `
-          <tr>
-            <td class="px-6 py-4">
-              <div class="font-bold">${escapeHtml(t.full_name)}</div>
-              <div class="text-xs text-gray-500">${escapeHtml(t.email || "")}</div>
-            </td>
-            <td class="px-6 py-4">${escapeHtml(t.specialization || "-")}</td>
-            <td class="px-6 py-4">${escapeHtml(t.license || "-")}</td>
-            <td class="px-6 py-4">${escapeHtml(t.shift || "-")}</td>
-          </tr>
-        `);
-      });
-
-      populateAppointmentSelects();
-      renderCharts();
-    }
-
-    function renderTherapist() {
-      const tbody = $("therapist-schedule-body");
-      const list = $("therapist-patient-list");
-      if (tbody) tbody.innerHTML = "";
-      if (list) list.innerHTML = "";
-      const seen = new Set();
-
-      const my = appointments.filter(a => a.therapist_id === currentUser.id).sort((a,b)=> new Date(a.date_time)-new Date(b.date_time));
-      my.forEach(a => {
-        const p = patients.find(x => x.id === a.patient_id);
-        const pName = p?.full_name || "Unknown";
-        tbody?.insertAdjacentHTML("beforeend", `
-          <tr>
-            <td class="px-6 py-4 text-sm">${escapeHtml(new Date(a.date_time).toLocaleString())}</td>
-            <td class="px-6 py-4 font-bold">${escapeHtml(pName)}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">${escapeHtml(a.notes || "")}</td>
-            <td class="px-6 py-4 text-sm">${escapeHtml(a.status)}</td>
-          </tr>
-        `);
-
-        if (!seen.has(pName)) {
-          seen.add(pName);
-          list?.insertAdjacentHTML("beforeend", `
-            <li class="border-b pb-2">
-              <div class="font-bold text-teal-800">${escapeHtml(pName)}</div>
-              <div class="text-sm text-gray-600">${escapeHtml(p?.condition || "")}</div>
-            </li>
+      // patients table
+      const pb = $("patients-table-body");
+      if(pb){
+        pb.innerHTML = "";
+        patients.forEach(p=>{
+          pb.insertAdjacentHTML("beforeend", `
+            <tr class="border-b">
+              <td class="px-6 py-4">${p.full_name || ""}</td>
+              <td class="px-6 py-4">${p.age ?? ""}</td>
+              <td class="px-6 py-4">${p.condition || ""}</td>
+              <td class="px-6 py-4">${p.phone || ""}</td>
+            </tr>
           `);
-        }
+        });
+      }
+
+      // therapists table
+      const tb = $("therapists-table-body");
+      if(tb){
+        tb.innerHTML = "";
+        therapists.forEach(t=>{
+          tb.insertAdjacentHTML("beforeend", `
+            <tr class="border-b">
+              <td class="px-6 py-4">
+                <div class="font-bold">${t.full_name || ""}</div>
+                <div class="text-xs text-gray-500">${t.email || ""}</div>
+              </td>
+              <td class="px-6 py-4">${t.specialization || ""}</td>
+              <td class="px-6 py-4">${t.license || ""}</td>
+              <td class="px-6 py-4">${t.shift || ""}</td>
+            </tr>
+          `);
+        });
+      }
+
+      // appointments columns
+      const s=$("col-scheduled"), c=$("col-completed"), x=$("col-cancelled");
+      if(s) s.innerHTML=""; if(c) c.innerHTML=""; if(x) x.innerHTML="";
+      let cs=0, cc=0, cx=0;
+      appointments.forEach(a=>{
+        const pName = patients.find(p=>p.id===a.patient_id)?.full_name || "Unknown";
+        const tName = therapists.find(t=>t.id===a.therapist_id)?.full_name || "Unknown";
+        const card = `
+          <div class="bg-white p-3 rounded shadow border">
+            <div class="font-bold">${pName}</div>
+            <div class="text-xs text-gray-500">${new Date(a.date_time).toLocaleString()}</div>
+            <div class="text-xs text-teal-700">${tName}</div>
+          </div>
+        `;
+        if(a.status==="Scheduled"){ s?.insertAdjacentHTML("beforeend", card); cs++; }
+        else if(a.status==="Completed"){ c?.insertAdjacentHTML("beforeend", card); cc++; }
+        else { x?.insertAdjacentHTML("beforeend", card); cx++; }
       });
+      setText("count-scheduled", String(cs));
+      setText("count-completed", String(cc));
+      setText("count-cancelled", String(cx));
     }
 
-    function refreshUI() {
-      if (currentUser?.role === "admin") renderAdmin();
-      if (currentUser?.role === "therapist") renderTherapist();
+    // ----- Navigation -----
+    function showSection(sectionId){
+      document.querySelectorAll(".content-section").forEach(el=>el.classList.add("hidden-section"));
+      $(sectionId)?.classList.remove("hidden-section");
+      document.querySelectorAll(".sidebar-link").forEach(el=>el.classList.remove("active"));
+      const btn = document.querySelector(`.sidebar-link[data-target="${sectionId}"]`);
+      if(btn) btn.classList.add("active");
     }
-
-    // ================
-    // Navigation / Events
-    // ================
-    function showSection(id) {
-      document.querySelectorAll(".content-section").forEach(el => el.classList.add("hidden-section"));
-      $(id)?.classList.remove("hidden-section");
-      document.querySelectorAll(".sidebar-link").forEach(el => el.classList.remove("active"));
-      const btn = document.querySelector(`.sidebar-link[data-target="${id}"]`);
-      if (btn) btn.classList.add("active");
-    }
-
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", (e)=>{
       const btn = e.target.closest(".sidebar-link[data-target]");
-      if (!btn) return;
+      if(!btn) return;
       showSection(btn.dataset.target);
     });
 
-    $("logout-btn")?.addEventListener("click", () => {
-      currentUser = null;
-      $("dashboard-layout")?.classList.add("hidden-section");
-      $("login-screen")?.classList.remove("hidden-section");
-      $("login-form")?.reset?.();
-      setStorageBadge();
-    });
-
-    $("btn-add-patient")?.addEventListener("click", () => $("add-patient-modal")?.classList.remove("hidden-section"));
-    $("btn-close-patient")?.addEventListener("click", () => $("add-patient-modal")?.classList.add("hidden-section"));
-    $("btn-cancel-patient")?.addEventListener("click", () => $("add-patient-modal")?.classList.add("hidden-section"));
-
-    $("btn-add-appointment")?.addEventListener("click", () => {
-      populateAppointmentSelects();
-      $("add-appointment-modal")?.classList.remove("hidden-section");
-    });
-    $("btn-cancel-appt")?.addEventListener("click", () => $("add-appointment-modal")?.classList.add("hidden-section"));
-
-    $("add-patient-form")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const newP = {
-        id: String(Date.now()),
-        full_name: $("p-name")?.value || "",
-        age: Number($("p-age")?.value || 0),
-        phone: $("p-phone")?.value || "",
-        condition: $("p-condition")?.value || ""
-      };
-      patients.push(newP);
-      saveLocal();
-      notify("Patient saved locally.", "success");
-      $("add-patient-modal")?.classList.add("hidden-section");
-      e.target.reset();
-      refreshUI();
-    });
-
-    $("add-appointment-form")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const newA = {
-        id: String(Date.now()),
-        patient_id: $("appt-patient")?.value || "",
-        therapist_id: $("appt-therapist")?.value || "",
-        date_time: $("appt-date")?.value || new Date().toISOString(),
-        status: "Scheduled",
-        notes: ""
-      };
-      appointments.push(newA);
-      saveLocal();
-      notify("Appointment saved locally.", "success");
-      $("add-appointment-modal")?.classList.add("hidden-section");
-      e.target.reset();
-      refreshUI();
-    });
-
-    // Settings buttons
-    $("btn-test-supabase")?.addEventListener("click", testSupabase);
-    $("btn-load-supabase")?.addEventListener("click", loadFromSupabase);
-    $("btn-copy-share")?.addEventListener("click", copyShareLink);
-
-    // Save keys + also store in HASH for cross-device
-    $("supabase-settings-form")?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const { url, key } = getSupabaseCreds();
-      if (!url || !key) { notify("Enter Supabase URL and Key.", "error"); return; }
-      saveSupabaseCreds(url, key);
-      setHashToken(url, key); // this is the cross-device fix
-      notify("Keys saved (local) + stored in URL hash.", "success");
-      setStorageBadge();
-      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
-    });
-
-    // ================
-    // Demo Auth
-    // ================
+    // ----- Auth (demo) -----
     let currentUser = null;
-
-    $("login-form")?.addEventListener("submit", (e) => {
+    $("login-form")?.addEventListener("submit", (e)=>{
       e.preventDefault();
-      const email = $("email")?.value || "";
-      const password = $("password")?.value || "";
       const role = $("role-select")?.value || "admin";
+      const email = $("email")?.value || "";
+      const pass = $("password")?.value || "";
 
-      if (role === "admin" && email === "admin@physio.com" && password === "admin123") {
-        currentUser = { role: "admin", name: "Administrator", id: "admin-id" };
-      } else if (role === "therapist") {
-        const user = therapists.find(t => t.email === email && t.password === password);
-        if (!user) { notify("Invalid therapist credentials", "error"); return; }
-        currentUser = { role: "therapist", name: user.full_name, id: user.id };
+      if(role==="admin" && email==="admin@physio.com" && pass==="admin123"){
+        currentUser = { role:"admin", name:"Administrator", id:"admin-id" };
+      } else if(role==="therapist"){
+        const t = therapists.find(x=>x.email===email && x.password===pass);
+        if(!t){ notify("Invalid therapist credentials", "error"); return; }
+        currentUser = { role:"therapist", name:t.full_name, id:t.id };
       } else {
-        notify("Invalid credentials", "error");
-        return;
+        notify("Invalid credentials", "error"); return;
       }
 
       $("login-screen")?.classList.add("hidden-section");
       $("dashboard-layout")?.classList.remove("hidden-section");
       setText("user-display", `Welcome, ${currentUser.name}`);
 
-      if (currentUser.role === "admin") {
+      if(currentUser.role==="admin"){
         $("admin-nav")?.classList.remove("hidden-section");
         $("therapist-nav")?.classList.add("hidden-section");
         showSection("admin-dashboard");
-        renderAdmin();
       } else {
         $("admin-nav")?.classList.add("hidden-section");
         $("therapist-nav")?.classList.remove("hidden-section");
         showSection("therapist-schedule");
-        renderTherapist();
       }
 
+      renderAll();
       setStorageBadge();
-      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
+      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", !!getSupabaseClient());
     });
 
-    // ================
-    // Boot: load keys from URL HASH first, then localStorage
-    // ================
-    document.addEventListener("DOMContentLoaded", () => {
-      const fromHash = readHashToken();
-      if (fromHash?.url && fromHash?.key) {
-        if ($("sb-url")) $("sb-url").value = fromHash.url;
-        if ($("sb-key")) $("sb-key").value = fromHash.key;
-        saveSupabaseCreds(fromHash.url, fromHash.key);
-        notify("Supabase keys loaded from URL hash.", "success");
+    $("logout-btn")?.addEventListener("click", ()=>{
+      currentUser=null;
+      $("dashboard-layout")?.classList.add("hidden-section");
+      $("login-screen")?.classList.remove("hidden-section");
+      $("login-form")?.reset?.();
+      setStorageBadge();
+    });
+
+    // ----- Settings buttons -----
+    $("btn-test")?.addEventListener("click", testSupabase);
+    $("btn-load")?.addEventListener("click", async ()=>{
+      try { await loadFromSupabase(); }
+      catch(err){
+        setStoragePill("Storage: local (Supabase failed)", false);
+        sbLog("ERROR: " + err.message);
+        notify("Load failed: " + err.message, "error");
+      }
+    });
+    $("btn-debug")?.addEventListener("click", debugSupabase);
+    $("btn-copy-link")?.addEventListener("click", copyShareLink);
+
+    $("btn-save-tables")?.addEventListener("click", ()=>{
+      const t = {
+        patients: ($("tbl-patients")?.value || "patients").trim(),
+        therapists: ($("tbl-therapists")?.value || "therapists").trim(),
+        appointments: ($("tbl-appointments")?.value || "appointments").trim(),
+      };
+      saveTables(t);
+      notify("Table names saved.", "success");
+    });
+
+    $("sb-form")?.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const { url, key } = getSupabaseCreds();
+      if(!url || !key){ notify("Enter URL + Key", "error"); return; }
+      saveSupabaseCreds(url, key);
+      notify("Supabase keys saved.", "success");
+      setStorageBadge();
+      setStoragePill("Storage: Supabase keys saved", true);
+    });
+
+    // ----- Boot: load keys + table names from URL share token or local storage -----
+    document.addEventListener("DOMContentLoaded", ()=>{
+      const shared = readShareToken();
+      if(shared?.url && shared?.key){
+        if($("sb-url")) $("sb-url").value = shared.url;
+        if($("sb-key")) $("sb-key").value = shared.key;
+        saveSupabaseCreds(shared.url, shared.key);
+
+        if(shared?.tables){
+          saveTables(shared.tables);
+          setTablesUI(shared.tables);
+        }
+
+        notify("Loaded Supabase settings from share link.", "success");
       } else {
+        // load saved tables
+        const t = SafeStorage.get(SB_TABLES_STORAGE_KEY, null);
+        if(t) setTablesUI(t);
+
+        // load saved keys
         const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, null);
-        if (stored?.url && $("sb-url")) $("sb-url").value = stored.url;
-        if (stored?.key && $("sb-key")) $("sb-key").value = stored.key;
+        if(stored?.url && $("sb-url")) $("sb-url").value = stored.url;
+        if(stored?.key && $("sb-key")) $("sb-key").value = stored.key;
       }
 
       setStorageBadge();
-      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
+      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", !!getSupabaseClient());
 
-      // Optional: auto load data if keys exist
-      // loadFromSupabase();
+      // render local
+      renderAll();
     });
   </script>
 </body>
