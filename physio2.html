@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PhysioCare (Supabase via URL Hash)</title>
+  <title>PhysioCare Management System (Supabase Cross-Device Fix)</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
   <style>
     .hidden-section { display: none !important; }
@@ -34,16 +34,17 @@
 </head>
 
 <body class="bg-gray-100 font-sans text-gray-800 relative">
+  <!-- Notifications -->
   <div id="notification-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
 
-  <!-- LOGIN -->
+  <!-- Login -->
   <div id="login-screen" class="min-h-screen flex items-center justify-center bg-blue-50">
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
       <div class="text-center mb-8">
         <i class="fa-solid fa-heart-pulse text-4xl text-teal-700 mb-2"></i>
         <h1 class="text-2xl font-bold text-gray-800">PhysioCare Login</h1>
         <span id="storage-mode-badge" class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-          STORAGE: LOCAL
+          STORAGE: CHECKING...
         </span>
       </div>
 
@@ -74,21 +75,24 @@
     </div>
   </div>
 
-  <!-- APP -->
+  <!-- App -->
   <div id="dashboard-layout" class="hidden-section min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar -->
     <aside class="w-full md:w-64 bg-white shadow-md flex-shrink-0 flex flex-col h-screen">
       <div class="p-6 border-b">
-        <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2"><i class="fa-solid fa-user-doctor"></i> PhysioCare</h2>
+        <h2 class="text-xl font-bold text-teal-700 flex items-center gap-2">
+          <i class="fa-solid fa-user-doctor"></i> PhysioCare
+        </h2>
         <p id="user-display" class="text-sm text-gray-500 mt-1">Welcome, User</p>
       </div>
 
       <nav class="p-4 flex-1 overflow-y-auto">
         <div id="admin-nav" class="hidden-section">
-          <button class="sidebar-link w-full text-left active" data-target="admin-dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
-          <button class="sidebar-link w-full text-left" data-target="manage-patients"><i class="fa-solid fa-users"></i> Patients</button>
-          <button class="sidebar-link w-full text-left" data-target="manage-appointments"><i class="fa-solid fa-calendar-check"></i> Appointments</button>
-          <button class="sidebar-link w-full text-left" data-target="manage-therapists"><i class="fa-solid fa-user-nurse"></i> Physiotherapists</button>
-          <button class="sidebar-link w-full text-left" data-target="settings-page"><i class="fa-solid fa-gear"></i> Settings</button>
+          <button class="sidebar-link w-full text-left active" data-target="admin-dashboard" id="nav-dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
+          <button class="sidebar-link w-full text-left" data-target="manage-patients" id="nav-patients"><i class="fa-solid fa-users"></i> Patients</button>
+          <button class="sidebar-link w-full text-left" data-target="manage-appointments" id="nav-appointments"><i class="fa-solid fa-calendar-check"></i> Appointments</button>
+          <button class="sidebar-link w-full text-left" data-target="manage-therapists" id="nav-therapists"><i class="fa-solid fa-user-nurse"></i> Physiotherapists</button>
+          <button class="sidebar-link w-full text-left" data-target="settings-page" id="nav-settings"><i class="fa-solid fa-gear"></i> Settings</button>
         </div>
 
         <div id="therapist-nav" class="hidden-section">
@@ -105,6 +109,7 @@
       </div>
     </aside>
 
+    <!-- Main -->
     <main class="flex-1 p-6 overflow-y-auto h-screen bg-gray-50">
       <!-- Dashboard -->
       <section id="admin-dashboard" class="content-section">
@@ -141,6 +146,9 @@
       <section id="manage-patients" class="content-section hidden-section">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-bold text-gray-800">Patients Directory</h2>
+          <button id="btn-add-patient" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
+            <i class="fa-solid fa-plus mr-2"></i> Add Patient
+          </button>
         </div>
 
         <div class="bg-white rounded-lg shadow-sm overflow-hidden border">
@@ -160,7 +168,12 @@
 
       <!-- Appointments -->
       <section id="manage-appointments" class="content-section hidden-section">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">Appointment Management</h2>
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-gray-800">Appointment Management</h2>
+          <button id="btn-add-appointment" class="bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800 shadow-sm transition">
+            <i class="fa-solid fa-plus mr-2"></i> New Appointment
+          </button>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
           <div class="bg-gray-200 rounded-lg p-4 flex flex-col h-full">
@@ -204,22 +217,28 @@
           <div class="bg-white p-6 rounded-lg shadow-sm border">
             <h3 class="text-lg font-bold mb-2 text-gray-700">Status</h3>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span id="storage-status-pill" class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700 text-sm">Storage: local</span>
-              <button id="btn-load-supabase" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm" type="button">
+              <button type="button" id="btn-load-supabase" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm">
                 <i class="fa-solid fa-rotate-right mr-2"></i> Load Data
+              </button>
+              <button type="button" id="btn-test-supabase" class="px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm">
+                <i class="fa-solid fa-plug mr-2"></i> Test
               </button>
             </div>
 
             <div class="mt-4 bg-gray-50 border rounded p-3 text-xs text-gray-700">
-              <div class="font-bold mb-2">Debug Log</div>
+              <div class="font-bold mb-2">Supabase Debug Log</div>
               <pre id="sb-debug-log" class="whitespace-pre-wrap text-xs text-gray-800"></pre>
             </div>
 
             <div class="mt-4 text-xs text-gray-600">
-              <div class="font-bold mb-1">New Solution</div>
-              <div><strong>Save in This URL</strong> stores Supabase keys in the URL hash (#). Copy the address bar URL to use in another browser.</div>
-              <div class="text-red-700 mt-2">Hash is not sent to server, but the key will be visible in the URL bar.</div>
+              <div class="font-bold mb-1">Fix for Laptop vs PC</div>
+              <div>
+                Keys are saved per device. Use <strong>Copy Share Link</strong> and open it on the other computer.
+                This link stores keys in the URL <strong>hash (#)</strong> so GitHub Pages keeps it.
+              </div>
+              <div class="text-red-700 mt-2">This will expose the anon key in the URL. Don’t share publicly.</div>
             </div>
           </div>
 
@@ -229,7 +248,7 @@
               <h3 class="text-lg font-bold text-gray-700">Supabase Connection</h3>
             </div>
 
-            <div class="space-y-4">
+            <form id="supabase-settings-form" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700">Project URL</label>
                 <input type="text" id="sb-url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm" placeholder="https://xxxx.supabase.co" />
@@ -239,22 +258,24 @@
                 <input type="password" id="sb-key" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border p-2 font-mono text-sm" placeholder="eyJhbGciOi..." />
               </div>
 
-              <div class="flex gap-2">
-                <button id="btn-save-hash" type="button" class="flex-1 bg-gray-900 text-white px-4 py-2 rounded hover:bg-black">
-                  <i class="fa-solid fa-link mr-2"></i> Save in This URL
+              <div class="flex gap-2 pt-2">
+                <button type="submit" class="flex-1 bg-teal-700 text-white px-4 py-2 rounded hover:bg-teal-800">
+                  <i class="fa-solid fa-save mr-2"></i> Save Keys
                 </button>
-                <button id="btn-test" type="button" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                  <i class="fa-solid fa-plug mr-2"></i> Test
+                <button type="button" id="btn-copy-share" class="flex-1 bg-gray-900 text-white px-4 py-2 rounded hover:bg-black">
+                  <i class="fa-solid fa-link mr-2"></i> Copy Share Link
                 </button>
               </div>
 
-              <div id="connection-status" class="hidden p-2 rounded text-sm text-center font-medium"></div>
-            </div>
+              <p class="text-xs text-gray-500">
+                Open the share link on your other computer to auto-load the keys.
+              </p>
+            </form>
           </div>
         </div>
       </section>
 
-      <!-- Therapist -->
+      <!-- Therapist schedule -->
       <section id="therapist-schedule" class="content-section hidden-section">
         <h2 class="text-2xl font-bold mb-6">My Schedule</h2>
         <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -278,29 +299,73 @@
           <ul id="therapist-patient-list" class="mt-4 space-y-3"></ul>
         </div>
       </section>
-
     </main>
+  </div>
+
+  <!-- Add Patient Modal -->
+  <div id="add-patient-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-xl flex flex-col">
+      <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 class="text-xl font-bold text-teal-800">Add Patient</h3>
+        <button type="button" id="btn-close-patient" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+      <div class="p-6">
+        <form id="add-patient-form" class="space-y-4">
+          <div><label class="block text-sm font-medium text-gray-700">Name</label><input type="text" id="p-name" class="mt-1 w-full border rounded p-2" required></div>
+          <div><label class="block text-sm font-medium text-gray-700">Age</label><input type="number" id="p-age" class="mt-1 w-full border rounded p-2" required></div>
+          <div><label class="block text-sm font-medium text-gray-700">Phone</label><input type="text" id="p-phone" class="mt-1 w-full border rounded p-2"></div>
+          <div><label class="block text-sm font-medium text-gray-700">Condition</label><input type="text" id="p-condition" class="mt-1 w-full border rounded p-2"></div>
+
+          <div class="flex justify-end gap-2 pt-4 border-t">
+            <button type="button" id="btn-cancel-patient" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded border">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Appointment Modal -->
+  <div id="add-appointment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden-section flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h3 class="text-lg font-bold mb-4">Book Appointment</h3>
+      <form id="add-appointment-form" class="space-y-3">
+        <label class="block text-sm">Patient</label>
+        <select id="appt-patient" class="w-full border p-2 rounded" required></select>
+
+        <label class="block text-sm">Therapist</label>
+        <select id="appt-therapist" class="w-full border p-2 rounded" required></select>
+
+        <label class="block text-sm">Date & Time</label>
+        <input type="datetime-local" id="appt-date" class="w-full border p-2 rounded" required>
+
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" id="btn-cancel-appt" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-teal-700 text-white rounded hover:bg-teal-800">Book</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
     "use strict";
 
-    // ---------------------------
+    // ================
     // Helpers
-    // ---------------------------
+    // ================
     const $ = (id) => document.getElementById(id);
-    const setText = (id, v) => { const el=$(id); if(el) el.textContent = v; };
-    const setHTML = (id, v) => { const el=$(id); if(el) el.innerHTML = v; };
+    const setText = (id, text) => { const el = $(id); if (el) el.textContent = text; };
+    const setHTML = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
 
     function escapeHtml(s) {
       return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
     }
 
+    // ================
+    // Notifications
+    // ================
     function notify(message, type="info") {
       const container = $("notification-container");
       if (!container) return;
@@ -317,83 +382,31 @@
         setTimeout(() => div.remove(), 300);
       }, 3000);
     }
+    window.notify = notify;
 
-    // ---------------------------
-    // Local data
-    // ---------------------------
-    const LS_PATIENTS = "physiocare_patients";
-    const LS_THERAPISTS = "physiocare_therapists";
-    const LS_APPOINTMENTS = "physiocare_appointments";
-
-    const defaultPatients = [
-      { id: "1", full_name: "John Doe", age: 45, condition: "Back Pain", phone: "555-0101" },
-      { id: "2", full_name: "Jane Roe", age: 29, condition: "ACL Recovery", phone: "555-0102" }
-    ];
-    const defaultTherapists = [
-      { id: "101", full_name: "Sarah Connor", specialization: "Sports Rehab", email: "sarah@physio.com", password: "pass123", license: "NHRA-001", shift: "Morning" }
-    ];
-    const defaultAppointments = [
-      { id: "a1", patient_id: "1", therapist_id: "101", date_time: new Date().toISOString(), status: "Scheduled", notes: "Initial assessment" }
-    ];
-
+    // ================
+    // Storage (local)
+    // ================
     const SafeStorage = {
       ok: (() => { try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; } catch { return false; } })(),
       get(k, fb) { if (!this.ok) return fb; const v = localStorage.getItem(k); try { return v ? JSON.parse(v) : fb; } catch { return fb; } },
       set(k, v) { if (!this.ok) return; localStorage.setItem(k, JSON.stringify(v)); }
     };
 
-    let patients = SafeStorage.get(LS_PATIENTS, defaultPatients);
-    let therapists = SafeStorage.get(LS_THERAPISTS, defaultTherapists);
-    let appointments = SafeStorage.get(LS_APPOINTMENTS, defaultAppointments);
-
-    function saveLocal() {
-      SafeStorage.set(LS_PATIENTS, patients);
-      SafeStorage.set(LS_THERAPISTS, therapists);
-      SafeStorage.set(LS_APPOINTMENTS, appointments);
-    }
-
-    // ---------------------------
-    // Supabase via URL hash
-    // hash format: #sb=<base64url(JSON)>
-    // ---------------------------
-    function b64urlEncode(str) {
-      const b64 = btoa(unescape(encodeURIComponent(str)));
-      return b64.replaceAll("+","-").replaceAll("/","_").replaceAll("=","");
-    }
-    function b64urlDecode(str) {
-      const pad = str.length % 4 ? "=".repeat(4 - (str.length % 4)) : "";
-      const b64 = (str + pad).replaceAll("-","+").replaceAll("_","/");
-      return decodeURIComponent(escape(atob(b64)));
-    }
-
-    function readHashCreds() {
-      const h = location.hash || "";
-      const m = h.match(/sb=([^&]+)/);
-      if (!m) return null;
-      try { return JSON.parse(b64urlDecode(m[1])); } catch { return null; }
-    }
-
-    function writeHashCreds(url, key) {
-      const token = b64urlEncode(JSON.stringify({ url, key }));
-      // preserve other hash params if needed; keep simple:
-      location.hash = `sb=${encodeURIComponent(token)}`;
-    }
+    // ================
+    // Supabase keys: localStorage + URL HASH token (cross-device)
+    // ================
+    const SB_KEYS_STORAGE_KEY = "physiocare_supabase_keys_v2";
 
     function getSupabaseCreds() {
-      // Prefer URL hash (works across browsers)
-      const fromHash = readHashCreds();
-      if (fromHash?.url && fromHash?.key) return { url: String(fromHash.url).trim(), key: String(fromHash.key).trim() };
-
-      // Fallback: localStorage
-      const stored = SafeStorage.get("physiocare_sb_keys", null);
-      if (stored?.url && stored?.key) return { url: String(stored.url).trim(), key: String(stored.key).trim() };
-
-      // Fallback: inputs
-      return { url: ($("sb-url")?.value || "").trim(), key: ($("sb-key")?.value || "").trim() };
+      const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, {}) || {};
+      const url = (($("sb-url")?.value) || stored.url || "").trim();
+      const key = (($("sb-key")?.value) || stored.key || "").trim();
+      return { url, key };
     }
 
-    function saveSupabaseCredsLocal(url, key) {
-      SafeStorage.set("physiocare_sb_keys", { url, key });
+    function saveSupabaseCreds(url, key) {
+      SafeStorage.set(SB_KEYS_STORAGE_KEY, { url, key });
     }
 
     function getSupabaseClient() {
@@ -402,9 +415,48 @@
       return window.supabase.createClient(url, key);
     }
 
-    // ---------------------------
+    // Base64 JSON token stored in location.hash as: #sb=<token>
+    function b64encode(str) { return btoa(unescape(encodeURIComponent(str))); }
+    function b64decode(str) { return decodeURIComponent(escape(atob(str))); }
+
+    function makeHashToken(url, key) {
+      return b64encode(JSON.stringify({ url, key }));
+    }
+
+    function readHashToken() {
+      // hash example: #sb=XXXX
+      const h = (location.hash || "").replace(/^#/, "");
+      if (!h) return null;
+      const params = new URLSearchParams(h);
+      const token = params.get("sb");
+      if (!token) return null;
+      try { return JSON.parse(b64decode(token)); } catch { return null; }
+    }
+
+    function setHashToken(url, key) {
+      const token = makeHashToken(url, key);
+      // keep other hash params if you want; here we replace for clarity
+      location.hash = `sb=${encodeURIComponent(token)}`;
+    }
+
+    async function copyShareLink() {
+      const { url, key } = getSupabaseCreds();
+      if (!url || !key) { notify("Enter Supabase URL and Key first.", "error"); return; }
+      // Use HASH link so GitHub Pages keeps it.
+      const token = makeHashToken(url, key);
+      const shareUrl = `${location.origin}${location.pathname}#sb=${encodeURIComponent(token)}`;
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        notify("Share link copied! Open it on the other computer.", "success");
+      } catch {
+        prompt("Copy this link:", shareUrl);
+      }
+    }
+
+    // ================
     // Storage UI
-    // ---------------------------
+    // ================
     function setStorageBadge() {
       const badge = $("storage-mode-badge");
       if (!badge) return;
@@ -432,9 +484,35 @@
       setStorageBadge();
     }
 
-    // ---------------------------
-    // Supabase operations
-    // ---------------------------
+    // ================
+    // Data (local defaults)
+    // ================
+    const LS_PATIENTS = "physiocare_patients";
+    const LS_THERAPISTS = "physiocare_therapists";
+    const LS_APPOINTMENTS = "physiocare_appointments";
+
+    const defaultPatients = [
+      { id: "1", full_name: "John Doe", age: 45, condition: "Back Pain", phone: "555-0101" },
+      { id: "2", full_name: "Jane Roe", age: 29, condition: "ACL Recovery", phone: "555-0102" }
+    ];
+    const defaultTherapists = [
+      { id: "101", full_name: "Sarah Connor", specialization: "Sports Rehab", email: "sarah@physio.com", password: "pass123", license: "NHRA-001", shift: "Morning" }
+    ];
+    const defaultAppointments = [];
+
+    let patients = SafeStorage.get(LS_PATIENTS, defaultPatients);
+    let therapists = SafeStorage.get(LS_THERAPISTS, defaultTherapists);
+    let appointments = SafeStorage.get(LS_APPOINTMENTS, defaultAppointments);
+
+    function saveLocal() {
+      SafeStorage.set(LS_PATIENTS, patients);
+      SafeStorage.set(LS_THERAPISTS, therapists);
+      SafeStorage.set(LS_APPOINTMENTS, appointments);
+    }
+
+    // ================
+    // Supabase: debug + load
+    // ================
     function sbLog(msg) {
       const el = $("sb-debug-log");
       if (!el) return;
@@ -444,10 +522,10 @@
 
     async function sbSelect(table) {
       const sb = getSupabaseClient();
-      if (!sb) return { ok:false, error:new Error("No Supabase client") };
-      const { data, error } = await sb.from(table).select("*").limit(500);
-      if (error) return { ok:false, error };
-      return { ok:true, data:data || [] };
+      if (!sb) return { ok: false, error: new Error("No Supabase client") };
+      const { data, error } = await sb.from(table).select("*").limit(1000);
+      if (error) return { ok: false, error };
+      return { ok: true, data: data || [] };
     }
 
     function normalizePatients(rows) {
@@ -481,15 +559,36 @@
       }));
     }
 
+    async function testSupabase() {
+      const { url, key } = getSupabaseCreds();
+      if (!url || !key) { notify("Enter Supabase URL and Key.", "error"); return; }
+      sbClear();
+      sbLog("Testing Supabase...");
+
+      try {
+        const sb = window.supabase.createClient(url, key);
+        const { error } = await sb.from("patients").select("*").limit(1);
+        if (error) throw error;
+        notify("Supabase connected.", "success");
+        setStoragePill("Storage: Supabase connected", "green");
+        sbLog("OK: select patients limit 1 succeeded.");
+      } catch (err) {
+        const msg = String(err?.message || err);
+        notify("Supabase error: " + msg, "error");
+        setStoragePill("Storage: local (Supabase failed)", "yellow");
+        sbLog("ERROR: " + msg);
+      }
+    }
+
     async function loadFromSupabase() {
       sbClear();
-      sbLog("=== Load Data From Supabase ===");
+      sbLog("Loading data from Supabase...");
 
       const sb = getSupabaseClient();
       if (!sb) {
         notify("Supabase not configured.", "error");
         setStoragePill("Storage: local (no keys)", "yellow");
-        sbLog("No client (missing URL/KEY).");
+        sbLog("No client.");
         return;
       }
 
@@ -506,64 +605,24 @@
         patients = normalizePatients(p.data);
         therapists = normalizeTherapists(t.data);
         appointments = normalizeAppointments(a.data);
-
         saveLocal();
+
         setStoragePill("Storage: Supabase (data loaded)", "green");
         notify("Supabase data loaded.", "success");
         refreshUI();
       } catch (err) {
         const msg = String(err?.message || err);
+        setStoragePill("Storage: local (Supabase failed)", "yellow");
+        notify("Load failed: " + msg, "error");
         sbLog("ERROR: " + msg);
-        setStoragePill("Storage: local (Supabase failed)", "yellow");
-        notify("Supabase read failed: " + msg, "error");
       }
     }
 
-    async function testSupabase() {
-      const { url, key } = getSupabaseCreds();
-      const statusDiv = $("connection-status");
-      sbClear();
-
-      if (!url || !key) { notify("Enter Supabase URL and Key.", "error"); return; }
-
-      if (statusDiv) {
-        statusDiv.classList.remove("hidden", "bg-green-100", "text-green-800", "bg-red-100", "text-red-800");
-        statusDiv.classList.add("bg-blue-100", "text-blue-800");
-        statusDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Connecting...';
-      }
-
-      try {
-        const sb = window.supabase.createClient(url, key);
-        const { error } = await sb.from("patients").select("*").limit(1);
-        if (error) throw error;
-
-        if (statusDiv) {
-          statusDiv.classList.remove("bg-blue-100", "text-blue-800");
-          statusDiv.classList.add("bg-green-100", "text-green-800");
-          statusDiv.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i> Connected!';
-        }
-
-        setStoragePill("Storage: Supabase connected", "green");
-        notify("Supabase connected!", "success");
-      } catch (err) {
-        const msg = String(err?.message || err);
-        if (statusDiv) {
-          statusDiv.classList.remove("bg-blue-100", "text-blue-800");
-          statusDiv.classList.add("bg-red-100", "text-red-800");
-          statusDiv.innerHTML = `<i class="fa-solid fa-times-circle mr-2"></i> Failed: ${escapeHtml(msg)}`;
-        }
-        setStoragePill("Storage: local (Supabase failed)", "yellow");
-        sbLog("TEST ERROR: " + msg);
-        notify("Supabase failed: " + msg, "error");
-      }
-    }
-
-    // ---------------------------
+    // ================
     // Rendering
-    // ---------------------------
-    let chart1 = null;
-    let chart2 = null;
-    let currentUser = null;
+    // ================
+    let apptChart = null;
+    let demoChart = null;
 
     function isToday(iso) {
       const d = new Date(iso);
@@ -571,13 +630,55 @@
       return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
     }
 
-    function showSection(id) {
-      document.querySelectorAll(".content-section").forEach(el => el.classList.add("hidden-section"));
-      $(id)?.classList.remove("hidden-section");
+    function populateAppointmentSelects() {
+      const pSel = $("appt-patient");
+      const tSel = $("appt-therapist");
+      if (pSel) pSel.innerHTML = "";
+      if (tSel) tSel.innerHTML = "";
 
-      document.querySelectorAll(".sidebar-link").forEach(el => el.classList.remove("active"));
-      const btn = document.querySelector(`.sidebar-link[data-target="${id}"]`);
-      if (btn) btn.classList.add("active");
+      patients.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.full_name;
+        pSel?.appendChild(opt);
+      });
+
+      therapists.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.full_name;
+        tSel?.appendChild(opt);
+      });
+    }
+
+    function renderCharts() {
+      const c1 = $("appointmentsChart");
+      const c2 = $("demographicsChart");
+      if (!c1 || !c2 || typeof Chart === "undefined") return;
+
+      const statusCounts = { Scheduled: 0, Completed: 0, Cancelled: 0 };
+      appointments.forEach(a => { if (statusCounts[a.status] != null) statusCounts[a.status]++; });
+
+      if (apptChart) apptChart.destroy();
+      apptChart = new Chart(c1.getContext("2d"), {
+        type: "doughnut",
+        data: { labels: Object.keys(statusCounts), datasets: [{ data: Object.values(statusCounts), backgroundColor: ["#FCD34D","#10B981","#EF4444"] }] }
+      });
+
+      const ageGroups = { "0-18":0, "19-40":0, "41-60":0, "60+":0 };
+      patients.forEach(p => {
+        if (p.age <= 18) ageGroups["0-18"]++;
+        else if (p.age <= 40) ageGroups["19-40"]++;
+        else if (p.age <= 60) ageGroups["41-60"]++;
+        else ageGroups["60+"]++;
+      });
+
+      if (demoChart) demoChart.destroy();
+      demoChart = new Chart(c2.getContext("2d"), {
+        type: "bar",
+        data: { labels: Object.keys(ageGroups), datasets: [{ label: "Patients", data: Object.values(ageGroups), backgroundColor: "#0f766e" }] },
+        options: { scales: { y: { beginAtZero: true } } }
+      });
     }
 
     function renderAdmin() {
@@ -616,64 +717,8 @@
         `);
       });
 
-      // Appointment columns
-      const sCol = $("col-scheduled"), cCol = $("col-completed"), xCol = $("col-cancelled");
-      if (sCol) sCol.innerHTML = "";
-      if (cCol) cCol.innerHTML = "";
-      if (xCol) xCol.innerHTML = "";
-
-      let cs=0, cc=0, cx=0;
-      appointments.slice().sort((a,b)=>new Date(a.date_time)-new Date(b.date_time)).forEach(a => {
-        const pName = patients.find(p=>p.id===a.patient_id)?.full_name || "Unknown";
-        const tName = therapists.find(t=>t.id===a.therapist_id)?.full_name || "Unknown";
-        const html = `
-          <div class="bg-white p-3 rounded shadow-sm border">
-            <div class="font-bold text-gray-800">${escapeHtml(pName)}</div>
-            <div class="text-xs text-gray-500">${escapeHtml(new Date(a.date_time).toLocaleString())}</div>
-            <div class="text-xs text-teal-700">${escapeHtml(tName)}</div>
-          </div>
-        `;
-        if (a.status === "Scheduled") { sCol?.insertAdjacentHTML("beforeend", html); cs++; }
-        else if (a.status === "Completed") { cCol?.insertAdjacentHTML("beforeend", html); cc++; }
-        else { xCol?.insertAdjacentHTML("beforeend", html); cx++; }
-      });
-
-      setText("count-scheduled", String(cs));
-      setText("count-completed", String(cc));
-      setText("count-cancelled", String(cx));
-
-      // Charts
-      if (typeof Chart !== "undefined") {
-        const statusCounts = { Scheduled: 0, Completed: 0, Cancelled: 0 };
-        appointments.forEach(a => { if (statusCounts[a.status] != null) statusCounts[a.status]++; });
-
-        const c1 = $("appointmentsChart");
-        if (c1) {
-          if (chart1) chart1.destroy();
-          chart1 = new Chart(c1.getContext("2d"), {
-            type: "doughnut",
-            data: { labels: Object.keys(statusCounts), datasets: [{ data: Object.values(statusCounts), backgroundColor: ["#FCD34D","#10B981","#EF4444"] }] }
-          });
-        }
-
-        const ageGroups = { "0-18":0, "19-40":0, "41-60":0, "60+":0 };
-        patients.forEach(p => {
-          if (p.age <= 18) ageGroups["0-18"]++;
-          else if (p.age <= 40) ageGroups["19-40"]++;
-          else if (p.age <= 60) ageGroups["41-60"]++;
-          else ageGroups["60+"]++;
-        });
-
-        const c2 = $("demographicsChart");
-        if (c2) {
-          if (chart2) chart2.destroy();
-          chart2 = new Chart(c2.getContext("2d"), {
-            type: "bar",
-            data: { labels: Object.keys(ageGroups), datasets: [{ label: "Patients", data: Object.values(ageGroups), backgroundColor: "#0f766e" }] },
-            options: { scales: { y: { beginAtZero: true } } }
-          });
-        }
-      }
+      populateAppointmentSelects();
+      renderCharts();
     }
 
     function renderTherapist() {
@@ -683,7 +728,7 @@
       if (list) list.innerHTML = "";
       const seen = new Set();
 
-      const my = appointments.filter(a => a.therapist_id === currentUser.id).sort((a,b)=>new Date(a.date_time)-new Date(b.date_time));
+      const my = appointments.filter(a => a.therapist_id === currentUser.id).sort((a,b)=> new Date(a.date_time)-new Date(b.date_time));
       my.forEach(a => {
         const p = patients.find(x => x.id === a.patient_id);
         const pName = p?.full_name || "Unknown";
@@ -713,9 +758,17 @@
       if (currentUser?.role === "therapist") renderTherapist();
     }
 
-    // ---------------------------
-    // Events
-    // ---------------------------
+    // ================
+    // Navigation / Events
+    // ================
+    function showSection(id) {
+      document.querySelectorAll(".content-section").forEach(el => el.classList.add("hidden-section"));
+      $(id)?.classList.remove("hidden-section");
+      document.querySelectorAll(".sidebar-link").forEach(el => el.classList.remove("active"));
+      const btn = document.querySelector(`.sidebar-link[data-target="${id}"]`);
+      if (btn) btn.classList.add("active");
+    }
+
     document.addEventListener("click", (e) => {
       const btn = e.target.closest(".sidebar-link[data-target]");
       if (!btn) return;
@@ -726,33 +779,87 @@
       currentUser = null;
       $("dashboard-layout")?.classList.add("hidden-section");
       $("login-screen")?.classList.remove("hidden-section");
+      $("login-form")?.reset?.();
       setStorageBadge();
     });
 
+    $("btn-add-patient")?.addEventListener("click", () => $("add-patient-modal")?.classList.remove("hidden-section"));
+    $("btn-close-patient")?.addEventListener("click", () => $("add-patient-modal")?.classList.add("hidden-section"));
+    $("btn-cancel-patient")?.addEventListener("click", () => $("add-patient-modal")?.classList.add("hidden-section"));
+
+    $("btn-add-appointment")?.addEventListener("click", () => {
+      populateAppointmentSelects();
+      $("add-appointment-modal")?.classList.remove("hidden-section");
+    });
+    $("btn-cancel-appt")?.addEventListener("click", () => $("add-appointment-modal")?.classList.add("hidden-section"));
+
+    $("add-patient-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newP = {
+        id: String(Date.now()),
+        full_name: $("p-name")?.value || "",
+        age: Number($("p-age")?.value || 0),
+        phone: $("p-phone")?.value || "",
+        condition: $("p-condition")?.value || ""
+      };
+      patients.push(newP);
+      saveLocal();
+      notify("Patient saved locally.", "success");
+      $("add-patient-modal")?.classList.add("hidden-section");
+      e.target.reset();
+      refreshUI();
+    });
+
+    $("add-appointment-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newA = {
+        id: String(Date.now()),
+        patient_id: $("appt-patient")?.value || "",
+        therapist_id: $("appt-therapist")?.value || "",
+        date_time: $("appt-date")?.value || new Date().toISOString(),
+        status: "Scheduled",
+        notes: ""
+      };
+      appointments.push(newA);
+      saveLocal();
+      notify("Appointment saved locally.", "success");
+      $("add-appointment-modal")?.classList.add("hidden-section");
+      e.target.reset();
+      refreshUI();
+    });
+
+    // Settings buttons
+    $("btn-test-supabase")?.addEventListener("click", testSupabase);
     $("btn-load-supabase")?.addEventListener("click", loadFromSupabase);
-    $("btn-test")?.addEventListener("click", testSupabase);
+    $("btn-copy-share")?.addEventListener("click", copyShareLink);
 
-    $("btn-save-hash")?.addEventListener("click", () => {
-      const url = ($("sb-url")?.value || "").trim();
-      const key = ($("sb-key")?.value || "").trim();
-      if (!url || !key) { notify("Enter URL and Key first.", "error"); return; }
-      writeHashCreds(url, key);
-      saveSupabaseCredsLocal(url, key);
-      notify("Saved in URL hash. Now copy the address bar URL.", "success");
+    // Save keys + also store in HASH for cross-device
+    $("supabase-settings-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const { url, key } = getSupabaseCreds();
+      if (!url || !key) { notify("Enter Supabase URL and Key.", "error"); return; }
+      saveSupabaseCreds(url, key);
+      setHashToken(url, key); // this is the cross-device fix
+      notify("Keys saved (local) + stored in URL hash.", "success");
       setStorageBadge();
-      setStoragePill("Storage: Supabase (in URL hash)", "green");
+      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
     });
+
+    // ================
+    // Demo Auth
+    // ================
+    let currentUser = null;
 
     $("login-form")?.addEventListener("submit", (e) => {
       e.preventDefault();
-      const email = ($("email")?.value || "").trim();
-      const pass = ($("password")?.value || "").trim();
-      const role = ($("role-select")?.value || "admin");
+      const email = $("email")?.value || "";
+      const password = $("password")?.value || "";
+      const role = $("role-select")?.value || "admin";
 
-      if (role === "admin" && email === "admin@physio.com" && pass === "admin123") {
+      if (role === "admin" && email === "admin@physio.com" && password === "admin123") {
         currentUser = { role: "admin", name: "Administrator", id: "admin-id" };
       } else if (role === "therapist") {
-        const user = therapists.find(t => t.email === email && t.password === pass);
+        const user = therapists.find(t => t.email === email && t.password === password);
         if (!user) { notify("Invalid therapist credentials", "error"); return; }
         currentUser = { role: "therapist", name: user.full_name, id: user.id };
       } else {
@@ -768,41 +875,39 @@
         $("admin-nav")?.classList.remove("hidden-section");
         $("therapist-nav")?.classList.add("hidden-section");
         showSection("admin-dashboard");
+        renderAdmin();
       } else {
         $("admin-nav")?.classList.add("hidden-section");
         $("therapist-nav")?.classList.remove("hidden-section");
         showSection("therapist-schedule");
+        renderTherapist();
       }
 
-      // Prefill creds into inputs
-      const creds = getSupabaseCreds();
-      if (creds.url && $("sb-url")) $("sb-url").value = creds.url;
-      if (creds.key && $("sb-key")) $("sb-key").value = creds.key;
-
       setStorageBadge();
-      setStoragePill(getSupabaseClient() ? "Storage: Supabase configured" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
-
-      refreshUI();
+      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
     });
 
-    // ---------------------------
-    // Boot: read hash and fill inputs
-    // ---------------------------
+    // ================
+    // Boot: load keys from URL HASH first, then localStorage
+    // ================
     document.addEventListener("DOMContentLoaded", () => {
-      const hashCreds = readHashCreds();
-      if (hashCreds?.url && hashCreds?.key) {
-        if ($("sb-url")) $("sb-url").value = hashCreds.url;
-        if ($("sb-key")) $("sb-key").value = hashCreds.key;
-        saveSupabaseCredsLocal(hashCreds.url, hashCreds.key);
+      const fromHash = readHashToken();
+      if (fromHash?.url && fromHash?.key) {
+        if ($("sb-url")) $("sb-url").value = fromHash.url;
+        if ($("sb-key")) $("sb-key").value = fromHash.key;
+        saveSupabaseCreds(fromHash.url, fromHash.key);
         notify("Supabase keys loaded from URL hash.", "success");
       } else {
-        const stored = SafeStorage.get("physiocare_sb_keys", null);
+        const stored = SafeStorage.get(SB_KEYS_STORAGE_KEY, null);
         if (stored?.url && $("sb-url")) $("sb-url").value = stored.url;
         if (stored?.key && $("sb-key")) $("sb-key").value = stored.key;
       }
 
       setStorageBadge();
-      setStoragePill(getSupabaseClient() ? "Storage: Supabase configured" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
+      setStoragePill(getSupabaseClient() ? "Storage: Supabase connected" : "Storage: local", getSupabaseClient() ? "green" : "yellow");
+
+      // Optional: auto load data if keys exist
+      // loadFromSupabase();
     });
   </script>
 </body>
